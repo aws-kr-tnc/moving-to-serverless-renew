@@ -8,83 +8,74 @@ from project.api.models import User
 users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint)
 
+def util_create_response(status, msg):
+    return {
+        'status': status,
+        'message': msg
+    }
 
 class UsersPing(Resource):
     def get(self):
-        return {
-        'status': 'success',
-        'message': 'pong!'
-    }
+        return util_create_response('success', 'pong!')
 
 
 class UsersList(Resource):
 
     def post(self):
         post_data = request.get_json()
-        response_object = {
-            'status': 'fail',
-            'message': 'Invalid payload.'
-        }
+
         if not post_data:
-            return response_object, 400
+            return util_create_response('fail', 'Invalid payload'), 400
 
         username = post_data.get('username')
         email = post_data.get('email')
         password = post_data.get('password')
 
         if None in (username, email, password):
-            return response_object, 400
+            return util_create_response('fail', 'Invalid payload'), 400
 
         try:
             user = User.query.filter_by(email=email).first()
             if not user:
                 db.session.add(User(username=username, email=email, password=password))
                 db.session.commit()
-                response_object['status'] = 'success'
-                response_object['message'] = f'{email} was added!'
-                return response_object, 201
+                return util_create_response('success', '%s was added!' % email), 201
             else:
-                response_object['message'] = 'Sorry. That email already exists.'
-                return response_object, 400
+                return util_create_response('fail', 'Sorry. That email already exists.'), 400
 
         except exc.IntegrityError:
             db.session.rollback()
-            return response_object, 400
+            return util_create_response('fail', 'Invalid payload'), 400
 
     def get(self):
         """Get all users"""
-        response_object = {
-            'status': 'success',
+        msg = {
             'data': {
                 'users': [user.to_json() for user in User.query.all()]
             }
         }
-        return response_object, 200
+        return util_create_response('success', msg), 200
 
 
 class Users(Resource):
     def get(self, user_id):
         """Get single user details"""
-        response_object = {
-            'status': 'fail',
-            'message': 'User does not exist'
-        }
+
         try:
             user = User.query.filter_by(id=int(user_id)).first()
             if not user:
-                return response_object, 404
+                return util_create_response('fail', 'User does not exist'), 404
             else:
-                response_object = {
-                    'status': 'success',
+                msg = {
                     'data': {
                         'id': user.id,
                         'username': user.username,
                         'email': user.email
                     }
                 }
-                return response_object, 200
+                return util_create_response('success', msg), 200
         except ValueError:
-            return response_object, 404
+            return util_create_response('fail', 'User does not exist'), 404
 
 
 api.add_resource(UsersPing, '/users/ping')
