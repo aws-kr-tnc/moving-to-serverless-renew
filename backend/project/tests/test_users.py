@@ -105,7 +105,7 @@ class TestUserService(BaseTestCase):
             data = json.loads(response.data.decode())
             self.assertEqual(response.status_code, 200)
             self.assertIn('mario', data['data']['username'])
-            self.assertIn('super@mario.com', data['data']['email'])
+            self.assertIn('michael@mherman.org', data['data']['email'])
 
     def test_single_user_no_id(self):
         """Ensure error is thrown if an id is not provided."""
