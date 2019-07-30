@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import exc
 from project import db
 from project.api.models import User
-# from project import login
+from project import login
 
 users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint)
@@ -98,6 +98,19 @@ class Signin(Resource):
             return util_create_response('fail', 'Login failed'), 400
 
 
+class Signout(Resource):
+    def post(self):
+        app.logger.debug('Sign-out : %s', current_user.username)
+        logout_user()
+        return util_create_response('success', 'Signout success.')
+
+@login.user_loader
+def user_loader(user_id):
+    result = User.query.get(user_id)
+    if result is not None:
+        return result
+    return None
+
 
 
 def util_create_response(status, msg):
@@ -116,3 +129,4 @@ api.add_resource(UsersPing, '/users/ping')
 api.add_resource(UsersList, '/users')
 api.add_resource(Users, '/users/<user_id>')
 api.add_resource(Signin, '/users/signin')
+api.add_resource(Signout, '/users/signout')
