@@ -8,7 +8,6 @@ from project.api.models import User
 app = create_app()
 cli = FlaskGroup(create_app=create_app)
 
-
 @cli.command('recreate_db')
 def recreate_db():
     db.drop_all()
@@ -29,8 +28,8 @@ def test():
 @cli.command('seed_db')
 def seed_db():
     """Seeds the database."""
-    db.session.add(User(username='mario', email="super@mario.com"))
-    db.session.add(User(username='luigi', email="super@luigi.com"))
+    db.session.add(User(username='mario', email='super@mario.com', password='asdf'))
+    db.session.add(User(username='luigi', email='super@luigi.com', password='asdf'))
     db.session.commit()
 
 
