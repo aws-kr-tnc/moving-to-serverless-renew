@@ -1,18 +1,19 @@
 
 from flask import Blueprint, request
+from flask import current_app as app
 from flask_restful import Resource, Api
+from flask_login import current_user, login_user, logout_user, login_required
+
+from werkzeug.security import generate_password_hash, check_password_hash
+
 from sqlalchemy import exc
 from project import db
 from project.api.models import User
+# from project import login
 
 users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint)
 
-def util_create_response(status, msg):
-    return {
-        'status': status,
-        'message': msg
-    }
 
 class UsersPing(Resource):
     def get(self):
@@ -20,7 +21,6 @@ class UsersPing(Resource):
 
 
 class UsersList(Resource):
-
     def post(self):
         post_data = request.get_json()
 
@@ -37,11 +37,11 @@ class UsersList(Resource):
         try:
             user = User.query.filter_by(email=email).first()
             if not user:
-                db.session.add(User(username=username, email=email, password=password))
+                db.session.add(User(username=username, email=email, password=generate_password_hash(password)))
                 db.session.commit()
                 return util_create_response('success', '%s was added!' % email), 201
             else:
-                return util_create_response('fail', 'Sorry. That email already exists.'), 400
+                return util_create_response('fail', 'Sorry. This email already exists.'), 400
 
         except exc.IntegrityError:
             db.session.rollback()
@@ -77,8 +77,42 @@ class Users(Resource):
         except ValueError:
             return util_create_response('fail', 'User does not exist'), 404
 
+class Signin(Resource):
+    def post(self):
+        post_data = request.get_json()
+        email = post_data.get('email')
+        password = post_data.get('password')
+        validated = data_validate(email, password)
+
+        if not validated:
+            return util_create_response('fail', 'Invalid user data'), 400
+
+        db_user = db.session.query(User).filter_by(email=email).first()
+
+        if db_user and check_password_hash(db_user.password, password):
+            app.logger.debug("login success: id: %s | email: %s" % (db_user.id, db_user.email))
+            login_user(db_user)
+            return util_create_response('success', 'Login success'), 200
+        else:
+            app.logger.debug('user login failed: %s' % db_user)
+            return util_create_response('fail', 'Login failed'), 400
+
+
+
+
+def util_create_response(status, msg):
+    return {
+        'status': status,
+        'message': msg
+    }
+
+
+def data_validate(email, password):
+    # TODO implement
+    return True
+
 
 api.add_resource(UsersPing, '/users/ping')
 api.add_resource(UsersList, '/users')
 api.add_resource(Users, '/users/<user_id>')
-
+api.add_resource(Signin, '/users/signin')

@@ -2,9 +2,9 @@
 
 from project import db
 from sqlalchemy import Float, DateTime, ForeignKey, Integer, String
+from flask_login import UserMixin, LoginManager
 
-
-class User(db.Model):
+class User(UserMixin, db.Model):
     """
     Database Model class for User table
     """
