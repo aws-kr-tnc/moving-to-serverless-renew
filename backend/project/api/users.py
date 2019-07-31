@@ -1,18 +1,21 @@
 
 from flask import Blueprint, request
 from flask import current_app as app
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, fields
 from flask_login import current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_restful_swagger import swagger
 
 from sqlalchemy import exc
 from project import db
 from project.api.models import User
 from project import login
+
 import re
 
 users_blueprint = Blueprint('users', __name__)
-api = Api(users_blueprint)
+# api = Api(users_blueprint)
+api = swagger.docs(Api(users_blueprint), apiVersion='0.1')
 
 dic_response = {
     200 : { 'status': 200,
@@ -27,11 +30,60 @@ dic_response = {
             'message': 'Internal server error'}
                  }
 
+@swagger.model
+class New_user:
+    def __init__(self, email, username, password):
+        resource_fields = {
+            'email': fields.String,
+            'username':fields.String,
+            'password':fields.String
+        }
+
+
+@swagger.model
+class Signin_user:
+    def __init__(self, email, password):
+        resource_fields = {
+            'email': fields.String,
+            'password':fields.String
+        }
+
+@swagger.model
+class Response:
+    def __init__(self, message, status):
+        pass
+
 class UsersPing(Resource):
+    @swagger.operation(
+        notes='test ping, answers pong!',
+        nickname='PING',
+        responseClass=Response.__name__,
+        responseMessages=[
+            {
+              "code": 200,
+              "message": "Always Success"
+            }
+          ]
+        )
     def get(self):
         return response_util(200, 'pong!')
 
 class UsersList(Resource):
+    @swagger.operation(
+        notes='get the whole users list',
+        responseClass=Response.__name__,
+        responseMessages=[
+            {
+                "code":200,
+                "message":"Return the whole users list"
+
+            },
+            {
+                "code": 500,
+                "message": "Internal server error"
+            }
+        ]
+    )
     def get(self):
         """Get all users"""
         msg = {
@@ -42,13 +94,28 @@ class UsersList(Resource):
         return response_util(200, msg)
 
 class Users(Resource):
+    @swagger.operation(
+        notes='get one user data',
+        responseClass=Response.__name__,
+        responseMessages=[
+            {
+                "code": 200,
+                "message": "Return a user data"
+
+            },
+            {
+                "code": 500,
+                "message": "Internal server error"
+            }
+        ]
+    )
     def get(self, user_id):
         """Get single user details"""
 
         try:
             user = User.query.filter_by(id=int(user_id)).first()
             if user is None:
-                return response_util(404)
+                return default_response_util(404)
             else:
                 msg = {
                     'data': {
@@ -59,21 +126,50 @@ class Users(Resource):
                 }
                 return response_util(200, msg)
         except ValueError:
-            return response_util(404)
+            return default_response_util(404)
 
 class Signup(Resource):
+    @swagger.operation(
+        notes='register a user',
+        responseClass=Response.__name__,
+        parameters=[
+            {
+                "name": "body",
+                "description": "necessary email, username, password with json",
+                "required": True,
+                "allowMultiple": False,
+                "dataType": New_user.__name__,
+                "paramType": "body"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": 201,
+                "message": "Return a user data"
+
+            },
+            {
+                "code": 400,
+                "message": "Invalidate data"
+            },
+            {
+                "code": 500,
+                "message": "Internal server error"
+            }
+        ]
+    )
     def post(self):
         post_data = request.get_json()
 
         if not post_data:
-            return response_util(400)
+            return default_response_util(400)
 
         username = post_data.get('username')
         email = post_data.get('email')
         password = post_data.get('password')
 
         if None in (username, email, password):
-            return response_util(400)
+            return default_response_util(400)
 
         if not data_validate(email, password):
             return response_util(400, 'email or password not valid')
@@ -91,14 +187,43 @@ class Signup(Resource):
             return response_util(500, 'Undefined status code.')
         except exc.IntegrityError:
             db.session.rollback()
-            return response_util(500)
+            return default_response_util(500)
 
 class Signin(Resource):
+    @swagger.operation(
+        notes='register a user',
+        responseClass=Response.__name__,
+        parameters=[
+            {
+                "name": "body",
+                "description": "necessary email, password with json",
+                "required": True,
+                "allowMultiple": False,
+                "dataType": Signin_user.__name__,
+                "paramType": "body"
+            }
+        ],
+        responseMessages=[
+            {
+                "code": 200,
+                "message": "login success"
+
+            },
+            {
+                "code": 400,
+                "message": "Invalidate data"
+            },
+            {
+                "code": 500,
+                "message": "Internal server error"
+            }
+        ]
+    )
     def post(self):
         post_data = request.get_json()
 
         if not post_data:
-            return response_util(400)
+            return default_response_util(400)
 
         email = post_data.get('email')
         password = post_data.get('password')
@@ -111,16 +236,28 @@ class Signin(Resource):
         if db_user and check_password_hash(db_user.password, password):
             app.logger.debug("login success: id: %s | email: %s" % (db_user.id, db_user.email))
             login_user(db_user)
-            return response_util(200)
+            return default_response_util(200)
         else:
             app.logger.debug('user login failed: %s' % db_user)
             return response_util(400, "Login Failed")
 
 class Signout(Resource):
+    @swagger.operation(
+        notes='Signout',
+        responseClass=Response.__name__,
+        responseMessages=[
+            {
+                "code": 200,
+                "message": "signout success"
+
+            }
+        ]
+    )
     def post(self):
         app.logger.debug('Sign-out : %s', current_user.username)
         logout_user()
-        return response_util(200)
+        return default_response_util(200)
+
 
 @login.user_loader
 def user_loader(user_id):
@@ -129,7 +266,7 @@ def user_loader(user_id):
         return None
     return result
 
-def response_util(response_code):
+def default_response_util(response_code):
     try:
         if response_code in dic_response:
             return dic_response[response_code], response_code

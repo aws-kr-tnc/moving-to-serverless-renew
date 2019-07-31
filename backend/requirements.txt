@@ -5,3 +5,4 @@ Flask-Testing==0.7.1
 Flask-Login==0.4.1
 SQLAlchemy==1.3.6
 Flask-Cors==3.0.8
+Flask-restful-swagger==0.20.1
