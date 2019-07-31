@@ -63,9 +63,7 @@ class Signup(Resource):
         if None in (username, email, password):
             return response_util(400)
 
-        validated = data_validate(email, password)
-
-        if not validated:
+        if not data_validate(email, password):
             return response_util(400, 'email or password not valid')
 
         try:
