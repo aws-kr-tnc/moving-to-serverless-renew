@@ -10,25 +10,12 @@ from sqlalchemy import exc
 from project import db
 from project.api.models import User
 from project import login
-
+from project.util.response import default_response, response_with_msg
 import re
 
 users_blueprint = Blueprint('users', __name__)
-# api = Api(users_blueprint)
 api = swagger.docs(Api(users_blueprint), apiVersion='0.1')
 
-dic_response = {
-    200 : { 'status': 200,
-            'message': 'Success'},
-    201 : { 'status': 201,
-            'message': 'Created'},
-    400 : { 'status': 400,
-            'message': 'Invalid payload'},
-    404 : { 'status': 404,
-            'message':'User not exist'},
-    500 : { 'status': 500,
-            'message': 'Internal server error'}
-                 }
 
 @swagger.model
 class New_user:
@@ -50,7 +37,7 @@ class Signin_user:
 
 @swagger.model
 class Response:
-    def __init__(self, message, status):
+    def __init__(self, message, code):
         pass
 
 class UsersPing(Resource):
@@ -66,7 +53,7 @@ class UsersPing(Resource):
           ]
         )
     def get(self):
-        return response_util(200, 'pong!')
+        return response_with_msg(200, 'pong!')
 
 class UsersList(Resource):
     @swagger.operation(
@@ -87,11 +74,9 @@ class UsersList(Resource):
     def get(self):
         """Get all users"""
         msg = {
-            'data': {
-                'users': [user.to_json() for user in User.query.all()]
-            }
+            'users': [user.to_json() for user in User.query.all()]
         }
-        return response_util(200, msg)
+        return response_with_msg(200, msg)
 
 class Users(Resource):
     @swagger.operation(
@@ -115,18 +100,18 @@ class Users(Resource):
         try:
             user = User.query.filter_by(id=int(user_id)).first()
             if user is None:
-                return default_response_util(404)
+                return response_with_msg(404, "Not exist user id")
             else:
                 msg = {
-                    'data': {
+                    'user': {
                         'id': user.id,
                         'username': user.username,
                         'email': user.email
                     }
                 }
-                return response_util(200, msg)
+                return response_with_msg(200, msg)
         except ValueError:
-            return default_response_util(404)
+            return default_response(400)
 
 class Signup(Resource):
     @swagger.operation(
@@ -150,7 +135,7 @@ class Signup(Resource):
             },
             {
                 "code": 400,
-                "message": "Invalidate data"
+                "message": "Invalidate email/password"
             },
             {
                 "code": 500,
@@ -162,32 +147,32 @@ class Signup(Resource):
         post_data = request.get_json()
 
         if not post_data:
-            return default_response_util(400)
+            return default_response(400)
 
         username = post_data.get('username')
         email = post_data.get('email')
         password = post_data.get('password')
 
         if None in (username, email, password):
-            return default_response_util(400)
+            return default_response(400)
 
         if not data_validate(email, password):
-            return response_util(400, 'email or password not valid')
+            return response_with_msg(400, 'email or password not valid')
 
         try:
             user = User.query.filter_by(email=email).first()
             if not user:
                 db.session.add(User(username=username, email=email, password=generate_password_hash(password)))
                 db.session.commit()
-                return response_util(201, '%s was added!' % email)
+                return response_with_msg(201, '%s was added!' % email)
             else:
-                return response_util(400, 'Sorry. This email already exists.')
+                return response_with_msg(400, 'Sorry. This email already exists.')
         except ValueError:
             db.session.rollback()
-            return response_util(500, 'Undefined status code.')
+            return response_with_msg(500, 'Undefined status code.')
         except exc.IntegrityError:
             db.session.rollback()
-            return default_response_util(500)
+            return default_response(500)
 
 class Signin(Resource):
     @swagger.operation(
@@ -223,23 +208,23 @@ class Signin(Resource):
         post_data = request.get_json()
 
         if not post_data:
-            return default_response_util(400)
+            return default_response(400)
 
         email = post_data.get('email')
         password = post_data.get('password')
 
         if not data_validate(email, password):
-            return response_util(400, 'email or password not valid')
+            return response_with_msg(400, 'email or password not valid')
 
         db_user = db.session.query(User).filter_by(email=email).first()
 
         if db_user and check_password_hash(db_user.password, password):
             app.logger.debug("login success: id: %s | email: %s" % (db_user.id, db_user.email))
             login_user(db_user)
-            return default_response_util(200)
+            return response_with_msg(200, "Login Success!")
         else:
             app.logger.debug('user login failed: %s' % db_user)
-            return response_util(400, "Login Failed")
+            return response_with_msg(400, "Login Failed")
 
 class Signout(Resource):
     @swagger.operation(
@@ -256,7 +241,7 @@ class Signout(Resource):
     def post(self):
         app.logger.debug('Sign-out : %s', current_user.username)
         logout_user()
-        return default_response_util(200)
+        return response_with_msg(200, "Signout success!")
 
 
 @login.user_loader
@@ -265,28 +250,6 @@ def user_loader(user_id):
     if not result:
         return None
     return result
-
-def default_response_util(response_code):
-    try:
-        if response_code in dic_response:
-            return dic_response[response_code], response_code
-        else:
-            raise ValueError
-    except:
-        raise ValueError
-
-def response_util(response_code, msg):
-    try:
-        if response_code in dic_response:
-            res = dic_response[response_code]
-            res['message'] = msg
-            return res, response_code
-        else:
-            raise ValueError
-    except:
-        app.logger.debug("Undefined error: %s" % response_code)
-        raise ValueError
-
 
 def data_validate(email, password):
     email_regex = re.compile(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$")
