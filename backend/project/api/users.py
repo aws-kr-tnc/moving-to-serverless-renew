@@ -14,6 +14,18 @@ import re
 users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint)
 
+dic_response = {
+    200 : { 'status': 200,
+            'message': 'Success'},
+    201 : { 'status': 201,
+            'message': 'Created'},
+    400 : { 'status': 400,
+            'message': 'Invalid payload'},
+    404 : { 'status': 404,
+            'message':'User not exist'},
+    500 : { 'status': 500,
+            'message': 'Internal server error'}
+                 }
 
 class UsersPing(Resource):
     def get(self):
@@ -104,7 +116,6 @@ class Signin(Resource):
             app.logger.debug('user login failed: %s' % db_user)
             return response_util(400, "Login Failed")
 
-
 class Signout(Resource):
     def post(self):
         app.logger.debug('Sign-out : %s', current_user.username)
@@ -117,18 +128,6 @@ def user_loader(user_id):
     if not result:
         return None
     return result
-
-dic_response = {200 : { 'status': 200,
-                         'message': 'Success'},
-                201 : { 'status': 201,
-                         'message': 'Created'},
-                400 : { 'status': 400,
-                         'message': 'Invalid payload'},
-                404 : { 'status': 404,
-                         'message':'User not exist'},
-                500 : { 'status': 500,
-                         'message': 'Internal server error'}
-                 }
 
 def response_util(response_code):
     try:
@@ -157,7 +156,6 @@ def data_validate(email, password):
     if not re.match(email_regex, email) or (len(password) <= 1):
         return False
     return True
-
 
 api.add_resource(UsersPing, '/users/ping')
 api.add_resource(UsersList, '/users')
