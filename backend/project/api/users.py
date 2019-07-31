@@ -84,11 +84,14 @@ class Signup(Resource):
 class Signin(Resource):
     def post(self):
         post_data = request.get_json()
+
+        if not post_data:
+            return response_util(400)
+
         email = post_data.get('email')
         password = post_data.get('password')
-        validated = data_validate(email, password)
 
-        if not validated:
+        if not data_validate(email, password):
             return response_util(400, 'email or password not valid')
 
         db_user = db.session.query(User).filter_by(email=email).first()
