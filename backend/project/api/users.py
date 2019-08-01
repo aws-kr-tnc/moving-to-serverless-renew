@@ -10,7 +10,7 @@ from sqlalchemy import exc
 from project import db
 from project.api.models import User
 from project import login
-from project.util.response import default_response, response_with_msg
+from project.util.response import default_response, response_with_msg, response_with_data, response_with_msg_data
 import re
 
 users_blueprint = Blueprint('users', __name__)
@@ -100,16 +100,16 @@ class Users(Resource):
         try:
             user = User.query.filter_by(id=int(user_id)).first()
             if user is None:
-                return response_with_msg(404, "Not exist user id")
-            else:
-                msg = {
-                    'user': {
-                        'id': user.id,
-                        'username': user.username,
-                        'email': user.email
-                    }
+                return response_with_msg_data(404, "Not exist user id", {"user": {"id": user_id}})
+
+            data = {
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email
                 }
-                return response_with_msg(200, msg)
+            }
+            return response_with_data(200, data)
         except ValueError:
             return default_response(400)
 
@@ -164,9 +164,19 @@ class Signup(Resource):
             if not user:
                 db.session.add(User(username=username, email=email, password=generate_password_hash(password)))
                 db.session.commit()
-                return response_with_msg(201, '%s was added!' % email)
-            else:
-                return response_with_msg(400, 'Sorry. This email already exists.')
+                committed_user = User.query.filter_by(email=email).first()
+
+                data= {
+                    "user": {
+                    "email": committed_user.email,
+                    "username": committed_user.username,
+                    "id": committed_user.id
+                    }
+                }
+
+                return response_with_msg_data(201, "Signup Success!", data)
+
+            return response_with_msg(400, 'Sorry. This email already exists.')
         except ValueError:
             db.session.rollback()
             return response_with_msg(500, 'Undefined status code.')
