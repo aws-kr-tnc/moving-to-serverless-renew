@@ -25,14 +25,16 @@
             <v-card-text>
               <v-form>
                 <v-text-field
-                  i="name"
+                  v-model="inputUsername"
+                  i="username"
                   label="Name"
-                  name="name"
+                  name="username"
                   prepend-icon="mdi-account"
                   type="text"
                 ></v-text-field>
 
                 <v-text-field
+                  v-model="inputEmail"
                   id="email"
                   label="Email"
                   name="email"
@@ -41,6 +43,7 @@
                 ></v-text-field>
 
                 <v-text-field
+                  v-model="inputPassword"
                   id="password"
                   label="Password"
                   name="password"
@@ -61,7 +64,9 @@
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="primary"><v-icon>mdi-send</v-icon> Submit</v-btn>
+              <v-btn color="primary"
+                     @click="userSignUp()"
+              ><v-icon>mdi-send</v-icon> Submit</v-btn>
             </v-card-actions>
             <v-card-actions>
               <v-spacer></v-spacer>
@@ -76,9 +81,53 @@
 </template>
 
 <script>
-    export default {
-        name: "SignUp"
-    }
+
+import axios from 'axios';
+
+export default {
+  name: "SignUp",
+
+  data() {
+      return {
+        inputUsername: '',
+        inputEmail: '',
+        inputPassword: ''
+      };
+
+  },
+
+  methods: {
+      userSignUp() {
+
+          const params = {
+              email: this.inputEmail,
+              username: this.inputUsername,
+              password: this.inputPassword
+          }
+          //
+          //   axios.post('http://localhost:5000/users/signup', params);
+          //
+          //   console.log(this.inputUsername);
+          //   console.log(this.inputEmail);
+          //   console.log(this.inputPassword);
+          // },
+          axios.post('http://localhost:5000/users/signup', {
+              params
+          }, {
+              dataType: 'json',
+              headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'}
+          })
+              .then(function (resp) {
+                  console.log(resp.data);
+              })
+              .catch(function (err) {
+                  return console.error(err);
+              }),
+      }
+  }
+};
+
+
 </script>
 
 <style scoped>

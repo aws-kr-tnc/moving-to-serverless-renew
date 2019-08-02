@@ -68,12 +68,12 @@ import EXIF from 'exif-js'
 
 export default {
   name: 'FileUpload',
-  data () {
+  data() {
     return {
-    }
+    };
   },
   components: {
-    PictureInput
+    PictureInput,
   },
   methods: {
     onChange (image) {
