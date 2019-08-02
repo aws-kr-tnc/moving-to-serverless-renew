@@ -71,7 +71,11 @@
             <v-card-actions>
               <v-spacer></v-spacer>
               Have already registered?
-              <v-btn text small href="/users/signin" color="primary"><v-icon>mdi-login</v-icon>Sign in</v-btn>
+              <v-btn text small
+                     href="/users/signin"
+                     color="primary">
+                <v-icon>mdi-login</v-icon>Sign in
+              </v-btn>
             </v-card-actions>
           </v-card>
         </v-flex>
@@ -85,7 +89,7 @@
 import axios from 'axios';
 
 export default {
-  name: "SignUp",
+  name: 'SignUp',
 
   data() {
       return {
@@ -93,11 +97,11 @@ export default {
         inputEmail: '',
         inputPassword: ''
       };
-
   },
 
   methods: {
-      userSignUp() {
+
+    userSignUp() {
 
           const params = {
               email: this.inputEmail,
@@ -123,8 +127,31 @@ export default {
               .catch(function (err) {
                   return console.error(err);
               })
+
       }
-  }
+  //         //
+  //         //   axios.post('http://localhost:5000/users/signup', params);
+  //         //
+  //         //   console.log(this.inputUsername);
+  //         //   console.log(this.inputEmail);
+  //         //   console.log(this.inputPassword);
+  //         // },
+      axios.post('http://localhost:5000/users/signup', {
+          params
+      }, {
+          dataType: 'json',
+          headers: {'Content-Type': 'application/json; charset=utf-8'}
+      })
+          .then(function (resp) {
+              console.log(resp.data);
+          })
+          .catch(function (err) {
+              return console.error(err);
+          });
+    },
+  },
+
+
 };
 
 
