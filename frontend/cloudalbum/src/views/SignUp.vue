@@ -101,37 +101,22 @@ export default {
 
   methods: {
     userSignUp() {
-  //
-  //     const params = {
-  //         email: this.inputEmail,
-  //         username: this.inputUsername,
-  //         password: this.inputPassword
-  //     }
 
-      console.log(params);
-
-  //         //
-  //         //   axios.post('http://localhost:5000/users/signup', params);
-  //         //
-  //         //   console.log(this.inputUsername);
-  //         //   console.log(this.inputEmail);
-  //         //   console.log(this.inputPassword);
-  //         // },
       axios.post('http://localhost:5000/users/signup', {
           email: this.inputEmail,
           username: this.inputUsername,
           password: this.inputPassword
-      }, {
+        }, {
           dataType: 'json',
           headers: {'Content-Type': 'application/json; charset=utf-8'}
-      })
+        })
           .then(function (resp) {
               console.log(resp.data);
           })
           .catch(function (err) {
               return console.error(err);
           });
-    },
+      },
   },
 
 
