@@ -37,8 +37,12 @@ class Signin_user:
 
 @swagger.model
 class Response:
-    def __init__(self, message, code):
-        pass
+    def __init__(self, message, code, data):
+        resource_fields = {
+            'message': fields.String,
+            'code': fields.String,
+            'data': fields.Integer
+        }
 
 class UsersPing(Resource):
     @swagger.operation(
@@ -73,11 +77,13 @@ class UsersList(Resource):
     )
     def get(self):
         """Get all users"""
-        msg = {
-            'users': [user.to_json() for user in User.query.all()]
-        }
-        return response_with_msg(200, msg)
-
+        try:
+            data = {
+                'users': [user.to_json() for user in User.query.all()]
+            }
+            return response_with_data(200, data)
+        except:
+            return default_response(500)
 class Users(Resource):
     @swagger.operation(
         notes='get one user data',
@@ -154,10 +160,10 @@ class Signup(Resource):
         password = post_data.get('password')
 
         if None in (username, email, password):
-            return default_response(400)
+            return response_with_msg_data(400, 'Insufficient data' ,post_data)
 
         if not data_validate(email, password):
-            return response_with_msg(400, 'email or password not valid')
+            return response_with_msg_data(400,'email format or password length not valid', post_data)
 
         try:
             user = User.query.filter_by(email=email).first()
@@ -181,6 +187,9 @@ class Signup(Resource):
             db.session.rollback()
             return response_with_msg(500, 'Undefined status code.')
         except exc.IntegrityError:
+            db.session.rollback()
+            return default_response(500)
+        except:
             db.session.rollback()
             return default_response(500)
 
@@ -215,26 +224,29 @@ class Signin(Resource):
         ]
     )
     def post(self):
-        post_data = request.get_json()
+        try:
+            post_data = request.get_json()
 
-        if not post_data:
-            return default_response(400)
+            if not post_data:
+                return default_response(400)
 
-        email = post_data.get('email')
-        password = post_data.get('password')
+            email = post_data.get('email')
+            password = post_data.get('password')
 
-        if not data_validate(email, password):
-            return response_with_msg(400, 'email or password not valid')
+            if not data_validate(email, password):
+                return response_with_msg(400, 'email or password not valid')
 
-        db_user = db.session.query(User).filter_by(email=email).first()
+            db_user = db.session.query(User).filter_by(email=email).first()
 
-        if db_user and check_password_hash(db_user.password, password):
-            app.logger.debug("login success: id: %s | email: %s" % (db_user.id, db_user.email))
-            login_user(db_user)
-            return response_with_msg(200, "Login Success!")
-        else:
-            app.logger.debug('user login failed: %s' % db_user)
-            return response_with_msg(400, "Login Failed")
+            if db_user and check_password_hash(db_user.password, password):
+                app.logger.debug("login success: id: %s | email: %s" % (db_user.id, db_user.email))
+                login_user(db_user)
+                return response_with_msg(200, "Login Success!")
+            else:
+                app.logger.debug('user login failed: %s' % db_user)
+                return response_with_msg(400, "Login Failed")
+        except:
+            return default_response(500)
 
 class Signout(Resource):
     @swagger.operation(
@@ -249,9 +261,12 @@ class Signout(Resource):
         ]
     )
     def post(self):
-        app.logger.debug('Sign-out : %s', current_user.username)
-        logout_user()
-        return response_with_msg(200, "Signout success!")
+        try:
+            app.logger.debug('Sign-out : %s', current_user.username)
+            logout_user()
+            return response_with_msg(200, "Signout success!")
+        except:
+            return default_response(500)
 
 
 @login.user_loader
