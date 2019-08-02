@@ -122,7 +122,7 @@ export default {
               })
               .catch(function (err) {
                   return console.error(err);
-              }),
+              })
       }
   }
 };
