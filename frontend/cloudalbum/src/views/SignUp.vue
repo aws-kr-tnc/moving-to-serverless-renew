@@ -102,11 +102,14 @@ export default {
   methods: {
     userSignUp() {
   //
-      const params = {
-          email: this.inputEmail,
-          username: this.inputUsername,
-          password: this.inputPassword
-      }
+  //     const params = {
+  //         email: this.inputEmail,
+  //         username: this.inputUsername,
+  //         password: this.inputPassword
+  //     }
+
+      console.log(params);
+
   //         //
   //         //   axios.post('http://localhost:5000/users/signup', params);
   //         //
@@ -115,7 +118,9 @@ export default {
   //         //   console.log(this.inputPassword);
   //         // },
       axios.post('http://localhost:5000/users/signup', {
-          params
+          email: this.inputEmail,
+          username: this.inputUsername,
+          password: this.inputPassword
       }, {
           dataType: 'json',
           headers: {'Content-Type': 'application/json; charset=utf-8'}
