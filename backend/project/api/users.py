@@ -2,7 +2,7 @@
 from flask import Blueprint, request
 from flask import current_app as app
 from flask_restful import Resource, Api, fields
-from flask_login import current_user, login_user, logout_user
+from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_restful_swagger import swagger
 
@@ -249,6 +249,7 @@ class Signin(Resource):
             return default_response(500)
 
 class Signout(Resource):
+    @login_required
     @swagger.operation(
         notes='Signout',
         responseClass=Response.__name__,
@@ -256,6 +257,11 @@ class Signout(Resource):
             {
                 "code": 200,
                 "message": "signout success"
+
+            },
+            {
+                "code": 401,
+                "message": "login required"
 
             }
         ]
