@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_login import LoginManager
 
+
 # instantiate the db
 db = SQLAlchemy()
 login = LoginManager()
@@ -34,10 +35,10 @@ def create_app(script_info=None):
 
     # register blueprints
     from project.api.users import users_blueprint
-    app.register_blueprint(users_blueprint)
+    app.register_blueprint(users_blueprint, url_prefix='/users')
 
     from project.api.photos import photos_blueprint
-    app.register_blueprint(photos_blueprint)
+    app.register_blueprint(photos_blueprint, url_prefix='/photos')
 
     from project.api.map import map_blueprint
     app.register_blueprint(map_blueprint)
