@@ -6,7 +6,4 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-export default {
-  name: 'axiosInstance',
-
-};
+export default axiosInstance;
