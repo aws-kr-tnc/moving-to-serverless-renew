@@ -61,7 +61,7 @@
 </template>
 
 <script>
-// import axios from 'axios';
+import { signIn } from '@/service';
 
 export default {
   name: 'SignIn',
@@ -75,26 +75,7 @@ export default {
 
   methods: {
     userSignIn() {
-      axiosInstance.post('/users/signin', {
-        email: this.inputEmail,
-        password: this.inputPassword,
-      }, {
-        dataType: 'json',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      }, {
-        withCredentials: true,
-      })
-        .then((resp) => {
-          console.log(resp);
-          console.log(resp.data);
-          console.log(resp.status);
-          console.log(resp.statusText);
-          this.$swal(resp.data);
-        })
-        .catch((err) => {
-          console.error(err);
-          this.$swal(`Error:${err.response.status}`);
-        });
+	    signIn(this.inputEmail, this.inputPassword);
     },
   },
 
