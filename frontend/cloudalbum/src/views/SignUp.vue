@@ -92,31 +92,37 @@ export default {
   name: 'SignUp',
 
   data() {
-      return {
-        inputUsername: '',
-        inputEmail: '',
-        inputPassword: ''
-      };
+    return {
+      inputUsername: '',
+      inputEmail: '',
+      inputPassword: '',
+    };
   },
 
   methods: {
     userSignUp() {
+      const apiUri = `${process.env.VUE_APP_API}/users/signup`;
+      console.log(`API URI: ${apiUri}`);
 
-      axios.post('http://localhost:5000/users/signup', {
-          email: this.inputEmail,
-          username: this.inputUsername,
-          password: this.inputPassword
-        }, {
-          dataType: 'json',
-          headers: {'Content-Type': 'application/json; charset=utf-8'}
+      axios.post(apiUri, {
+        email: this.inputEmail,
+        username: this.inputUsername,
+        password: this.inputPassword,
+      }, {
+        dataType: 'json',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      })
+        .then((resp) => {
+          console.log(resp.data);
+          console.log(resp.status);
+          console.log(resp.statusText);
+          this.$swal(resp.data);
         })
-          .then(function (resp) {
-              console.log(resp.data);
-          })
-          .catch(function (err) {
-              return console.error(err);
-          });
-      },
+        .catch((err) => {
+          console.error(err);
+          this.$swal(`Error:${err.response.status}`);
+        });
+    },
   },
 
 

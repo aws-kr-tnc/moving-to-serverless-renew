@@ -27,6 +27,7 @@
                 <v-text-field
                   label="Login (Email)"
                   name="email"
+                  v-model="inputEmail"
                   prepend-icon="mdi-account"
                   type="text"
                 ></v-text-field>
@@ -35,6 +36,7 @@
                   id="password"
                   label="Password"
                   name="password"
+                  v-model="inputPassword"
                   prepend-icon="mdi-lock"
                   type="password"
                 ></v-text-field>
@@ -42,12 +44,14 @@
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="primary"><v-icon>mdi-send</v-icon> Submit</v-btn>
+              <v-btn color="primary" @click="userSignIn()"><v-icon>mdi-send</v-icon> Submit</v-btn>
             </v-card-actions>
             <v-card-actions>
               <v-spacer></v-spacer>
               Not yet registered?
-              <v-btn text small href="/users/signup" color="primary"><v-icon>mdi-account-plus</v-icon>Sign up</v-btn>
+              <v-btn text small href="/users/signup"
+                     color="primary">
+                <v-icon>mdi-account-plus</v-icon>Sign up</v-btn>
             </v-card-actions>
           </v-card>
         </v-flex>
@@ -57,12 +61,45 @@
 </template>
 
 <script>
-	export default {
-		name: "SignIn",
-	  props: {
-		  source: String,
-	  }
-	}
+// import axios from 'axios';
+
+export default {
+  name: 'SignIn',
+
+  data() {
+    return {
+      inputEmail: '',
+      inputPassword: '',
+    };
+  },
+
+  methods: {
+    userSignIn() {
+      axiosInstance.post('/users/signin', {
+        email: this.inputEmail,
+        password: this.inputPassword,
+      }, {
+        dataType: 'json',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      }, {
+        withCredentials: true,
+      })
+        .then((resp) => {
+          console.log(resp);
+          console.log(resp.data);
+          console.log(resp.status);
+          console.log(resp.statusText);
+          this.$swal(resp.data);
+        })
+        .catch((err) => {
+          console.error(err);
+          this.$swal(`Error:${err.response.status}`);
+        });
+    },
+  },
+
+
+};
 </script>
 
 <style scoped>
