@@ -12,6 +12,7 @@ from project.util.response import default_response, response_with_msg, response_
 from flask_restplus import Api, Resource, fields, reqparse
 
 import re
+from project.schemas import validate_user
 
 users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint, doc='/swagger/', title='Users', description='CloudAlbum-users: \n prefix url "/users" is already exist.', version='0.1')
@@ -106,54 +107,75 @@ class Signup(Resource):
     def post(self):
         """Enroll a new user"""
 
-        post_data = request.get_json()
+        # post_data = request.get_json()
+        data = validate_user(request.get_json())
 
-        if not post_data:
-            return default_response(400)
+        app.logger.debug(data)
 
-        username = post_data.get('username')
-        email = post_data.get('email')
-        password = post_data.get('password')
+        if data['ok']:
+            username = data['data']['username']
+            email = data['data']['email']
+            password = data['data']['password']
 
-        if None in (username, email, password):
-            app.logger.debug('ERROR:user_signup:insuficient data: %s' % post_data)
-            return response_with_msg_data(400, 'Insufficient data' ,post_data)
+            try:
+                user = User.query.filter_by(email=email).first()
+                if not user:
+                    db.session.add(User(username=username, email=email, password=generate_password_hash(password)))
+                    db.session.commit()
+                    committed_user = User.query.filter_by(email=email).first()
+                    app.logger.debug('success:user_signup: {0}'.format(data['data']))
+                    return response_with_msg_data(201, "Signup Success!", data['data'])
 
-        if not data_validate(email, password):
-            app.logger.debug('ERROR:user_signup:invalidation failed: %s' % post_data)
-            return response_with_msg_data(400,'email format or password length not valid', post_data)
+        else:
+            app.logger.debug('ERROR:user_signup:invalidation failed: {0}'.format(data))
+            return response_with_msg_data(400, data['message'], data)
 
-        try:
-            user = User.query.filter_by(email=email).first()
-            if not user:
-                db.session.add(User(username=username, email=email, password=generate_password_hash(password)))
-                db.session.commit()
-                committed_user = User.query.filter_by(email=email).first()
-
-                data= {
-                    "user": {
-                    "email": committed_user.email,
-                    "username": committed_user.username,
-                    "id": committed_user.id
-                    }
-                }
-                app.logger.debug('success:user_signup: %s' % post_data)
-                return response_with_msg_data(201, "Signup Success!", data)
-
-            app.logger.debug('ERROR:user_signup:Already exist email:%s' % post_data)
-            return response_with_msg(400, 'Sorry. This email already exists.')
-        except ValueError:
-            db.session.rollback()
-            app.logger.debug('ERROR:user_signup:Undefined status code:%s' % post_data)
-            return response_with_msg(500, 'Undefined status code.')
-        except exc.IntegrityError:
-            db.session.rollback()
-            app.logger.debug('ERROR:user_signup:Integrity Error:%s' % post_data)
-            return default_response(500)
-        except:
-            db.session.rollback()
-            app.logger.debug('ERROR:user_signup:unknown error:%s' % post_data)
-            return default_response(500)
+    # if not post_data:
+        #     return default_response(400)
+        #
+        # username = post_data.get('username')
+        # email = post_data.get('email')
+        # password = post_data.get('password')
+        #
+        # if None in (username, email, password):
+        #     app.logger.debug('ERROR:user_signup:insuficient data: %s' % post_data)
+        #     return response_with_msg_data(400, 'Insufficient data' ,post_data)
+        #
+        # if not data_validate(email, password):
+        #     app.logger.debug('ERROR:user_signup:invalidation failed: %s' % post_data)
+        #     return response_with_msg_data(400,'email format or password length not valid', post_data)
+        #
+        # try:
+        #     user = User.query.filter_by(email=email).first()
+        #     if not user:
+        #         db.session.add(User(username=username, email=email, password=generate_password_hash(password)))
+        #         db.session.commit()
+        #         committed_user = User.query.filter_by(email=email).first()
+        #
+        #         data= {
+        #             "user": {
+        #             "email": committed_user.email,
+        #             "username": committed_user.username,
+        #             "id": committed_user.id
+        #             }
+        #         }
+        #         app.logger.debug('success:user_signup: %s' % post_data)
+        #         return response_with_msg_data(201, "Signup Success!", data)
+        #
+        #     app.logger.debug('ERROR:user_signup:Already exist email:%s' % post_data)
+        #     return response_with_msg(400, 'Sorry. This email already exists.')
+        # except ValueError:
+        #     db.session.rollback()
+        #     app.logger.debug('ERROR:user_signup:Undefined status code:%s' % post_data)
+        #     return response_with_msg(500, 'Undefined status code.')
+        # except exc.IntegrityError:
+        #     db.session.rollback()
+        #     app.logger.debug('ERROR:user_signup:Integrity Error:%s' % post_data)
+        #     return default_response(500)
+        # except:
+        #     db.session.rollback()
+        #     app.logger.debug('ERROR:user_signup:unknown error:%s' % post_data)
+        #     return default_response(500)
 
 @api.route('/signin')
 class Signin(Resource):
