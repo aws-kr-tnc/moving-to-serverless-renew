@@ -4,7 +4,7 @@ import Home from './views/Home.vue';
 import Signin from './views/SignIn.vue';
 import Signup from './views/SignUp.vue';
 import FileUpload from './views/FileUpload.vue';
-import PhotoList from './views/PhotoList';
+import PhotoList from './views/PhotoList.vue';
 
 Vue.use(Router);
 
