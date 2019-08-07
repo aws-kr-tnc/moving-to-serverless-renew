@@ -1,4 +1,5 @@
 import axios from '@/plugins/axios';
+import Swal from 'sweetalert2'
 
 const signIn = (email, password) => {
   const apiUri = '/users/signin';
@@ -15,11 +16,11 @@ const signIn = (email, password) => {
       console.log(resp.data);
       console.log(resp.status);
       console.log(resp.statusText);
-      this.$swal(resp.data);
+      // this.$swal(resp.data);
     })
     .catch((err) => {
       console.error(err);
-      this.$swal(`Error:${err.response.status}`);
+      // this.$swal(`Error:${err.response.status}`);
     });
 };
 

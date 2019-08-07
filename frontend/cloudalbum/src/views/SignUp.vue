@@ -100,7 +100,7 @@ export default {
 
   methods: {
     userSignUp() {
-	    signUp(this.inputEmail, this.inputUsername, this.inputPassword)
+	    signUp(this.inputEmail, this.inputUsername, this.inputPassword);
     },
   },
 
