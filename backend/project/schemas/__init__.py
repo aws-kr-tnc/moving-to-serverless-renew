@@ -1,6 +1,7 @@
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 from jsonschema.exceptions import SchemaError
+from flask import app
 
 user_schema = {
     "type": "object",
@@ -38,6 +39,34 @@ user_signin_schema = {
     "additionalProperties": False
 }
 
+photo_info_schema = {
+    "type":'object',
+    'properties': {
+        'tags' : {"type":"string"},
+        'desc' : {"type":"string"},
+        'geotag_lat' : {"type":"number"},
+        'geotag_lng' : {"type":"number"},
+        'taken_date' : {
+            "type":"string",
+            "format": "date-time"},
+        'make' : {"type":"string"},
+        'model' : {"type":"string"},
+        'width' : {"type":"string"},
+        'height' : {"type":"string"},
+        'city' : {"type":"string"},
+        'nation'  : {"type":"string"},
+        'address' : {"type":"string"}
+    }
+}
+
+def validate_photo_info(data):
+    try:
+        validate(data, photo_info_schema)
+    except ValidationError as e:
+        return {'ok': False, 'message': e}
+    except SchemaError as e:
+        return {'ok': False, 'message': e}
+    return {'ok': True, 'data': data}
 
 def validate_user(data):
     try:

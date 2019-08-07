@@ -3,15 +3,11 @@ from flask import Blueprint, request
 from flask import current_app as app
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-
-from sqlalchemy import exc
 from project import db
 from project.api.models import User
 from project import login
-from project.util.response import default_response, response_with_msg, response_with_data, response_with_msg_data
-from flask_restplus import Api, Resource, fields, reqparse
+from flask_restplus import Api, Resource, fields
 
-import re
 from project.schemas import validate_user
 from flask_jwt_extended import (create_access_token, create_refresh_token, JWTManager,
                                 jwt_required, jwt_refresh_token_required, get_jwt_identity)
@@ -40,14 +36,12 @@ signin_user = api.model ('Signin_user',{
 
 
 @api.route('/ping')
-class UsersPing(Resource):
-    @api.marshal_with(response)
+class Ping(Resource):
     @api.doc(responses={200: 'pong!'})
     def get(self):
         """Ping api"""
         app.logger.debug("ping success!")
-        return response_with_msg(200, 'pong!')
-
+        return make_response({'ok':True, 'data':{'msg':'pong!'}}, 200)
 
 @api.route('/')
 class UsersList(Resource):
@@ -58,7 +52,6 @@ class UsersList(Resource):
                 500: "Internal server error"
             }
         )
-    @api.marshal_with(response)
     def get(self):
         """Get all users as list"""
         try:
@@ -68,10 +61,11 @@ class UsersList(Resource):
             }
             app.logger.debug("success:users_list:%s" % users)
 
-            return response_with_data(200, data)
+            return make_response({'ok':True, 'data': data}, 200)
+
         except:
             app.logger.debug("users list failed:users list:%s" % users)
-            return default_response(500)
+            return make_response({'ok':False, 'data':data}, 500)
 
 
 @api.route('/<user_id>')
@@ -80,13 +74,13 @@ class Users(Resource):
                 200: "Return a user data",
                 500: "Internal server error"
             })
-    @api.marshal_with(response)
     def get(self, user_id):
         """Get a single user details"""
         try:
             user = User.query.filter_by(id=int(user_id)).first()
             if user is None:
-                return response_with_msg_data(404, "Not exist user id", {"user": {"id": user_id}})
+                # return response_with_msg_data(404, "Not exist user id", {"user": {"id": user_id}})
+                return make_response(jsonify({'ok':False, 'data':user}), 404)
 
             data = {
                 'user': {
@@ -96,10 +90,10 @@ class Users(Resource):
                 }
             }
             app.logger.debug("success:user_get_by_id:%s" % data['user'])
-            return response_with_data(200, data)
+            return make_response({'ok':True, 'data':data}, 200)
         except ValueError:
-            app.logger.debug("ERROR:user_get_by_id:%s" % data['user'])
-            return default_response(400)
+            app.logger.debug("ERROR:user_get_by_id:{}".format(data['user']))
+            return make_response()
 
 
 @api.route('/signup')
@@ -110,7 +104,6 @@ class Signup(Resource):
         500: "Internal server error"
     })
     @api.expect(signup_user)
-    @api.marshal_with(response)
     def post(self):
         """Enroll a new user"""
         post_data = validate_user(request.get_json())
@@ -125,28 +118,15 @@ class Signup(Resource):
                                         password=generate_password_hash(data['password'])))
                     db.session.commit()
                     app.logger.debug('success:user_signup: {0}'.format(data))
-                    return response_with_msg_data(201, "Signup Success!", data)
 
-            except ValueError as e:
-                db.session.rollback()
-                app.logger.debug('ERROR: {0}'.format(e))
-                app.logger.debug('ERROR:user_signup:Undefined status code: {0}'.format(post_data))
-                return response_with_msg(500, 'Undefined status code.')
+                    # return response_with_msg_data(201, "Signup Success!", data['data'])
+                    return make_response(jsonify({"ok":True, 'data':data}), 201)
+            except:
+                return make_response(jsonify({'ok': False, 'data': data}), 500)
 
-            except exc.IntegrityError as e:
-                db.session.rollback()
-                app.logger.debug('ERROR: {0}'.format(e))
-                app.logger.debug('ERROR:user_signup:Integrity Error: {0}'.format(post_data))
-                return default_response(500)
-
-            except Exception as e:
-                db.session.rollback()
-                app.logger.debug('ERROR: {0}'.format(e))
-                app.logger.debug('ERROR:user_signup:unknown error: {0}'.format(post_data))
-                return default_response(500)
         else:
             app.logger.debug('ERROR:user_signup:invalidation failed: {0}'.format(post_data))
-            return response_with_msg_data(400, post_data['message'], post_data)
+            return make_response(jsonify({'ok': False, 'data': post_data}), 400)
 
 
 @api.route('/signin')
@@ -157,7 +137,6 @@ class Signin(Resource):
         500: 'Internal server error'
     })
     @api.expect(signin_user)
-    # @api.marshal_with(response)
     def post(self):
         """user signin"""
         try:
@@ -174,12 +153,13 @@ class Signin(Resource):
 
                 else:
                     app.logger.debug('ERROR:user signin failed:password unmatched: {0}'.format(data['email']))
-                    return response_with_msg(400, "Login Failed")
 
+                    return make_response({'ok': False, 'data': data}, 400)
+            else:
+                return make_response({'ok': False, 'data': post_data}, 500)
         except Exception as e:
             app.logger.debug('ERROR: {0}'.format(e))
-            app.logger.debug('ERROR:user signin failed:unknown issue:{0}'.format(data['email']))
-            return default_response(500)
+            return make_response({'ok': False, 'data': post_data}, 500)
 
 
 @api.route('/signout')
@@ -189,17 +169,17 @@ class Signout(Resource):
         200:'signout success',
         500:'login required'
     })
-    @api.marshal_with(response)
     def post(self):
         """user signout"""
         try:
             username = current_user.username
             logout_user()
             app.logger.debug('success:Sign-out:%s', username)
-            return response_with_msg(200, "Signout success!")
+            return make_response({'ok':True, 'data': {'username': username}}, 200)
+
         except:
             app.logger.debug('ERROR:Sign-out:unknown issue:%s', username)
-            return default_response(500)
+            return make_response({'ok':False, 'data': {'username': username}}, 500)
 
 
 @login.user_loader
@@ -208,10 +188,3 @@ def user_loader(user_id):
     if not result:
         return None
     return result
-
-
-def data_validate(email, password):
-    email_regex = re.compile(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$")
-    if not re.match(email_regex, email) or (len(password) <= 1):
-        return False
-    return True
