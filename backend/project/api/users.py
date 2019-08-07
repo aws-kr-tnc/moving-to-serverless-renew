@@ -12,9 +12,14 @@ from project.util.response import default_response, response_with_msg, response_
 from flask_restplus import Api, Resource, fields, reqparse
 
 import re
+from project.schemas import validate_user
+from flask_jwt_extended import (create_access_token, create_refresh_token, JWTManager,
+                                jwt_required, jwt_refresh_token_required, get_jwt_identity)
+from flask import jsonify, make_response
 
 users_blueprint = Blueprint('users', __name__)
-api = Api(users_blueprint, doc='/swagger/', title='Users', description='CloudAlbum-users: \n prefix url "/users" is already exist.', version='0.1')
+api = Api(users_blueprint, doc='/swagger/', title='Users',
+          description='CloudAlbum-users: \n prefix url "/users" is already exist.', version='0.1')
 
 response = api.model('Response', {
     'code': fields.Integer,
@@ -33,6 +38,7 @@ signin_user = api.model ('Signin_user',{
     'password':fields.String
 })
 
+
 @api.route('/ping')
 class UsersPing(Resource):
     @api.marshal_with(response)
@@ -42,6 +48,7 @@ class UsersPing(Resource):
         app.logger.debug("ping success!")
         return response_with_msg(200, 'pong!')
 
+
 @api.route('/')
 class UsersList(Resource):
     @api.doc(
@@ -49,7 +56,6 @@ class UsersList(Resource):
             {
                 200:"Return the whole users list",
                 500: "Internal server error"
-
             }
         )
     @api.marshal_with(response)
@@ -66,6 +72,7 @@ class UsersList(Resource):
         except:
             app.logger.debug("users list failed:users list:%s" % users)
             return default_response(500)
+
 
 @api.route('/<user_id>')
 class Users(Resource):
@@ -94,6 +101,7 @@ class Users(Resource):
             app.logger.debug("ERROR:user_get_by_id:%s" % data['user'])
             return default_response(400)
 
+
 @api.route('/signup')
 class Signup(Resource):
     @api.doc(responses={
@@ -105,55 +113,41 @@ class Signup(Resource):
     @api.marshal_with(response)
     def post(self):
         """Enroll a new user"""
+        post_data = validate_user(request.get_json())
 
-        post_data = request.get_json()
+        if post_data['ok']:
+            data = post_data['data']
+            try:
+                user = User.query.filter_by(email=data['email']).first()
+                if not user:
+                    db.session.add(User(username=data['username'],
+                                        email=data['email'],
+                                        password=generate_password_hash(data['password'])))
+                    db.session.commit()
+                    app.logger.debug('success:user_signup: {0}'.format(data))
+                    return response_with_msg_data(201, "Signup Success!", data)
 
-        if not post_data:
-            return default_response(400)
+            except ValueError as e:
+                db.session.rollback()
+                app.logger.debug('ERROR: {0}'.format(e))
+                app.logger.debug('ERROR:user_signup:Undefined status code: {0}'.format(post_data))
+                return response_with_msg(500, 'Undefined status code.')
 
-        username = post_data.get('username')
-        email = post_data.get('email')
-        password = post_data.get('password')
+            except exc.IntegrityError as e:
+                db.session.rollback()
+                app.logger.debug('ERROR: {0}'.format(e))
+                app.logger.debug('ERROR:user_signup:Integrity Error: {0}'.format(post_data))
+                return default_response(500)
 
-        if None in (username, email, password):
-            app.logger.debug('ERROR:user_signup:insuficient data: %s' % post_data)
-            return response_with_msg_data(400, 'Insufficient data' ,post_data)
+            except Exception as e:
+                db.session.rollback()
+                app.logger.debug('ERROR: {0}'.format(e))
+                app.logger.debug('ERROR:user_signup:unknown error: {0}'.format(post_data))
+                return default_response(500)
+        else:
+            app.logger.debug('ERROR:user_signup:invalidation failed: {0}'.format(post_data))
+            return response_with_msg_data(400, post_data['message'], post_data)
 
-        if not data_validate(email, password):
-            app.logger.debug('ERROR:user_signup:invalidation failed: %s' % post_data)
-            return response_with_msg_data(400,'email format or password length not valid', post_data)
-
-        try:
-            user = User.query.filter_by(email=email).first()
-            if not user:
-                db.session.add(User(username=username, email=email, password=generate_password_hash(password)))
-                db.session.commit()
-                committed_user = User.query.filter_by(email=email).first()
-
-                data= {
-                    "user": {
-                    "email": committed_user.email,
-                    "username": committed_user.username,
-                    "id": committed_user.id
-                    }
-                }
-                app.logger.debug('success:user_signup: %s' % post_data)
-                return response_with_msg_data(201, "Signup Success!", data)
-
-            app.logger.debug('ERROR:user_signup:Already exist email:%s' % post_data)
-            return response_with_msg(400, 'Sorry. This email already exists.')
-        except ValueError:
-            db.session.rollback()
-            app.logger.debug('ERROR:user_signup:Undefined status code:%s' % post_data)
-            return response_with_msg(500, 'Undefined status code.')
-        except exc.IntegrityError:
-            db.session.rollback()
-            app.logger.debug('ERROR:user_signup:Integrity Error:%s' % post_data)
-            return default_response(500)
-        except:
-            db.session.rollback()
-            app.logger.debug('ERROR:user_signup:unknown error:%s' % post_data)
-            return default_response(500)
 
 @api.route('/signin')
 class Signin(Resource):
@@ -163,35 +157,33 @@ class Signin(Resource):
         500: 'Internal server error'
     })
     @api.expect(signin_user)
-    @api.marshal_with(response)
+    # @api.marshal_with(response)
     def post(self):
         """user signin"""
         try:
-            post_data = request.get_json()
+            post_data = validate_user(request.get_json())
+            if post_data['ok']:
+                data = post_data['data']
+                user = db.session.query(User).filter_by(email=data['email']).first()
+                user = user.to_json()
 
-            if not post_data:
-                app.logger.debug("ERROR:user signin:posted data is null")
-                return default_response(400)
+                if user and check_password_hash(user['password'], data['password']):
+                    del user['password']
+                    access_token = create_access_token(identity=data)
+                    refresh_token = create_refresh_token(identity=data)
+                    user['token'] = access_token
+                    user['refresh'] = refresh_token
+                    return make_response(jsonify({'ok': True, 'data': user}), 200)
 
-            email = post_data.get('email')
-            password = post_data.get('password')
+                else:
+                    app.logger.debug('ERROR:user signin failed:password unmatched: {0}'.format(data['email']))
+                    return response_with_msg(400, "Login Failed")
 
-            if not data_validate(email, password):
-                app.logger.debug("ERROR:user signin:invalidate data:%s" % post_data)
-                return response_with_msg(400, 'email or password not valid')
-
-            db_user = db.session.query(User).filter_by(email=email).first()
-
-            if db_user and check_password_hash(db_user.password, password):
-                login_user(db_user)
-                app.logger.debug("success:user signin:id: %s | email: %s" % (db_user.id, db_user.email))
-                return response_with_msg(200, "Login Success!")
-            else:
-                app.logger.debug('ERROR:user signin failed:password unmatched:%s' % db_user)
-                return response_with_msg(400, "Login Failed")
-        except:
-            app.logger.debug('ERROR:user signin failed:unknown issue:%s' % db_user)
+        except Exception as e:
+            app.logger.debug('ERROR: {0}'.format(e))
+            app.logger.debug('ERROR:user signin failed:unknown issue:{0}'.format(data['email']))
             return default_response(500)
+
 
 @api.route('/signout')
 class Signout(Resource):
@@ -219,6 +211,7 @@ def user_loader(user_id):
     if not result:
         return None
     return result
+
 
 def data_validate(email, password):
     email_regex = re.compile(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$")
