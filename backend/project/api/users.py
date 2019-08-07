@@ -36,13 +36,12 @@ signin_user = api.model ('Signin_user',{
 
 
 @api.route('/ping')
-class UsersPing(Resource):
-    @api.marshal_with(response)
+class Ping(Resource):
     @api.doc(responses={200: 'pong!'})
     def get(self):
         """Ping api"""
         app.logger.debug("ping success!")
-        return make_response(jsonify({'ok':True, 'data':{'msg':'ping'}}), 200)
+        return make_response({'ok':True, 'data':{'msg':'pong!'}}, 200)
 
 @api.route('/')
 class UsersList(Resource):
@@ -53,7 +52,6 @@ class UsersList(Resource):
                 500: "Internal server error"
             }
         )
-    @api.marshal_with(response)
     def get(self):
         """Get all users as list"""
         try:
@@ -63,11 +61,11 @@ class UsersList(Resource):
             }
             app.logger.debug("success:users_list:%s" % users)
 
-            return make_response(jsonify({'ok':True, 'data': data}), 200)
+            return make_response({'ok':True, 'data': data}, 200)
 
         except:
             app.logger.debug("users list failed:users list:%s" % users)
-            return make_response(jsonify({'ok':False, 'data':data}), 500)
+            return make_response({'ok':False, 'data':data}, 500)
 
 
 @api.route('/<user_id>')
@@ -76,7 +74,6 @@ class Users(Resource):
                 200: "Return a user data",
                 500: "Internal server error"
             })
-    @api.marshal_with(response)
     def get(self, user_id):
         """Get a single user details"""
         try:
@@ -93,9 +90,9 @@ class Users(Resource):
                 }
             }
             app.logger.debug("success:user_get_by_id:%s" % data['user'])
-            return make_response(jsonify({'ok':True, 'data':data}), 200)
+            return make_response({'ok':True, 'data':data}, 200)
         except ValueError:
-            app.logger.debug("ERROR:user_get_by_id:%s" % data['user'])
+            app.logger.debug("ERROR:user_get_by_id:{}".format(data['user']))
             return make_response()
 
 
@@ -157,12 +154,12 @@ class Signin(Resource):
                 else:
                     app.logger.debug('ERROR:user signin failed:password unmatched: {0}'.format(data['email']))
 
-                    return make_response(jsonify({'ok': False, 'data': user}), 400)
-
+                    return make_response({'ok': False, 'data': data}, 400)
+            else:
+                return make_response({'ok': False, 'data': post_data}, 500)
         except Exception as e:
             app.logger.debug('ERROR: {0}'.format(e))
-            app.logger.debug('ERROR:user signin failed:unknown issue:{0}'.format(data['email']))
-            return make_response(jsonify({'ok': False, 'data': user}), 500)
+            return make_response({'ok': False, 'data': post_data}, 500)
 
 
 @api.route('/signout')
@@ -172,18 +169,17 @@ class Signout(Resource):
         200:'signout success',
         500:'login required'
     })
-    @api.marshal_with(response)
     def post(self):
         """user signout"""
         try:
             username = current_user.username
             logout_user()
             app.logger.debug('success:Sign-out:%s', username)
-            return make_response(jsonify({'ok':True, 'data': {'username': username}}), 200)
+            return make_response({'ok':True, 'data': {'username': username}}, 200)
 
         except:
             app.logger.debug('ERROR:Sign-out:unknown issue:%s', username)
-            return make_response(jsonify({'ok':False, 'data': {'username': username}}), 500)
+            return make_response({'ok':False, 'data': {'username': username}}, 500)
 
 
 @login.user_loader

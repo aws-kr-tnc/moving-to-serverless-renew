@@ -1,6 +1,7 @@
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 from jsonschema.exceptions import SchemaError
+from flask import app
 
 user_schema = {
     "type": "object",
