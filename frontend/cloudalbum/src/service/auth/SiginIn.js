@@ -1,7 +1,7 @@
 import axios from '@/plugins/axios';
 
 const signIn = (email, password) => {
-  const apiUri = `${process.env.VUE_APP_API}/users/signin`;
+  const apiUri = '/users/signin';
   console.log(`API URI: ${apiUri}`);
 
   axios.post(apiUri, {
