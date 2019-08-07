@@ -85,38 +85,23 @@
 </template>
 
 <script>
-
-import axios from 'axios';
+import { signUp } from '@/service';
 
 export default {
   name: 'SignUp',
 
   data() {
-      return {
-        inputUsername: '',
-        inputEmail: '',
-        inputPassword: ''
-      };
+    return {
+      inputUsername: '',
+      inputEmail: '',
+      inputPassword: '',
+    };
   },
 
   methods: {
     userSignUp() {
-
-      axios.post('http://localhost:5000/users/signup', {
-          email: this.inputEmail,
-          username: this.inputUsername,
-          password: this.inputPassword
-        }, {
-          dataType: 'json',
-          headers: {'Content-Type': 'application/json; charset=utf-8'}
-        })
-          .then(function (resp) {
-              console.log(resp.data);
-          })
-          .catch(function (err) {
-              return console.error(err);
-          });
-      },
+	    signUp(this.inputEmail, this.inputUsername, this.inputPassword)
+    },
   },
 
 
