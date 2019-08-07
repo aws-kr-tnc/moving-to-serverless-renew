@@ -89,7 +89,6 @@ import { signUp } from '@/service';
 
 export default {
   name: 'SignUp',
-
   data() {
     return {
       inputUsername: '',
@@ -97,17 +96,17 @@ export default {
       inputPassword: '',
     };
   },
-
   methods: {
-    userSignUp() {
-	    signUp(this.inputEmail, this.inputUsername, this.inputPassword);
+    async userSignUp() {
+      try {
+        const resp = await signUp(this.inputEmail, this.inputUsername, this.inputPassword)
+        this.$swal(resp.data);
+      } catch (err) {
+        this.$swal(`Error:${err.response.status}`);
+      }
     },
   },
-
-
 };
-
-
 </script>
 
 <style scoped>
