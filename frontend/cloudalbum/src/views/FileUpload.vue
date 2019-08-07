@@ -63,8 +63,8 @@
 </template>
 
 <script>
-import PictureInput from 'vue-picture-input'
-import EXIF from 'exif-js'
+import PictureInput from 'vue-picture-input';
+import EXIF from 'exif-js';
 
 export default {
   name: 'FileUpload',
@@ -76,22 +76,22 @@ export default {
     PictureInput,
   },
   methods: {
-    onChange (image) {
-      console.log('New picture selected!')
+    onChange(image) {
+      console.log('New picture selected!');
       if (image) {
-        EXIF.getData(this.$refs.pictureInput.file, function() {
-            console.log('image info', this)
-            console.log('exif data', this.exifdata)
-        })
+        EXIF.getData(this.$refs.pictureInput.file, function () {
+          console.log('image info', this);
+          console.log('exif data', this.exifdata);
+        });
 
-        console.log('Picture loaded.')
-        this.image = image
+        console.log('Picture loaded.');
+        this.image = image;
       } else {
-        console.log('FileReader API not supported: use the <form>, Luke!')
+        console.log('FileReader API not supported: use the <form>, Luke!');
       }
-    }
-  }
-}
+    },
+  },
+};
 
 </script>
 
