@@ -41,20 +41,20 @@ user_signin_schema = {
 photo_info_schema = {
     "type":'object',
     'properties': {
-        'tags' : {"type":"String"},
-        'desc' : {"type":"String"},
-        'geotag_lat' : {"type":"Numbers"},
-        'geotag_lng' : {"type":"Numbers"},
+        'tags' : {"type":"string"},
+        'desc' : {"type":"string"},
+        'geotag_lat' : {"type":"number"},
+        'geotag_lng' : {"type":"number"},
         'taken_date' : {
-            "type":"DateTime",
-            "format": "%Y:%m:%d %H:%M:%S"},
-        'make' : {"type":"String"},
-        'model' : {"type":"String"},
-        'width' : {"type":"String"},
-        'height' : {"type":"String"},
-        'city' : {"type":"String"},
-        'nation'  : {"type":"String"},
-        'address' : {"type":"String"}
+            "type":"string",
+            "format": "date-time"},
+        'make' : {"type":"string"},
+        'model' : {"type":"string"},
+        'width' : {"type":"string"},
+        'height' : {"type":"string"},
+        'city' : {"type":"string"},
+        'nation'  : {"type":"string"},
+        'address' : {"type":"string"}
     }
 }
 

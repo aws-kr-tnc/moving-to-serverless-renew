@@ -26,16 +26,6 @@ response = api.model('Response', {
     'data':fields.String
 })
 
-
-@api.route('/ping')
-@api.doc('photos ping!')
-class PhotosPing(Resource):
-    @api.marshal_with(response)
-    @api.doc(responses={ 200 : 'pong success'})
-    def get(self):
-        return response_with_msg(200, "pong!")
-
-
 photo_info = api.model('New_photo', {
     'tags' : fields.String,
     'desc' : fields.String,
@@ -51,9 +41,6 @@ photo_info = api.model('New_photo', {
     'address' : fields.String
 })
 
-
-upload_parser = api.parser()
-upload_parser.add_argument('file', location='files',type=FileStorage, required=True)
 
 def save(upload_file, filename, email):
     """
@@ -83,6 +70,7 @@ def save(upload_file, filename, email):
         raise e
 
     return file_size
+
 def insert_new_photo(user_id, filename, filename_orig, filesize):
 
     new_photo = Photo(user_id=user_id,
@@ -92,6 +80,17 @@ def insert_new_photo(user_id, filename, filename_orig, filesize):
                       upload_date=datetime.today())
     db.session.add(new_photo)
     db.session.commit()
+
+@api.route('/ping')
+@api.doc('photos ping!')
+class PhotosPing(Resource):
+    @api.doc(responses={ 200 : 'pong success'})
+    def get(self):
+        return make_response(jsonify({'ok':True, 'data':{'msg':'pong!'}}))
+
+
+upload_parser = api.parser()
+upload_parser.add_argument('file', location='files',type=FileStorage, required=True)
 
 @api.route('/file')
 @api.expect(upload_parser)
@@ -123,7 +122,7 @@ class UploadPhotoInfo(Resource):
     def post(self, photo_id):
 
         if validate_photo_info(request.get_json())['ok']:
-            body = request.get_json()['data']
+            body = request.get_json()
             try:
                 photo = Photo.query.filter_by(id=photo_id).first()
 
@@ -142,10 +141,13 @@ class UploadPhotoInfo(Resource):
                 photo.address= body['address']
 
                 db.session.commit()
+                app.logger.debug('success:photo info update:{}'.format(body))
                 return response_with_msg(200, "file uploaded")
             except:
+                app.logger.debug('ERROR:photo info update:{}'.format(body))
                 return default_response(500)
         else:
+            app.logger.debug('ERROR:photo info update:{}'.format(request.get_json()))
             return default_response(400)
 
 
@@ -174,7 +176,6 @@ class PhotosList(Resource):
             app.logger.debug("photos list failed:users list:%s" % photos)
             return make_response(jsonify({'ok': False, 'data': data}), 500)
 
-# return file data list
 # photo delete
 # photo url
 # photo edit
