@@ -9,7 +9,7 @@ from project import db
 from project.api.models import User
 from project import login
 from project.util.response import default_response, response_with_msg, response_with_data, response_with_msg_data
-from flask_restplus import Api, Resource, fields, reqparse
+from flask_restplus import Api, Resource, fields
 
 import re
 
