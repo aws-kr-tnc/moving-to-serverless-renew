@@ -62,28 +62,32 @@ photo_info_schema = {
 def validate_photo_info(data):
     try:
         validate(data, photo_info_schema)
+        return {'ok': True, 'data': data}
     except ValidationError as e:
-        return {'ok': False, 'message': e}
+        raise e
     except SchemaError as e:
-        return {'ok': False, 'message': e}
-    return {'ok': True, 'data': data}
+        raise e
+    except Exception as e:
+        raise e
 
 def validate_user(data):
     try:
         validate(data, user_schema)
+        return {'ok': True, 'data': data}
     except ValidationError as e:
-        return {'ok': False, 'message': e}
+        raise e
     except SchemaError as e:
-        return {'ok': False, 'message': e}
-    return {'ok': True, 'data': data}
-
+        raise e
+    except Exception as e:
+        raise e
 
 def validate_signin(data):
     try:
         validate(data, user_signin_schema)
+        return {'ok': True, 'data': data}
     except ValidationError as e:
-        return {'ok': False, 'message': e}
+        raise e
     except SchemaError as e:
-        return {'ok': False, 'message': e}
-    return {'ok': True, 'data': data}
-
+        raise e
+    except Exception as e:
+        raise e
