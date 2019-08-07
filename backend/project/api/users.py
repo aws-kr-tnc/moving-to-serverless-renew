@@ -167,13 +167,10 @@ class Signin(Resource):
                 user = db.session.query(User).filter_by(email=data['email']).first()
 
                 if user is not None and check_password_hash(user.password, data['password']):
-                    user = user.to_json()
-                    del user['password']
                     access_token = create_access_token(identity=data)
                     refresh_token = create_refresh_token(identity=data)
-                    user['token'] = access_token
-                    user['refresh'] = refresh_token
-                    return make_response(jsonify({'ok': True, 'data': user}), 200)
+                    res = jsonify({'accessToken': access_token, 'refresh_token': refresh_token})
+                    return make_response(res, 200)
 
                 else:
                     app.logger.debug('ERROR:user signin failed:password unmatched: {0}'.format(data['email']))
