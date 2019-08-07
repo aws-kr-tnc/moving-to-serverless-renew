@@ -60,27 +60,26 @@ class Photo(db.Model):
     nation = db.Column(String(400), unique=False)
     address = db.Column(String(400), unique=False)
 
-    def __init__(self, user_id, tags, desc, filename_orig, filename, filesize, geotag_lat, geotag_lng, upload_date,
-                 taken_date, make, model, width, height, city, nation, address):
+    def __init__(self, user_id, filename_orig, filename, filesize, upload_date):
         """Initialize"""
 
         self.user_id = user_id
-        self.tags = tags
-        self.desc = desc
+        # self.tags = tags
+        # self.desc = desc
         self.filename_orig = filename_orig
         self.filename = filename
         self.filesize = filesize
-        self.geotag_lat = geotag_lat
-        self.geotag_lng = geotag_lng
+        # self.geotag_lat = geotag_lat
+        # self.geotag_lng = geotag_lng
         self.upload_date = upload_date
-        self.taken_date = taken_date
-        self.make = make
-        self.model = model
-        self.width = width
-        self.height = height
-        self.city = city
-        self.nation = nation
-        self.address = address
+        # self.taken_date = taken_date
+        # self.make = make
+        # self.model = model
+        # self.width = width
+        # self.height = height
+        # self.city = city
+        # self.nation = nation
+        # self.address = address
 
     def __repr__(self):
         """print information"""
