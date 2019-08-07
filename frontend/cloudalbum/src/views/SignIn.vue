@@ -76,7 +76,7 @@ export default {
   methods: {
     async userSignIn() {
       try {
-        const resp = await signIn(this.inputEmail, this.inputUsername, this.inputPassword);
+        const resp = await signIn(this.inputEmail, this.inputPassword);
 
         console.log(resp)
 
