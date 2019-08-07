@@ -67,6 +67,13 @@ def create_app(script_info=None):
     from project.api.map import map_blueprint
     app.register_blueprint(map_blueprint)
 
+    # Setup models for DB operations
+    with app.app_context():
+        try:
+            db.create_all()
+        except Exception as e:
+            app.logger.error(e)
+
     # shell context for flask cli
     @app.shell_context_processor
     def ctx():
