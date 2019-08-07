@@ -11,3 +11,4 @@ Flask-JWT-Extended==3.21.0
 Flask-Bcrypt==0.7.1
 bson==0.5.8
 flask-restplus==0.12.1
+

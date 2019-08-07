@@ -30,7 +30,8 @@ class User(UserMixin, db.Model):
     def to_json(self):
         return {
             'username': self.username,
-            'email': self.email
+            'email': self.email,
+            'password': self.password
         }
 
 
