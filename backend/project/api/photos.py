@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify, make_response
 from flask_restplus import Api, Resource, fields
 from project import db
 from project.api.models import Photo
@@ -9,8 +9,9 @@ from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
 from project.api.users import Signin as user_signin
+from project.schemas import validate_photo_info
 
-import os, re, uuid
+import os, uuid
 
 photos_blueprint = Blueprint('photos', __name__)
 api = Api(photos_blueprint, doc='/swagger/',
@@ -35,8 +36,7 @@ class PhotosPing(Resource):
         return response_with_msg(200, "pong!")
 
 
-new_photo = api.model('New_photo', {
-
+photo_info = api.model('New_photo', {
     'tags' : fields.String,
     'desc' : fields.String,
     'geotag_lat' : fields.Float,
@@ -118,35 +118,37 @@ class FileUpload(Resource):
 class UploadPhotoInfo(Resource):
     @api.doc(responses={200: 'success photo information upload',
                         500: 'internal server error'})
-    @api.expect(new_photo)
+    @api.expect(photo_info)
     @login_required
     def post(self, photo_id):
-        body = request.get_json()
-        user_id = current_user.id
 
-        # extension = (body['filename_orig'].rsplit('.', 1)[1]).lower()
-        # filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
-        # taken_date = datetime.strptime(body['taken_date'], "%Y-%m-%dT%H:%M:%S.%fZ")
+        if validate_photo_info(request.get_json())['ok']:
+            body = request.get_json()['data']
+            try:
+                photo = Photo.query.filter_by(id=photo_id).first()
 
-        photo = Photo.query.filter_by(id=photo_id).first()
+                photo.taken_date = datetime.strptime(body['taken_date'], "%Y:%m:%d %H:%M:%S")
+                photo.id= photo_id
+                photo.tags = body['tags']
+                photo.desc = body['desc']
+                photo.geotag_lat = body['geotag_lat']
+                photo.geotag_lng= body['geotag_lng']
+                photo.make= body['make']
+                photo.model= body['model']
+                photo.width= body['width']
+                photo.height= body['height']
+                photo.city= body['city']
+                photo.nation= body['nation']
+                photo.address= body['address']
 
-        photo.taken_date = datetime.strptime(body['taken_date'], "%Y:%m:%d %H:%M:%S")
-        photo.id= photo_id
-        photo.tags = body['tags']
-        photo.desc = body['desc']
-        photo.geotag_lat = body['geotag_lat']
-        photo.geotag_lng= body['geotag_lng']
-        photo.make= body['make']
-        photo.model= body['model']
-        photo.width= body['width']
-        photo.height= body['height']
-        photo.city= body['city']
-        photo.nation= body['nation']
-        photo.address= body['address']
-        # db.session.add(photo)
-        db.session.commit()
+                db.session.commit()
+                return response_with_msg(200, "file uploaded")
+            except:
+                return default_response(500)
+        else:
+            return default_response(400)
 
-        return response_with_msg(200, "file uploaded")
+
 
 @api.route('/')
 class PhotosList(Resource):
@@ -166,10 +168,11 @@ class PhotosList(Resource):
             }
             app.logger.debug("success:photos_list:%s" % photos)
 
-            return response_with_data(200, data)
+
+            return make_response(jsonify({'ok': True, 'data': data}), 200)
         except:
             app.logger.debug("photos list failed:users list:%s" % photos)
-            return default_response(500)
+            return make_response(jsonify({'ok': False, 'data': data}), 500)
 
 # return file data list
 # photo delete
