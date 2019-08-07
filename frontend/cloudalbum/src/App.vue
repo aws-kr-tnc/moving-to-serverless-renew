@@ -7,15 +7,15 @@
 </template>
 
 <script>
-import LayoutHeader from "./components/layout/LayoutHeader";
-import LayoutBody from "./components/layout/LayoutBody";
-import LayoutFooter from "./components/layout/LayoutFooter";
+import LayoutHeader from './components/layout/LayoutHeader.vue';
+import LayoutBody from './components/layout/LayoutBody.vue';
+import LayoutFooter from './components/layout/LayoutFooter.vue';
 
 export default {
   name: 'App',
-	components: {LayoutFooter, LayoutBody, LayoutHeader},
-	data: () => ({
+  components: { LayoutFooter, LayoutBody, LayoutHeader },
+  data: () => ({
     //
-  })
-}
+  }),
+};
 </script>

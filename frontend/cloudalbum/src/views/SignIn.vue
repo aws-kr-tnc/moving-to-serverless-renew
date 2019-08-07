@@ -74,11 +74,18 @@ export default {
   },
 
   methods: {
-    userSignIn() {
-	    signIn(this.inputEmail, this.inputPassword);
+    async userSignIn() {
+      try {
+        const resp = await signIn(this.inputEmail, this.inputUsername, this.inputPassword);
+
+        console.log(resp)
+
+        this.$swal(resp.data);
+      } catch (err) {
+        this.$swal(`Error:${err.response.status}`);
+      }
     },
   },
-
 
 };
 </script>
