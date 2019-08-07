@@ -99,7 +99,7 @@ export default {
   methods: {
     async userSignUp() {
       try {
-        const resp = await signUp(this.inputEmail, this.inputUsername, this.inputPassword)
+        const resp = await signUp(this.inputEmail, this.inputUsername, this.inputPassword);
         this.$swal(resp.data);
       } catch (err) {
         this.$swal(`Error:${err.response.status}`);

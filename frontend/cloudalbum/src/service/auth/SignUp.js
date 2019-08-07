@@ -2,7 +2,6 @@ import axios from '@/plugins/axios';
 
 const signUp = (email, username, password) => {
   const apiUri = '/users/signup';
-  console.log(`API URI: ${apiUri}`);
 
   return axios.post(apiUri, {
     email,

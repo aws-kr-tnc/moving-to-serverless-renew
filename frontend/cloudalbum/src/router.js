@@ -31,6 +31,5 @@ export default new Router({
       name: 'upload',
       component: FileUpload,
     },
-
   ],
 });
