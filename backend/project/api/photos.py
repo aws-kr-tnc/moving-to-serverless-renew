@@ -58,7 +58,7 @@ photo_info = api.model('New_photo', {
     'address' : fields.String
 })
 
-def make_thumbnails(path, filename):
+def make_thumbnail(path, filename):
     """
     Generate thumbnail from original image file.
     :param path: target path
@@ -67,9 +67,9 @@ def make_thumbnails(path, filename):
     """
     thumb_path = os.path.join(path, 'thumbnails')
     thumb_file_location = os.path.join(thumb_path, filename)
-    #
-    # app.logger.debug(thumb_path)
-    # app.logger.debug(thumb_file_location)
+
+    app.logger.debug(thumb_path)
+    app.logger.debug(thumb_file_location)
 
     try:
         if not os.path.exists(thumb_path):
@@ -78,11 +78,11 @@ def make_thumbnails(path, filename):
 
         im = Image.open(os.path.join(path, filename))
         im = im.convert('RGB')
-        im.thumbnail((conf['THUMBNAIL_WIDTH'], conf['THUMBNAIL_HEIGHT'], Image.ANTIALIAS))
+        im.thumbnail((300, 200, Image.ANTIALIAS))
         im.save(thumb_file_location)
 
     except Exception as e:
-        app.logger.error("Thumbnails creation error : %s, %s", thumb_file_location, e)
+        app.logger.error("ERROR:Thumbnails creation error:{}:{}".format(thumb_file_location, e))
         raise e
 
 def delete_file(filename, email):
@@ -129,11 +129,11 @@ def save(upload_file, filename, email):
         original_full_path = os.path.join(path, filename)
         upload_file.save(original_full_path)
         file_size = os.stat(original_full_path).st_size
-        make_thumbnails(path, filename)
+        make_thumbnail(path, filename)
 
     except Exception as e:
         app.logger.error('Error occurred while saving file:%s', e)
-        raise e
+
 
     return file_size
 
@@ -163,20 +163,26 @@ class Ping(Resource):
 class FileUpload(Resource):
     @jwt_required
     def post(self):
-        uploaded_file = upload_parser.parse_args()['file']
-        filename_orig = uploaded_file.filename
-        current_user = get_jwt_identity()
+        try:
+            uploaded_file = upload_parser.parse_args()['file']
+            filename_orig = uploaded_file.filename
+            current_user = get_jwt_identity()
 
-        extension = (filename_orig.rsplit('.', 1)[1]).lower()
-        filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
-        filesize = save(uploaded_file, filename, current_user['email'])
+            extension = (filename_orig.rsplit('.', 1)[1]).lower()
+            filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
+            filesize = save(uploaded_file, filename, current_user['email'])
 
-        user_id = current_user['user_id']
-        insert_basic_info(user_id, filename, filename_orig, filesize)
+            user_id = current_user['user_id']
+            insert_basic_info(user_id, filename, filename_orig, filesize)
 
-        committed = Photo.query.filter_by(user_id=user_id, filename=filename, filename_orig=filename_orig).first()
+            committed = Photo.query.filter_by(user_id=user_id, filename=filename, filename_orig=filename_orig).first()
+            return make_response({'ok': True, "photo_id": committed.id}, 200)
+        except Exception as e:
+            app.logger.error('ERROR:file upload failed:user_id:{}'.format(current_user['user_id']))
+            app.logger.error(e)
+            return make_response({'ok':False, 'data':{'user_id':current_user['user_id']}}, 500)
 
-        return response_with_msg_data(200, 'file uploaded', {"photo_id":committed.id})
+
 
 # upload a photo file
 @api.route('/<photo_id>/info')
