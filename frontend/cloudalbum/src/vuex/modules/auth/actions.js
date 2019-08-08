@@ -27,6 +27,7 @@ const getTokens = async (store, { email, password }) => {
     const resp = await services.Auth.signIn(email, password);
     setAccessToken(store, resp.data.accessToken);
     setRefreshToken(store, resp.data.refreshToken);
+    return resp
   } catch (error) {
     const msg = responseCheck(error);
     setErrorMessage(store, msg);
