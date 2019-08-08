@@ -82,6 +82,9 @@ export default {
     async userSignIn() {
       try {
         await this.getTokens({ email: this.inputEmail, password: this.inputPassword });
+        // console.log(`this.$store.state.accessToken: ${this.$store.state.accessToken}`)
+        // console.log(`this.$store.state.refreshToken: ${this.$store.state.refreshToken}`)
+
         if (this.getIsAuth) this.$router.push({ name: 'photolist' });
       } catch (err) {
         this.$swal(

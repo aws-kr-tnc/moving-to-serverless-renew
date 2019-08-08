@@ -142,8 +142,9 @@ class Signin(Resource):
     @api.expect(signin_user)
     def post(self):
         """user signin"""
+        post_data = validate_user(request.get_json())
+
         try:
-            post_data = validate_user(request.get_json())
             if post_data['ok']:
                 data = post_data['data']
                 user = db.session.query(User).filter_by(email=data['email']).first()
