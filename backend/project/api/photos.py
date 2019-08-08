@@ -8,9 +8,8 @@ from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
 from project.schemas import validate_photo_info
-from flask_jwt_extended import (create_access_token, create_refresh_token, JWTManager,
-                                jwt_required, jwt_refresh_token_required, get_jwt_identity)
-from project.api.users import Signin as user_signin
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from PIL import Image
 
 import os, uuid
 
@@ -59,13 +58,39 @@ photo_info = api.model('New_photo', {
     'address' : fields.String
 })
 
+def make_thumbnails(path, filename):
+    """
+    Generate thumbnail from original image file.
+    :param path: target path
+    :param filename: secure file name
+    :return: None
+    """
+    thumb_path = os.path.join(path, 'thumbnails')
+    thumb_file_location = os.path.join(thumb_path, filename)
+    #
+    # app.logger.debug(thumb_path)
+    # app.logger.debug(thumb_file_location)
+
+    try:
+        if not os.path.exists(thumb_path):
+            os.makedirs(thumb_path)
+            app.logger.info("Create folder for thumbnails: %s", path)
+
+        im = Image.open(os.path.join(path, filename))
+        im = im.convert('RGB')
+        im.thumbnail((conf['THUMBNAIL_WIDTH'], conf['THUMBNAIL_HEIGHT'], Image.ANTIALIAS))
+        im.save(thumb_file_location)
+
+    except Exception as e:
+        app.logger.error("Thumbnails creation error : %s, %s", thumb_file_location, e)
+        raise e
+
 def delete_file(filename, email):
     """
     Delete specific file (with thumbnail)
-    :param app: Flask.application
     :param photo: specific photo ORM object
-    :param current_user: Flask_login.current_user
-    :return: None
+    :param email: registered user email
+    :return: Boolean
     """
     try:
         path = os.path.join('/tmp/', email.replace('@', '_at_').replace('.', '_dot_'))
@@ -104,7 +129,7 @@ def save(upload_file, filename, email):
         original_full_path = os.path.join(path, filename)
         upload_file.save(original_full_path)
         file_size = os.stat(original_full_path).st_size
-        # make_thumbnails(path, filename, app)
+        make_thumbnails(path, filename)
 
     except Exception as e:
         app.logger.error('Error occurred while saving file:%s', e)
