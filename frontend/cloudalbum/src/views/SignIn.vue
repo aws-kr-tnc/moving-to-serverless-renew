@@ -77,10 +77,8 @@ export default {
     async userSignIn() {
       try {
         const resp = await signIn(this.inputEmail, this.inputPassword);
-
-        console.log(resp)
-
-        this.$swal(resp.data);
+        console.log(resp.data)
+        this.$router.push({ name: 'photolist' });
       } catch (err) {
         this.$swal(`Error:${err.response.status}`);
       }

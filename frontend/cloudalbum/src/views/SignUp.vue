@@ -100,9 +100,25 @@ export default {
     async userSignUp() {
       try {
         const resp = await signUp(this.inputEmail, this.inputUsername, this.inputPassword);
-        this.$swal(resp.data);
+        console.log(resp);
+        this.$swal(
+          {
+            title: 'Sign-up completed!',
+            type: 'success',
+            onClose: () => {
+              this.$router.push({ name: 'signin' });
+            },
+          },
+        );
       } catch (err) {
-        this.$swal(`Error:${err.response.status}`);
+        this.$swal(
+          {
+            type: 'error',
+            title: 'Oops...',
+            text: 'Already registerd? or something went wrong!',
+            footer: '<a href="/users/signup">Retry</a>',
+          },
+        );
       }
     },
   },
