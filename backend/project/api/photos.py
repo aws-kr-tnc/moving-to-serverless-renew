@@ -59,6 +59,29 @@ photo_info = api.model('New_photo', {
     'address' : fields.String
 })
 
+def delete_file(filename, email):
+    """
+    Delete specific file (with thumbnail)
+    :param app: Flask.application
+    :param photo: specific photo ORM object
+    :param current_user: Flask_login.current_user
+    :return: None
+    """
+    try:
+        path = os.path.join('/tmp/', email.replace('@', '_at_').replace('.', '_dot_'))
+        # thumbnail = os.path.join(os.path.join(path, "thumbnail"), filename)
+        original = os.path.join(path, filename)
+        # if os.path.exists(thumbnail):
+        #     os.remove(thumbnail)
+        if os.path.exists(original):
+            os.remove(original)
+            return True
+        else:
+            app.logger.error('ERROR:delete failed:filepath:{}'.format(original))
+            return False
+    except Exception as e:
+        app.logger.error('Error occurred while deleting file:%s', e)
+        raise e
 
 def save(upload_file, filename, email):
     """
@@ -163,11 +186,11 @@ class InfoUpload(Resource):
                 app.logger.debug('success:photo info update:{}'.format(body))
                 return response_with_msg(200, "file uploaded")
             except Exception as e:
-                app.logger.debug('ERROR:photo info update:{}'.format(body))
-                app.logger.debug(e)
+                app.logger.error('ERROR:photo info update:{}'.format(body))
+                app.logger.error(e)
                 return default_response(500)
         else:
-            app.logger.debug('ERROR:photo info update:{}'.format(request.get_json()))
+            app.logger.error('ERROR:photo info update:{}'.format(request.get_json()))
             return default_response(400)
 
 @api.route('/')
@@ -192,9 +215,42 @@ class List(Resource):
 
             return make_response(jsonify({'ok': True, 'data': data}), 200)
         except:
-            app.logger.debug("photos list failed:users list:%s" % photos)
-            return make_response(jsonify({'ok': False, 'data': data}), 500)
+            app.logger.error("ERROR:photos list failed")
+            return make_response(jsonify({'ok': False}), 500)
 
-# photo delete
+
+@api.route('/<photo_id>')
+class Delete(Resource):
+    @api.doc(
+        responses=
+        {
+            200: "Delete success",
+            500: "Internal server error"
+        }
+    )
+    @jwt_required
+    def delete(self, photo_id):
+        """one photo delete"""
+        try:
+            # DB에서 사진 정보 가지고 오기
+            photo = Photo.query.filter_by(id=photo_id).first()
+            filename = photo.filename
+
+            # DB에서 사진정보 지우기
+            db.session.delete(photo)
+            db.session.commit()
+            # 저장된 사진 지우기
+            user = get_jwt_identity()
+            file_deleted = delete_file(filename, user['email'])
+            if file_deleted:
+                return make_response({'ok':True, 'data':{'photo_id':photo_id}}, 200)
+            else:
+                raise FileNotFoundError
+        except Exception as e:
+            app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
+            app.logger.error(e)
+            return make_response({'ok':False, 'data':{'photo_id':photo_id}}, 500)
+
+
 # photo url
 # photo edit
