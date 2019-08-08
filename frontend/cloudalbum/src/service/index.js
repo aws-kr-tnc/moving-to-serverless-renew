@@ -1,6 +1,5 @@
-import { signIn, signUp } from '@/service/auth';
+import Auth from '@/service/auth';
 
-export {
-  signUp,
-  signIn,
+export default {
+  Auth,
 };
