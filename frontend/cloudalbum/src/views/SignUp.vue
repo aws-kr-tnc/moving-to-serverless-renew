@@ -85,7 +85,7 @@
 </template>
 
 <script>
-import { signUp } from '@/service';
+import service from '@/service';
 
 export default {
   name: 'SignUp',
@@ -99,7 +99,7 @@ export default {
   methods: {
     async userSignUp() {
       try {
-        const resp = await signUp(this.inputEmail, this.inputUsername, this.inputPassword);
+        const resp = await service.Auth.signUp(this.inputEmail, this.inputUsername, this.inputPassword);
         console.log(resp);
         this.$swal(
           {

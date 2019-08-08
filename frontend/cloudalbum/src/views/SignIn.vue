@@ -61,7 +61,7 @@
 </template>
 
 <script>
-import { signIn } from '@/service';
+import { mapActions, mapGetters } from 'vuex';
 
 export default {
   name: 'SignIn',
@@ -72,15 +72,25 @@ export default {
       inputPassword: '',
     };
   },
-
+  computed: {
+    ...mapGetters('Auth', [
+      'getIsAuth',
+    ]),
+  },
   methods: {
+    ...mapActions('Auth', ['getTokens']),
     async userSignIn() {
       try {
-        const resp = await signIn(this.inputEmail, this.inputPassword);
-        console.log(resp.data)
-        this.$router.push({ name: 'photolist' });
+        await this.getTokens({ email: this.inputEmail, password: this.inputPassword });
+        if (this.getIsAuth) this.$router.push({ name: 'photolist' });
       } catch (err) {
-        this.$swal(`Error:${err.response.status}`);
+        this.$swal(
+          {
+            type: 'error',
+            title: 'Oops...',
+            text: `Something went wrong! (${err})`,
+          },
+        );
       }
     },
   },
