@@ -124,7 +124,8 @@ class Signup(Resource):
                 else:
                     return make_response(jsonify({"ok":False, 'data':data}), 500)
             except:
-                return make_response(jsonify({'ok': False, 'data': data}), 500)
+                app.logger.debug('ERROR:exist user:{}'.format(data))
+                return make_response(jsonify({'ok': False, 'data': data}), 400)
 
         else:
             app.logger.debug('ERROR:user_signup:invalidation failed: {0}'.format(post_data))
