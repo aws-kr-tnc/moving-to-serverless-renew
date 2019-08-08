@@ -30,7 +30,7 @@ const getTokens = (store, { email, password }) => {
     })
     .catch((err) => {
       const msg = responseCheck(err);
-      setErrorMessage(msg);
+      setErrorMessage(store, msg);
     });
 };
 
