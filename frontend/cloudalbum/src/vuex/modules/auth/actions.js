@@ -22,16 +22,15 @@ const responseCheck = (error) => {
   return msg;
 };
 
-const getTokens = (store, { email, password }) => {
-  services.Auth.signIn(email, password)
-    .then((resp) => {
-      setAccessToken(store, resp.data.accessToken);
-      setRefreshToken(store, resp.data.refreshToken);
-    })
-    .catch((err) => {
-      const msg = responseCheck(err);
-      setErrorMessage(store, msg);
-    });
+const getTokens = async (store, { email, password }) => {
+  try {
+    const resp = await services.Auth.signIn(email, password);
+    setAccessToken(store, resp.data.accessToken);
+    setRefreshToken(store, resp.data.refreshToken);
+  } catch (error) {
+    const msg = responseCheck(error);
+    setErrorMessage(store, msg);
+  }
 };
 
 export default {
