@@ -81,20 +81,25 @@ export default {
     ...mapActions('Auth', ['getTokens']),
     async userSignIn() {
       try {
-        await this.getTokens({ email: this.inputEmail, password: this.inputPassword });
-        // console.log(`this.$store.state.accessToken: ${this.$store.state.accessToken}`)
-        // console.log(`this.$store.state.refreshToken: ${this.$store.state.refreshToken}`)
-
+        const resp = await this.getTokens({ email: this.inputEmail, password: this.inputPassword });
+        if (resp.status !== 200) this.popupAlert(resp);
         if (this.getIsAuth) this.$router.push({ name: 'photolist' });
       } catch (err) {
-        this.$swal(
-          {
-            type: 'error',
-            title: 'Oops...',
-            text: `Something went wrong! (${err})`,
-          },
-        );
+        this.popupAlert(err);
       }
+    },
+    popupAlert(resp) {
+      let msg = '';
+      if (resp.status === 400) msg = '400 error';
+      if (resp.status === 500) msg = resp.body;
+      if (resp.status === undefined) msg = resp;
+      this.$swal(
+        {
+          type: 'error',
+          title: 'Oops...',
+          text: `Something went wrong! (${msg})`,
+        },
+      );
     },
   },
 
