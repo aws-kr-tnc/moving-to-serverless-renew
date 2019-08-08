@@ -1,24 +1,42 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_restplus import Api, Resource, fields
 from project import db
-from project.api.models import Photo
+from project.api.models import Photo, User
 from datetime import datetime
 from project.util.response import default_response, response_with_msg, response_with_data, response_with_msg_data
-from flask_login import current_user, login_required
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
-from project.api.users import Signin as user_signin
 from project.schemas import validate_photo_info
+from flask_jwt_extended import (create_access_token, create_refresh_token, JWTManager,
+                                jwt_required, jwt_refresh_token_required, get_jwt_identity)
+from project.api.users import Signin as user_signin
 
 import os, uuid
+
+authorizations = {
+    'Bearer Auth': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'Authorization'
+    },
+}
 
 photos_blueprint = Blueprint('photos', __name__)
 api = Api(photos_blueprint, doc='/swagger/',
                             title='Photos',
-                            description='CloudAlbum-photos: \n prefix url "/photos" is already exist.',
-                            version='0.1')
+                            description='CloudAlbum-photos: \n prefix url "/photos" is already exist.\n '
+                                        'Due to JWT token is required, to test this api, please follow under instruction.\n'
+                                        '1. Get  your access token which you can get /users/signin with registered user email. \n'
+                                        '2. Copy your access token, and click Authorize button which located in right bottom of this description \n'
+                                        '3. Input your access token with this format: "Bearer <copied jwt token>", into value box.'
+                                        '4. click Authorize, and close the popup. now you can start your test.',
+                            version='0.1',
+                            security='Bearer Auth',
+                            authorizations=authorizations)
 
+upload_parser = api.parser()
+upload_parser.add_argument('file', location='files',type=FileStorage, required=True)
 
 response = api.model('Response', {
     'code': fields.Integer,
@@ -71,7 +89,7 @@ def save(upload_file, filename, email):
 
     return file_size
 
-def insert_new_photo(user_id, filename, filename_orig, filesize):
+def insert_basic_info(user_id, filename, filename_orig, filesize):
 
     new_photo = Photo(user_id=user_id,
                       filename=filename,
@@ -83,29 +101,30 @@ def insert_new_photo(user_id, filename, filename_orig, filesize):
 
 @api.route('/ping')
 @api.doc('photos ping!')
-class PhotosPing(Resource):
+class Ping(Resource):
     @api.doc(responses={ 200 : 'pong success'})
+    @jwt_required
     def get(self):
         return make_response(jsonify({'ok':True, 'data':{'msg':'pong!'}}))
 
 
-upload_parser = api.parser()
-upload_parser.add_argument('file', location='files',type=FileStorage, required=True)
+
 
 @api.route('/file')
 @api.expect(upload_parser)
 class FileUpload(Resource):
-    @login_required
+    @jwt_required
     def post(self):
         uploaded_file = upload_parser.parse_args()['file']
         filename_orig = uploaded_file.filename
+        current_user = get_jwt_identity()
 
         extension = (filename_orig.rsplit('.', 1)[1]).lower()
         filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
-        filesize = save(uploaded_file, filename, current_user.email)
+        filesize = save(uploaded_file, filename, current_user['email'])
 
-        user_id = current_user.id
-        insert_new_photo(user_id, filename, filename_orig, filesize)
+        user_id = current_user['user_id']
+        insert_basic_info(user_id, filename, filename_orig, filesize)
 
         committed = Photo.query.filter_by(user_id=user_id, filename=filename, filename_orig=filename_orig).first()
 
@@ -114,11 +133,11 @@ class FileUpload(Resource):
 # upload a photo file
 @api.route('/<photo_id>/info')
 @api.doc('upload a photo information with photo_id')
-class UploadPhotoInfo(Resource):
+class InfoUpload(Resource):
     @api.doc(responses={200: 'success photo information upload',
                         500: 'internal server error'})
     @api.expect(photo_info)
-    @login_required
+    @jwt_required
     def post(self, photo_id):
 
         if validate_photo_info(request.get_json())['ok']:
@@ -143,17 +162,16 @@ class UploadPhotoInfo(Resource):
                 db.session.commit()
                 app.logger.debug('success:photo info update:{}'.format(body))
                 return response_with_msg(200, "file uploaded")
-            except:
+            except Exception as e:
                 app.logger.debug('ERROR:photo info update:{}'.format(body))
+                app.logger.debug(e)
                 return default_response(500)
         else:
             app.logger.debug('ERROR:photo info update:{}'.format(request.get_json()))
             return default_response(400)
 
-
-
 @api.route('/')
-class PhotosList(Resource):
+class List(Resource):
     @api.doc(
         responses=
             {
@@ -161,6 +179,7 @@ class PhotosList(Resource):
                 500: "Internal server error"
             }
         )
+    @jwt_required
     def get(self):
         """Get all photos as list"""
         try:
@@ -179,16 +198,3 @@ class PhotosList(Resource):
 # photo delete
 # photo url
 # photo edit
-
-
-signin_user = api.model ('Signin_user',{
-    'email': fields.String,
-    'password':fields.String
-})
-
-@api.route('/signin')
-class Signin(Resource):
-    @api.expect(signin_user)
-    def post(self):
-        """to create session in swagger photos page"""
-        return user_signin.post(Resource)
