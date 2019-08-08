@@ -124,7 +124,8 @@ class Signup(Resource):
                 else:
                     return make_response(jsonify({"ok":False, 'data':data}), 500)
             except:
-                return make_response(jsonify({'ok': False, 'data': data}), 500)
+                app.logger.debug('ERROR:exist user:{}'.format(data))
+                return make_response(jsonify({'ok': False, 'data': data}), 400)
 
         else:
             app.logger.debug('ERROR:user_signup:invalidation failed: {0}'.format(post_data))
@@ -146,10 +147,11 @@ class Signin(Resource):
             if post_data['ok']:
                 data = post_data['data']
                 user = db.session.query(User).filter_by(email=data['email']).first()
+                token_data = {'user_id': user.id, 'username':user.username, 'email':user.email}
 
                 if user is not None and check_password_hash(user.password, data['password']):
-                    access_token = create_access_token(identity=data)
-                    refresh_token = create_refresh_token(identity=data)
+                    access_token = create_access_token(identity=token_data)
+                    refresh_token = create_refresh_token(identity=token_data)
                     res = jsonify({'accessToken': access_token, 'refresh_token': refresh_token})
                     return make_response(res, 200)
 
