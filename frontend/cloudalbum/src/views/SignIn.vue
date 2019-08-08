@@ -77,10 +77,19 @@ export default {
     async userSignIn() {
       try {
         const resp = await signIn(this.inputEmail, this.inputPassword);
-        console.log(resp.data)
+        console.log(resp.data);
+        this.$store.state.accessToken = resp.data.accessToken;
+        this.$store.state.refreshToken = resp.data.refreshToken;
+
         this.$router.push({ name: 'photolist' });
       } catch (err) {
-        this.$swal(`Error:${err.response.status}`);
+        this.$swal(
+          {
+            type: 'error',
+            title: 'Oops...',
+            text: `Something went wrong! (${err})`,
+          },
+        );
       }
     },
   },
