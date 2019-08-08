@@ -5,13 +5,14 @@ import Signin from './views/SignIn.vue';
 import Signup from './views/SignUp.vue';
 import FileUpload from './views/FileUpload.vue';
 import PhotoList from './views/PhotoList.vue';
+import store from '@/vuex';
 
 Vue.use(Router);
 
-// //Router Guard
-// router.beforeEach((to, from, next) => {
-//
-// });
+const requireAuth = () => (from, to, next) => {
+  if (store.getters['Auth/getIsAuth']) return next();
+  return next('/');
+};
 
 export default new Router({
   mode: 'history',
@@ -36,17 +37,13 @@ export default new Router({
       path: '/photos/upload',
       name: 'upload',
       component: FileUpload,
-      meta: {
-        requiresAuth: true,
-      },
+      beforeEnter: requireAuth(),
     },
     {
       path: '/photos',
       name: 'photolist',
       component: PhotoList,
-      meta: {
-        requiresAuth: true,
-      },
+      beforeEnter: requireAuth(),
     },
   ],
 });
