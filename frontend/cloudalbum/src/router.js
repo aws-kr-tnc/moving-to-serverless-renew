@@ -8,6 +8,11 @@ import PhotoList from './views/PhotoList.vue';
 
 Vue.use(Router);
 
+// //Router Guard
+// router.beforeEach((to, from, next) => {
+//
+// });
+
 export default new Router({
   mode: 'history',
   base: process.env.BASE_URL,
@@ -31,11 +36,17 @@ export default new Router({
       path: '/photos/upload',
       name: 'upload',
       component: FileUpload,
+      meta: {
+        requiresAuth: true,
+      },
     },
     {
       path: '/photos',
       name: 'photolist',
       component: PhotoList,
+      meta: {
+        requiresAuth: true,
+      },
     },
   ],
 });
