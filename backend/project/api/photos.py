@@ -14,7 +14,7 @@ from pathlib import Path
 
 import os, uuid
 
-CONF_TMP = '/tmp'
+CONF_UPLOAD_DIR = '/tmp'
 
 authorizations = {
     'Bearer Auth': {
@@ -37,8 +37,8 @@ api = Api(photos_blueprint, doc='/swagger/',
                             security='Bearer Auth',
                             authorizations=authorizations)
 
-upload_parser = api.parser()
-upload_parser.add_argument('file', location='files',type=FileStorage, required=True)
+
+
 
 response = api.model('Response', {
     'code': fields.Integer,
@@ -60,6 +60,11 @@ photo_info = api.model('New_photo', {
     'nation'  : fields.String,
     'address' : fields.String
 })
+
+
+def email_normalized(email):
+    return email.replace('@', '_at_').replace('.', '_dot_')
+
 
 def make_thumbnail(path, filename):
     """
@@ -93,7 +98,7 @@ def delete_file(filename, email):
     :return: Boolean
     """
     try:
-        dir_location = '{0}/{1}'.format(CONF_TMP, email.replace('@', '_at_').replace('.', '_dot_'))
+        dir_location = '{0}/{1}'.format(CONF_UPLOAD_DIR, email_normalized(email))
         base_path = Path(dir_location)
 
         thumbnail_file_location = base_path / 'thumbnails' / filename
@@ -122,17 +127,13 @@ def save(upload_file, filename, email):
     :param app: Flask.application
     :return: file size (byte)
     """
-    email_normalized = email.replace('@', '_at_').replace('.', '_dot_')
-    # path = os.path.join('/tmp/', email_normalized)
-    path= Path(CONF_TMP) / email_normalized
+    path= Path(CONF_UPLOAD_DIR) / email_normalized(email)
 
     try:
         if not path.exists():
             path.mkdir()
-            # os.makedirs(path)
             app.logger.info("Create folder:{}".format(path._str))
 
-        # original_full_path = os.path.join(path, filename)
         original_full_path = path / filename
         upload_file.save(original_full_path._str)
         app.logger.debug("success:original file saved!:{}".format(original_full_path._str))
@@ -143,8 +144,6 @@ def save(upload_file, filename, email):
         return file_size
     except Exception as e:
         app.logger.error('Error occurred while saving file:%s', e)
-
-
 
 
 def insert_basic_info(user_id, filename, filename_orig, filesize):
@@ -166,7 +165,8 @@ class Ping(Resource):
         return make_response(jsonify({'ok':True, 'data':{'msg':'pong!'}}))
 
 
-
+upload_parser = api.parser()
+upload_parser.add_argument('file', location='files', type=FileStorage, required=True)
 
 @api.route('/file')
 @api.expect(upload_parser)
@@ -193,8 +193,6 @@ class FileUpload(Resource):
             return make_response({'ok':False, 'data':{'user_id':current_user['user_id']}}, 500)
 
 
-
-# upload a photo file
 @api.route('/<photo_id>/info')
 @api.doc('upload a photo information with photo_id')
 class InfoUpload(Resource):
@@ -203,7 +201,7 @@ class InfoUpload(Resource):
     @api.expect(photo_info)
     @jwt_required
     def post(self, photo_id):
-
+        """update photo additional information"""
         if validate_photo_info(request.get_json())['ok']:
             body = request.get_json()
             try:
@@ -260,8 +258,9 @@ class List(Resource):
             return make_response(jsonify({'ok': False}), 500)
 
 
+
 @api.route('/<photo_id>')
-class Delete(Resource):
+class OnePhoto(Resource):
     @api.doc(
         responses=
         {
@@ -292,6 +291,46 @@ class Delete(Resource):
             app.logger.error(e)
             return make_response({'ok':False, 'data':{'photo_id':photo_id}}, 500)
 
+    get_parser = api.parser()
+    get_parser.add_argument('mode', type=str, location='args')
 
-# photo url
+    @api.doc(
+        responses=
+        {
+            200: "Success",
+            500: "Internal server error"
+        }
+    )
+    @jwt_required
+    @api.expect(get_parser)
+    def get(self, photo_id):
+        """
+        Return image for thumbnail and original photo.
+        :param photo_id: target photo id
+        :queryparam mode: None(original) or thumbnail
+        :return: image url for authenticated user
+        """
+        try:
+            mode = request.args.get('mode')
+            email = get_jwt_identity()['email']
+            photo = db.session.query(Photo).filter_by(id=photo_id).first()
+            path = os.path.join(CONF_UPLOAD_DIR, email_normalized(email))
+            full_path = Path(path)
+            if mode == "thumbnail":
+                full_path = full_path / "thumbnails" / photo.filename
+            else:
+                full_path = full_path / photo.filename
+
+            with full_path.open('rb') as f:
+                contents = f.read()
+                resp = make_response(contents)
+            app.logger.debug("filepath:{}".format(full_path._str))
+            resp.content_type = "image/jpeg"
+            return resp
+        except Exception as e:
+            app.logger.error(e)
+            return 'http://placehold.it/400x300'
+
+
+
 # photo edit
