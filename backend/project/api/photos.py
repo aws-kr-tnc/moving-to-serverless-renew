@@ -10,8 +10,11 @@ from werkzeug.utils import secure_filename
 from project.schemas import validate_photo_info
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from PIL import Image
+from pathlib import Path
 
 import os, uuid
+
+CONF_TMP = '/tmp'
 
 authorizations = {
     'Bearer Auth': {
@@ -61,28 +64,25 @@ photo_info = api.model('New_photo', {
 def make_thumbnail(path, filename):
     """
     Generate thumbnail from original image file.
-    :param path: target path
+    :param path: pathlib.Path, which pointing a original file directory
     :param filename: secure file name
     :return: None
     """
-    thumb_path = os.path.join(path, 'thumbnails')
-    thumb_file_location = os.path.join(thumb_path, filename)
-
-    app.logger.debug(thumb_path)
-    app.logger.debug(thumb_file_location)
+    thumb_path = path / 'thumbnails'
+    thumb_file_location = thumb_path / filename
 
     try:
-        if not os.path.exists(thumb_path):
-            os.makedirs(thumb_path)
-            app.logger.info("Create folder for thumbnails: %s", path)
+        if not thumb_path.exists():
+            thumb_path.mkdir()
+            app.logger.info("Create folder for thumbnails: %s", thumb_path._str)
 
         im = Image.open(os.path.join(path, filename))
         im = im.convert('RGB')
         im.thumbnail((300, 200, Image.ANTIALIAS))
         im.save(thumb_file_location)
-
+        app.logger.debug("success:thumbnail saved!:{}".format(thumb_file_location._str))
     except Exception as e:
-        app.logger.error("ERROR:Thumbnails creation error:{}:{}".format(thumb_file_location, e))
+        app.logger.error("ERROR:Thumbnails creation error:{}:{}".format(thumb_file_location._str, e))
         raise e
 
 def delete_file(filename, email):
@@ -93,20 +93,24 @@ def delete_file(filename, email):
     :return: Boolean
     """
     try:
-        path = os.path.join('/tmp/', email.replace('@', '_at_').replace('.', '_dot_'))
-        # thumbnail = os.path.join(os.path.join(path, "thumbnail"), filename)
-        original = os.path.join(path, filename)
-        # if os.path.exists(thumbnail):
-        #     os.remove(thumbnail)
-        if os.path.exists(original):
-            os.remove(original)
+        dir_location = '{0}/{1}'.format(CONF_TMP, email.replace('@', '_at_').replace('.', '_dot_'))
+        base_path = Path(dir_location)
+
+        thumbnail_file_location = base_path / 'thumbnails' / filename
+        original_file_location = base_path / filename
+
+        if thumbnail_file_location.exists():
+            Path.unlink(thumbnail_file_location)
+        if original_file_location.exists():
+            Path.unlink(original_file_location)
             return True
         else:
-            app.logger.error('ERROR:delete failed:filepath:{}'.format(original))
+            app.logger.error('ERROR:delete failed:filepath:{}'.format(original_file_location))
             return False
     except Exception as e:
         app.logger.error('Error occurred while deleting file:%s', e)
         raise e
+
 
 def save(upload_file, filename, email):
     """
@@ -119,23 +123,29 @@ def save(upload_file, filename, email):
     :return: file size (byte)
     """
     email_normalized = email.replace('@', '_at_').replace('.', '_dot_')
-    path = os.path.join('/tmp/', email_normalized)
+    # path = os.path.join('/tmp/', email_normalized)
+    path= Path(CONF_TMP) / email_normalized
 
     try:
-        if not os.path.exists(path):
-            os.makedirs(path)
-            app.logger.info("Create folder: %s", path)
+        if not path.exists():
+            path.mkdir()
+            # os.makedirs(path)
+            app.logger.info("Create folder:{}".format(path._str))
 
-        original_full_path = os.path.join(path, filename)
-        upload_file.save(original_full_path)
+        # original_full_path = os.path.join(path, filename)
+        original_full_path = path / filename
+        upload_file.save(original_full_path._str)
+        app.logger.debug("success:original file saved!:{}".format(original_full_path._str))
         file_size = os.stat(original_full_path).st_size
+
         make_thumbnail(path, filename)
 
+        return file_size
     except Exception as e:
         app.logger.error('Error occurred while saving file:%s', e)
 
 
-    return file_size
+
 
 def insert_basic_info(user_id, filename, filename_orig, filesize):
 
