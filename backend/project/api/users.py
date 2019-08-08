@@ -152,7 +152,7 @@ class Signin(Resource):
                 if user is not None and check_password_hash(user.password, data['password']):
                     access_token = create_access_token(identity=token_data)
                     refresh_token = create_refresh_token(identity=token_data)
-                    res = jsonify({'accessToken': access_token, 'refresh_token': refresh_token})
+                    res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
                     return make_response(res, 200)
 
                 else:
