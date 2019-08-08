@@ -121,6 +121,8 @@ class Signup(Resource):
 
                     # return response_with_msg_data(201, "Signup Success!", data['data'])
                     return make_response(jsonify({"ok":True, 'data':data}), 201)
+                else:
+                    return make_response(jsonify({"ok":False, 'data':data}), 500)
             except:
                 return make_response(jsonify({'ok': False, 'data': data}), 500)
 
