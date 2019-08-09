@@ -143,31 +143,31 @@ class Signin(Resource):
     @api.expect(signin_user)
     def post(self):
         """user signin"""
-        data = request.get_json()
+        post_data = request.get_json()
         try:
-            valid_data = validate_user(data)
+            valid_data = validate_user(post_data)
             if valid_data['ok']:
                 data = valid_data['data']
-                user = db.session.query(User).filter_by(email=valid_data['email']).first()
+                user = db.session.query(User).filter_by(email=data['email']).first()
                 token_data = {'user_id': user.id, 'username':user.username, 'email':user.email}
 
-                if user is not None and check_password_hash(user.password, valid_data['password']):
+                if user is not None and check_password_hash(user.password, data['password']):
                     access_token = create_access_token(identity=token_data)
                     refresh_token = create_refresh_token(identity=token_data)
                     res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
                     app.logger.debug('success:user signin:{}'.format(token_data))
                     return make_response(res, 200)
                 else:
-                    app.logger.error('ERROR:user signin failed:password unmatched: {0}'.format(valid_data['email']))
-                    return make_response({'ok': False, 'data': valid_data}, 400)
+                    app.logger.error('ERROR:user signin failed:password unmatched: {0}'.format(data))
+                    return make_response({'ok': False, 'data': data}, 400)
 
         except ValidationError as e:
             app.logger.error('ERROR: email or password invalid:{0}'.format(e.message))
             app.logger.error(e)
-            return make_response({'ok': False, 'data': data}, 400)
+            return make_response({'ok': False, 'data': post_data}, 400)
         except Exception as e:
             app.logger.error('ERROR: {0}'.format(e))
-            return make_response({'ok': False, 'data': data}, 500)
+            return make_response({'ok': False, 'data': post_data}, 500)
 
 
 @api.route('/signout')
