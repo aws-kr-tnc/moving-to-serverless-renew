@@ -166,7 +166,7 @@ class Signin(Resource):
             app.logger.error(e)
             return make_response({'ok': False, 'data': data}, 400)
         except Exception as e:
-            app.logger.error('ERROR: {0}'.format(e.message))
+            app.logger.error('ERROR: {0}'.format(e))
             return make_response({'ok': False, 'data': data}, 500)
 
 
