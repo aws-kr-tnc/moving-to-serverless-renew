@@ -1,7 +1,6 @@
 
 from flask import Blueprint, request
 from flask import current_app as app
-from flask_login import current_user, login_user, logout_user, login_required
 from jsonschema import ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
 from project import db
@@ -10,9 +9,9 @@ from project import login
 from flask_restplus import Api, Resource, fields
 
 from project.schemas import validate_user
-from flask_jwt_extended import (create_access_token, create_refresh_token, JWTManager,
-                                jwt_required, jwt_refresh_token_required, get_jwt_identity)
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_current_user
 from flask import jsonify, make_response
+from project.util.response import m_response
 
 users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint, doc='/swagger/', title='Users',
@@ -41,8 +40,8 @@ class Ping(Resource):
     @api.doc(responses={200: 'pong!'})
     def get(self):
         """Ping api"""
-        app.logger.debug("ping success!")
-        return make_response({'ok':True, 'data':{'msg':'pong!'}}, 200)
+        app.logger.debug("success:ping pong!")
+        return m_response(True, {'msg':'pong!'}, 200)
 
 @api.route('/')
 class UsersList(Resource):
@@ -60,13 +59,14 @@ class UsersList(Resource):
             data = {
                 'users': users
             }
+
             app.logger.debug("success:users_list:%s" % users)
+            return m_response(True, data, 200)
 
-            return make_response({'ok':True, 'data': data}, 200)
-
-        except:
-            app.logger.debug("users list failed:users list:%s" % users)
-            return make_response({'ok':False, 'data':data}, 500)
+        except Exception as e:
+            app.logger.error("users list failed:users list:%s" % data)
+            app.logger.error(e)
+            return make_response(False, data, 500)
 
 
 @api.route('/<user_id>')
@@ -80,8 +80,8 @@ class Users(Resource):
         try:
             user = User.query.filter_by(id=int(user_id)).first()
             if user is None:
-                # return response_with_msg_data(404, "Not exist user id", {"user": {"id": user_id}})
-                return make_response(jsonify({'ok':False, 'data':user}), 404)
+                app.logger.error('ERROR:user_id not exist:{}'.format(user_id))
+                return m_response(False, {'user_id': user_id}, 404)
 
             data = {
                 'user': {
@@ -91,10 +91,15 @@ class Users(Resource):
                 }
             }
             app.logger.debug("success:user_get_by_id:%s" % data['user'])
-            return make_response({'ok':True, 'data':data}, 200)
-        except ValueError:
-            app.logger.debug("ERROR:user_get_by_id:{}".format(data['user']))
-            return make_response()
+            return m_response(True, data, 200)
+        except ValueError as e:
+            app.logger.error("ERROR:user_get_by_id:{}".format(user_id))
+            app.logger.error(e)
+            return m_response(False, {'user_id':user_id}, 500)
+        except Exception as e:
+            app.logger.error("ERROR:user_get_by_id:{}".format(user_id))
+            app.logger.error(e)
+            return m_response(False, {'user_id': user_id}, 500)
 
 
 @api.route('/signup')
@@ -107,72 +112,70 @@ class Signup(Resource):
     @api.expect(signup_user)
     def post(self):
         """Enroll a new user"""
-        post_data = validate_user(request.get_json())
+        req_data = request.get_json()
+        try:
+            validated = validate_user(req_data)
+            user_data = validated['data']
+            db_user = User.query.filter_by(email=user_data['email']).first()
 
-        if post_data['ok']:
-            data = post_data['data']
-            try:
-                user = User.query.filter_by(email=data['email']).first()
-                if not user:
-                    db.session.add(User(username=data['username'],
-                                        email=data['email'],
-                                        password=generate_password_hash(data['password'])))
-                    db.session.commit()
-                    app.logger.debug('success:user_signup: {0}'.format(data))
-
-                    # return response_with_msg_data(201, "Signup Success!", data['data'])
-                    return make_response(jsonify({"ok":True, 'data':data}), 201)
-                else:
-                    return make_response(jsonify({"ok":False, 'data':data}), 500)
-            except:
-                app.logger.debug('ERROR:exist user:{}'.format(data))
-                return make_response(jsonify({'ok': False, 'data': data}), 400)
-
-        else:
-            app.logger.debug('ERROR:user_signup:invalidation failed: {0}'.format(post_data))
-            return make_response(jsonify({'ok': False, 'data': post_data}), 400)
-
+            if not db_user:
+                db.session.add(User(username=user_data['username'],
+                                    email=user_data['email'],
+                                    password=generate_password_hash(user_data['password'])))
+                db.session.commit()
+                app.logger.debug('success:user_signup: {0}'.format(user_data))
+                return m_response(True, user_data, 201)
+            else:
+                app.logger.error('ERROR:exist user: {0}'.format(user_data))
+                return m_response(False, user_data, 409)
+        except ValidationError as e:
+            app.logger.error('ERROR:invalid signup data format:{0}'.format(req_data))
+            app.logger.error(e)
+            return m_response(False, req_data,400)
+        except Exception as e:
+            app.logger.error('ERROR:unexpected signup error:{}'.format(req_data))
+            app.logger.error(e)
+            return m_response(False, req_data, 500)
 
 @api.route('/signin')
 class Signin(Resource):
     @api.doc(responses={
-        200:'login success',
+        200: 'login success',
         400: 'Invalidate data',
         500: 'Internal server error'
     })
     @api.expect(signin_user)
     def post(self):
         """user signin"""
-        data = request.get_json()
+        req_data = request.get_json()
         try:
-            valid_data = validate_user(data)
-            if valid_data['ok']:
-                data = valid_data['data']
-                user = db.session.query(User).filter_by(email=valid_data['email']).first()
-                token_data = {'user_id': user.id, 'username':user.username, 'email':user.email}
+            signin_data = validate_user(req_data)['data']
 
-                if user is not None and check_password_hash(user.password, valid_data['password']):
-                    access_token = create_access_token(identity=token_data)
-                    refresh_token = create_refresh_token(identity=token_data)
-                    res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
-                    app.logger.debug('success:user signin:{}'.format(token_data))
-                    return make_response(res, 200)
-                else:
-                    app.logger.error('ERROR:user signin failed:password unmatched: {0}'.format(valid_data['email']))
-                    return make_response({'ok': False, 'data': valid_data}, 400)
+            db_user = db.session.query(User).filter_by(email=signin_data['email']).first()
+            token_data = {'user_id': db_user.id, 'username':db_user.username, 'email':db_user.email}
 
+            if db_user is not None and check_password_hash(db_user.password, signin_data['password']):
+                access_token = create_access_token(identity=token_data)
+                refresh_token = create_refresh_token(identity=token_data)
+                res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
+                app.logger.debug('success:user signin:{}'.format(token_data))
+                return make_response(res, 200)
+            else:
+                app.logger.error('ERROR:user signin failed:password unmatched or not valid user: {0}'.format(signin_data))
+                return m_response(False, signin_data, 400)
         except ValidationError as e:
-            app.logger.error('ERROR: email or password invalid:{0}'.format(e.message))
+            app.logger.error('ERROR:invalid data format:{0}'.format(req_data))
             app.logger.error(e)
-            return make_response({'ok': False, 'data': data}, 400)
+            return m_response(False,req_data,400)
         except Exception as e:
-            app.logger.error('ERROR: {0}'.format(e))
-            return make_response({'ok': False, 'data': data}, 500)
+            app.logger.error('ERROR:unexpected error:{0}'.format(req_data))
+            app.logger.error(e)
+            return m_response(False, req_data, 500)
 
 
-@api.route('/signout')
+@api.route('/signout', doc=False)
 class Signout(Resource):
-    @login_required
+    @jwt_required
     @api.doc(responses={
         200:'signout success',
         500:'login required'
@@ -180,14 +183,18 @@ class Signout(Resource):
     def post(self):
         """user signout"""
         try:
-            username = current_user.username
-            logout_user()
-            app.logger.debug('success:Sign-out:%s', username)
-            return make_response({'ok':True, 'data': {'username': username}}, 200)
+            current_user = get_current_user()
+            # TODO: jwt token expire with set up blacklist
+            # jti = get_raw_jwt()['jti']
+            # blacklist.add(jti)
 
-        except:
-            app.logger.debug('ERROR:Sign-out:unknown issue:%s', username)
-            return make_response({'ok':False, 'data': {'username': username}}, 500)
+            app.logger.debug('success:Sign-out:%s', current_user)
+            return m_response( True, current_user, 200)
+
+        except Exception as e:
+            app.logger.error('ERROR:Sign-out:unknown issue:%s', get_current_user())
+            app.logger.error(e)
+            return m_response(False, get_current_user(), 500)
 
 
 @login.user_loader
