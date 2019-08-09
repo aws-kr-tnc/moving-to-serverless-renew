@@ -9,7 +9,8 @@ from project import login
 from flask_restplus import Api, Resource, fields
 
 from project.schemas import validate_user
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_current_user
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_current_user, \
+    get_jwt_identity
 from flask import jsonify, make_response
 from project.util.response import m_response
 
@@ -152,6 +153,9 @@ class Signin(Resource):
             signin_data = validate_user(req_data)['data']
 
             db_user = db.session.query(User).filter_by(email=signin_data['email']).first()
+            if db_user is None:
+                return m_response(False, {'msg':'not exist email', 'user':signin_data}, 400)
+
             token_data = {'user_id': db_user.id, 'username':db_user.username, 'email':db_user.email}
 
             if db_user is not None and check_password_hash(db_user.password, signin_data['password']):
@@ -161,12 +165,13 @@ class Signin(Resource):
                 app.logger.debug('success:user signin:{}'.format(token_data))
                 return make_response(res, 200)
             else:
-                app.logger.error('ERROR:user signin failed:password unmatched or not valid user: {0}'.format(signin_data))
-                return m_response(False, signin_data, 400)
+                app.logger.error('ERROR:user signin failed:password unmatched or invalid user: {0}'.format(signin_data))
+                return m_response(False, {'msg':'password unmatched or invalid user',
+                                          'user': signin_data}, 400)
         except ValidationError as e:
             app.logger.error('ERROR:invalid data format:{0}'.format(req_data))
             app.logger.error(e)
-            return m_response(False,req_data,400)
+            return m_response(False, {'msg':e.message, 'user':req_data} ,400)
         except Exception as e:
             app.logger.error('ERROR:unexpected error:{0}'.format(req_data))
             app.logger.error(e)
@@ -183,18 +188,19 @@ class Signout(Resource):
     def post(self):
         """user signout"""
         try:
-            current_user = get_current_user()
             # TODO: jwt token expire with set up blacklist
+            user = get_jwt_identity()
+
             # jti = get_raw_jwt()['jti']
             # blacklist.add(jti)
 
-            app.logger.debug('success:Sign-out:%s', current_user)
-            return m_response( True, current_user, 200)
+            app.logger.debug('success:Sign-out:%s', user)
+            return m_response( True, user, 200)
 
         except Exception as e:
-            app.logger.error('ERROR:Sign-out:unknown issue:%s', get_current_user())
+            app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_jwt_identity()))
             app.logger.error(e)
-            return m_response(False, get_current_user(), 500)
+            return m_response(False, get_jwt_identity(), 500)
 
 
 @login.user_loader

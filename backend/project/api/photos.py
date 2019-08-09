@@ -1,20 +1,20 @@
-from flask import Blueprint, request, jsonify, make_response
+from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
 from project import db
-from project.api.models import Photo, User
+from project.api.models import Photo
 from datetime import datetime
-from project.util.response import default_response, response_with_msg, response_with_data, response_with_msg_data
+from project.util.response import m_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
 from project.schemas import validate_photo_info
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from PIL import Image
+
 from pathlib import Path
-
+from project.util.config import conf
+from project.util.file_control import email_normalize, delete, save, insert_basic_info
+from jsonschema.exceptions import ValidationError
 import os, uuid
-
-CONF_UPLOAD_DIR = '/tmp'
 
 authorizations = {
     'Bearer Auth': {
@@ -38,14 +38,6 @@ api = Api(photos_blueprint, doc='/swagger/',
                             authorizations=authorizations)
 
 
-
-
-response = api.model('Response', {
-    'code': fields.Integer,
-    'message':fields.String,
-    'data':fields.String
-})
-
 photo_info = api.model('New_photo', {
     'tags' : fields.String,
     'desc' : fields.String,
@@ -61,100 +53,12 @@ photo_info = api.model('New_photo', {
     'address' : fields.String
 })
 
+photo_get_parser = api.parser()
+photo_get_parser.add_argument('mode', type=str, location='args')
 
-def email_normalized(email):
-    return email.replace('@', '_at_').replace('.', '_dot_')
+file_upload_parser = api.parser()
+file_upload_parser.add_argument('file', location='files', type=FileStorage, required=True)
 
-
-def make_thumbnail(path, filename):
-    """
-    Generate thumbnail from original image file.
-    :param path: pathlib.Path, which pointing a original file directory
-    :param filename: secure file name
-    :return: None
-    """
-    thumb_path = path / 'thumbnails'
-    thumb_file_location = thumb_path / filename
-
-    try:
-        if not thumb_path.exists():
-            thumb_path.mkdir()
-            app.logger.info("Create folder for thumbnails: %s", thumb_path._str)
-
-        im = Image.open(os.path.join(path, filename))
-        im = im.convert('RGB')
-        im.thumbnail((300, 200, Image.ANTIALIAS))
-        im.save(thumb_file_location)
-        app.logger.debug("success:thumbnail saved!:{}".format(thumb_file_location._str))
-    except Exception as e:
-        app.logger.error("ERROR:Thumbnails creation error:{}:{}".format(thumb_file_location._str, e))
-        raise e
-
-def delete_file(filename, email):
-    """
-    Delete specific file (with thumbnail)
-    :param photo: specific photo ORM object
-    :param email: registered user email
-    :return: Boolean
-    """
-    try:
-        dir_location = '{0}/{1}'.format(CONF_UPLOAD_DIR, email_normalized(email))
-        base_path = Path(dir_location)
-
-        thumbnail_file_location = base_path / 'thumbnails' / filename
-        original_file_location = base_path / filename
-
-        if thumbnail_file_location.exists():
-            Path.unlink(thumbnail_file_location)
-        if original_file_location.exists():
-            Path.unlink(original_file_location)
-            return True
-        else:
-            app.logger.error('ERROR:delete failed:filepath:{}'.format(original_file_location))
-            return False
-    except Exception as e:
-        app.logger.error('Error occurred while deleting file:%s', e)
-        raise e
-
-
-def save(upload_file, filename, email):
-    """
-    Upload input file (photo) to specific path for individual user.
-    Save original file and thumbnail file.
-    :param upload_file: file object
-    :param filename: secure filename for upload
-    :param email: user email address
-    :param app: Flask.application
-    :return: file size (byte)
-    """
-    path= Path(CONF_UPLOAD_DIR) / email_normalized(email)
-
-    try:
-        if not path.exists():
-            path.mkdir()
-            app.logger.info("Create folder:{}".format(path._str))
-
-        original_full_path = path / filename
-        upload_file.save(original_full_path._str)
-        app.logger.debug("success:original file saved!:{}".format(original_full_path._str))
-        file_size = os.stat(original_full_path).st_size
-
-        make_thumbnail(path, filename)
-
-        return file_size
-    except Exception as e:
-        app.logger.error('Error occurred while saving file:%s', e)
-
-
-def insert_basic_info(user_id, filename, filename_orig, filesize):
-
-    new_photo = Photo(user_id=user_id,
-                      filename=filename,
-                      filename_orig=filename_orig,
-                      filesize=filesize,
-                      upload_date=datetime.today())
-    db.session.add(new_photo)
-    db.session.commit()
 
 @api.route('/ping')
 @api.doc('photos ping!')
@@ -162,35 +66,42 @@ class Ping(Resource):
     @api.doc(responses={ 200 : 'pong success'})
     @jwt_required
     def get(self):
-        return make_response(jsonify({'ok':True, 'data':{'msg':'pong!'}}))
+        app.logger.debug('success:pong!')
+        return m_response(True, {'msg':'pong!'}, 200)
 
 
-upload_parser = api.parser()
-upload_parser.add_argument('file', location='files', type=FileStorage, required=True)
 
 @api.route('/file')
-@api.expect(upload_parser)
+@api.expect(file_upload_parser)
 class FileUpload(Resource):
     @jwt_required
     def post(self):
         try:
-            uploaded_file = upload_parser.parse_args()['file']
+            uploaded_file = file_upload_parser.parse_args()['file']
             filename_orig = uploaded_file.filename
-            current_user = get_jwt_identity()
 
             extension = (filename_orig.rsplit('.', 1)[1]).lower()
+            if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
+                app.logger.error('ERROR:file format is not supported:{0}'.format(filename_orig))
+                return m_response(False, {'filename':filename_orig,
+                                          'msg':'not supported file format:{}'.format(extension)}, 400)
+
+            current_user = get_jwt_identity()
             filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
             filesize = save(uploaded_file, filename, current_user['email'])
 
             user_id = current_user['user_id']
             insert_basic_info(user_id, filename, filename_orig, filesize)
 
-            committed = Photo.query.filter_by(user_id=user_id, filename=filename, filename_orig=filename_orig).first()
+            committed = Photo.query.filter_by(user_id=user_id,
+                                              filename=filename,
+                                              filename_orig=filename_orig).first()
+
             return make_response({'ok': True, "photo_id": committed.id}, 200)
         except Exception as e:
-            app.logger.error('ERROR:file upload failed:user_id:{}'.format(current_user['user_id']))
+            app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
-            return make_response({'ok':False, 'data':{'user_id':current_user['user_id']}}, 500)
+            return make_response({'ok':False, 'data':{'user_id': get_jwt_identity()['user_id']}}, 500)
 
 
 @api.route('/<photo_id>/info')
@@ -202,35 +113,47 @@ class InfoUpload(Resource):
     @jwt_required
     def post(self, photo_id):
         """update photo additional information"""
-        if validate_photo_info(request.get_json())['ok']:
-            body = request.get_json()
-            try:
-                photo = Photo.query.filter_by(id=photo_id).first()
+        infos_column = ['tags', 'desc', 'model', 'geotag_lat', 'geotag_lng', 'make',
+                        'width', 'height', 'city', 'nation', 'address']
+        body = request.get_json()
+        try:
+            valid_data = validate_photo_info(body)['data']
 
-                photo.taken_date = datetime.strptime(body['taken_date'], "%Y:%m:%d %H:%M:%S")
-                photo.id= photo_id
-                photo.tags = body['tags']
-                photo.desc = body['desc']
-                photo.geotag_lat = body['geotag_lat']
-                photo.geotag_lng= body['geotag_lng']
-                photo.make= body['make']
-                photo.model= body['model']
-                photo.width= body['width']
-                photo.height= body['height']
-                photo.city= body['city']
-                photo.nation= body['nation']
-                photo.address= body['address']
+            photo = Photo.query.filter_by(id=photo_id).first()
 
-                db.session.commit()
-                app.logger.debug('success:photo info update:{}'.format(body))
-                return response_with_msg(200, "file uploaded")
-            except Exception as e:
-                app.logger.error('ERROR:photo info update:{}'.format(body))
-                app.logger.error(e)
-                return default_response(500)
-        else:
-            app.logger.error('ERROR:photo info update:{}'.format(request.get_json()))
-            return default_response(400)
+            for key in infos_column:
+                if key not in valid_data.keys():
+                    valid_data[key] = None
+
+
+            photo.taken_date = datetime.strptime(valid_data['taken_date'], "%Y:%m:%d %H:%M:%S")
+
+            photo.id= photo_id
+            photo.tags = valid_data['tags']
+            photo.desc = valid_data['desc']
+            photo.geotag_lat = valid_data['geotag_lat']
+            photo.geotag_lng= valid_data['geotag_lng']
+            photo.make= valid_data['make']
+            photo.model= valid_data['model']
+            photo.width= valid_data['width']
+            photo.height= valid_data['height']
+            photo.city= valid_data['city']
+            photo.nation= valid_data['nation']
+            photo.address= valid_data['address']
+
+            db.session.add(photo)
+            db.session.commit()
+            app.logger.debug('success:photo info update:{}'.format(valid_data))
+            return m_response(True, {'photo_id':photo_id, 'infos':valid_data}, 200)
+        except ValidationError as e:
+            app.logger.error('ERROR:wrong photo information format :{}'.format(body))
+            app.logger.error(e)
+            return m_response(False, {'photo_id': photo_id, 'msg':'information format wrong','body': body}, 500)
+        except Exception as e:
+            app.logger.error('ERROR:photo info update failed:{}'.format(body))
+            app.logger.error(e)
+            return m_response(False, {'photo_id':photo_id, 'msg':e,'body':body}, 500)
+
 
 @api.route('/')
 class List(Resource):
@@ -249,13 +172,13 @@ class List(Resource):
             data = {
                 'photos': photos
             }
-            app.logger.debug("success:photos_list:%s" % photos)
+            app.logger.debug("success:photos_list:%s" % data)
+            return m_response(True, data, 200)
 
-
-            return make_response(jsonify({'ok': True, 'data': data}), 200)
-        except:
+        except Exception as e:
             app.logger.error("ERROR:photos list failed")
-            return make_response(jsonify({'ok': False}), 500)
+            app.logger.error(e)
+            return m_response(False, None ,500)
 
 
 
@@ -265,6 +188,7 @@ class OnePhoto(Resource):
         responses=
         {
             200: "Delete success",
+            404: "file not exist",
             500: "Internal server error"
         }
     )
@@ -272,27 +196,29 @@ class OnePhoto(Resource):
     def delete(self, photo_id):
         """one photo delete"""
         try:
-            # DB에서 사진 정보 가지고 오기
-            photo = Photo.query.filter_by(id=photo_id).first()
-            filename = photo.filename
+            db_photo = Photo.query.filter_by(id=photo_id).first()
 
-            # DB에서 사진정보 지우기
-            db.session.delete(photo)
+            if db_photo is None:
+                app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
+                return m_response(False, {'photo_id':photo_id}, 404)
+
+            filename = db_photo.filename
+
+            db.session.delete(db_photo)
             db.session.commit()
-            # 저장된 사진 지우기
+
             user = get_jwt_identity()
-            file_deleted = delete_file(filename, user['email'])
+            file_deleted = delete(filename, user['email'])
+
             if file_deleted:
-                return make_response({'ok':True, 'data':{'photo_id':photo_id}}, 200)
+                app.logger.error("success:photo deleted: photo_id:{}".format(photo_id))
+                return m_response(True, {'photo_id':photo_id}, 200)
             else:
                 raise FileNotFoundError
         except Exception as e:
             app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
             app.logger.error(e)
-            return make_response({'ok':False, 'data':{'photo_id':photo_id}}, 500)
-
-    get_parser = api.parser()
-    get_parser.add_argument('mode', type=str, location='args')
+            return m_response(False, {'photo_id':photo_id}, 500)
 
     @api.doc(
         responses=
@@ -302,7 +228,7 @@ class OnePhoto(Resource):
         }
     )
     @jwt_required
-    @api.expect(get_parser)
+    @api.expect(photo_get_parser)
     def get(self, photo_id):
         """
         Return image for thumbnail and original photo.
@@ -313,9 +239,11 @@ class OnePhoto(Resource):
         try:
             mode = request.args.get('mode')
             email = get_jwt_identity()['email']
-            photo = db.session.query(Photo).filter_by(id=photo_id).first()
-            path = os.path.join(CONF_UPLOAD_DIR, email_normalized(email))
+            path = os.path.join(conf['UPLOAD_DIR'], email_normalize(email))
             full_path = Path(path)
+
+            photo = db.session.query(Photo).filter_by(id=photo_id).first()
+
             if mode == "thumbnail":
                 full_path = full_path / "thumbnails" / photo.filename
             else:
@@ -324,10 +252,12 @@ class OnePhoto(Resource):
             with full_path.open('rb') as f:
                 contents = f.read()
                 resp = make_response(contents)
-            app.logger.debug("filepath:{}".format(full_path._str))
+
+            app.logger.debug("filepath:{}".format(str(full_path)))
             resp.content_type = "image/jpeg"
             return resp
         except Exception as e:
+            app.logger.error('ERROR:get photo failed:photo_id:{}'.format(photo_id))
             app.logger.error(e)
             return 'http://placehold.it/400x300'
 
