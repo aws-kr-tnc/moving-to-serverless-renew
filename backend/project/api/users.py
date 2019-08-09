@@ -9,7 +9,8 @@ from project import login
 from flask_restplus import Api, Resource, fields
 
 from project.schemas import validate_user
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_current_user
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_current_user, \
+    get_jwt_identity
 from flask import jsonify, make_response
 from project.util.response import m_response
 
@@ -183,18 +184,19 @@ class Signout(Resource):
     def post(self):
         """user signout"""
         try:
-            current_user = get_current_user()
             # TODO: jwt token expire with set up blacklist
+            user = get_jwt_identity()
+
             # jti = get_raw_jwt()['jti']
             # blacklist.add(jti)
 
-            app.logger.debug('success:Sign-out:%s', current_user)
-            return m_response( True, current_user, 200)
+            app.logger.debug('success:Sign-out:%s', user)
+            return m_response( True, user, 200)
 
         except Exception as e:
-            app.logger.error('ERROR:Sign-out:unknown issue:%s', get_current_user())
+            app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_jwt_identity()))
             app.logger.error(e)
-            return m_response(False, get_current_user(), 500)
+            return m_response(False, get_jwt_identity(), 500)
 
 
 @login.user_loader
