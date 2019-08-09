@@ -106,3 +106,6 @@ class Photo(db.Model):
             'nation': self.nation,
             'address': self.address
         }
+
+    def insert_column(self, col, data):
+        self[col] = data
