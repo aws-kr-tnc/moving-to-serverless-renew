@@ -54,7 +54,9 @@
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="primary"><v-icon>mdi-upload</v-icon> Submit</v-btn>
+              <v-btn color="primary" @click="attemptUpload" v-bind:class="{ disabled: !image }">
+                <v-icon>mdi-upload</v-icon> Submit
+              </v-btn>
             </v-card-actions>
         </v-card>
       </v-flex>
@@ -63,8 +65,10 @@
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
 import PictureInput from 'vue-picture-input';
 import EXIF from 'exif-js';
+import service from '@/service';
 
 export default {
   name: 'FileUpload',
@@ -72,12 +76,20 @@ export default {
     return {
     };
   },
+  computed: {
+    ...mapGetters('Auth', [
+      'isAuthenticated',
+    ]),
+  },
   components: {
     PictureInput,
   },
   methods: {
     onChange(image) {
       console.log('New picture selected!');
+      this.image = image;
+      console.log(`image: ${this.image}`);
+
       if (image) {
         EXIF.getData(this.$refs.pictureInput.file, function () {
           console.log('image info', this);
@@ -85,15 +97,35 @@ export default {
         });
 
         console.log('Picture loaded.');
+        console.log();
         this.image = image;
+        service.Photo.fileUpload();
       } else {
         console.log('FileReader API not supported: use the <form>, Luke!');
+      }
+    },
+    onRemoved() {
+      this.image = '';
+    },
+    attemptUpload() {
+      if (this.image) {
+        service.Photo.fileUpload(this.image, 'myfile.jpg')
+          .then((response) => {
+            if (response.data.success) {
+              this.image = '';
+              console.log('Image uploaded successfully ✨');
+            }
+          })
+          .catch((err) => {
+            console.error(err);
+          });
       }
     },
   },
 };
 
 </script>
+
 
 <style scoped>
 

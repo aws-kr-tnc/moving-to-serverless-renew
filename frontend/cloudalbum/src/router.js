@@ -10,7 +10,7 @@ import store from '@/vuex';
 Vue.use(Router);
 
 const requireAuth = () => (from, to, next) => {
-  if (store.getters['Auth/getIsAuth']) return next();
+  if (store.getters['Auth/isAuthenticated']) return next();
   return next('/');
 };
 

@@ -1,4 +1,5 @@
 import services from '@/service';
+import axios from '@/plugins/axios';
 import { SET_ACCESS_TOKEN, SET_REFRESH_TOKEN, SET_ERROR_MESSAGE } from '@/vuex/mutation-types';
 
 const setAccessToken = ({ commit }, data) => {
@@ -27,7 +28,8 @@ const getTokens = async (store, { email, password }) => {
     const resp = await services.Auth.signIn(email, password);
     setAccessToken(store, resp.data.accessToken);
     setRefreshToken(store, resp.data.refreshToken);
-    return resp
+    axios.defaults.headers.common.Authorization = `Bearer ${resp.data.accessToken}`;
+    return resp;
   } catch (error) {
     const msg = responseCheck(error);
     setErrorMessage(store, msg);
