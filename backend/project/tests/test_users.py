@@ -29,22 +29,20 @@ class TestUserService(BaseTestCase):
     def test_users_ping(self):
         """Ensure the /ping route behaves correctly."""
         response = self.client.get('/users/ping')
-        data = json.loads(response.data.decode())
+        resp = json.loads(response.data.decode())
+
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(200, data['code'])
-        self.assertIn('pong!', data['message'])
+        self.assertIn('pong!', resp['data']['msg'])
 
     def test_user_signup(self):
         """Ensure a new user signup resource."""
 
         response, new_user = auto_signup(self)
-        response_json = response.json
+        resp = response.json
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(201, response_json['code'])
-        self.assertIn('Signup Success!', response_json['message'])
-        self.assertEqual(new_user['email'], response_json['data']['user']['email'])
-        self.assertEqual(new_user['username'], response_json['data']['user']['username'])
+        self.assertEqual(new_user['email'], resp['data']['email'])
+        self.assertEqual(new_user['username'], resp['data']['username'])
 
     def test_add_user_invalid_json(self):
         """Ensure error is thrown if the JSON object is empty."""
@@ -56,11 +54,11 @@ class TestUserService(BaseTestCase):
                 content_type='application/json',
             )
 
-            data = response.json
+            resp = response.json
 
-            self.assertEqual(response.status_code, 400)
-            self.assertEqual(400, data['code'])
-            self.assertIn('Bad request', data['message'])
+            self.assertEqual({}, resp['data'])
+            self.assertEqual(400, response.status_code)
+
 
     def test_add_user_invalid_json_keys(self):
         """
@@ -75,8 +73,7 @@ class TestUserService(BaseTestCase):
             data = response.json
 
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(400, data['code'])
-            self.assertIn('Bad request', data['message'])
+            self.assertIn('super@mario.com', data['data']['email'])
 
 
     def test_add_user_duplicate_email(self):
@@ -92,8 +89,7 @@ class TestUserService(BaseTestCase):
                 )
             duplicated_resp = second_response.json
             self.assertEqual(second_response.status_code, 400)
-            self.assertEqual(400, duplicated_resp['code'])
-            self.assertIn('Sorry. This email already exists.', duplicated_resp['message'])
+            self.assertIn(test_user, duplicated_resp['data'])
 
 
     def test_single_user_search(self):

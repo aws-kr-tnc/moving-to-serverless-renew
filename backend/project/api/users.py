@@ -107,30 +107,34 @@ class Signup(Resource):
     @api.expect(signup_user)
     def post(self):
         """Enroll a new user"""
-        post_data = validate_user(request.get_json())
 
-        if post_data['ok']:
-            data = post_data['data']
-            try:
-                user = User.query.filter_by(email=data['email']).first()
-                if not user:
-                    db.session.add(User(username=data['username'],
-                                        email=data['email'],
-                                        password=generate_password_hash(data['password'])))
-                    db.session.commit()
-                    app.logger.debug('success:user_signup: {0}'.format(data))
+        try:
+            valid_data = validate_user(request.get_json())
+            signup_data = valid_data['data']
+            user = User.query.filter_by(email=signup_data['email']).first()
 
-                    # return response_with_msg_data(201, "Signup Success!", data['data'])
-                    return make_response(jsonify({"ok":True, 'data':data}), 201)
-                else:
-                    return make_response(jsonify({"ok":False, 'data':data}), 500)
-            except:
-                app.logger.debug('ERROR:exist user:{}'.format(data))
-                return make_response(jsonify({'ok': False, 'data': data}), 400)
+            if not user:
+                db.session.add(User(username=signup_data['username'],
+                                    email=signup_data['email'],
+                                    password=generate_password_hash(signup_data['password'])))
+                db.session.commit()
+                app.logger.debug('success:user_signup: {0}'.format(signup_data))
 
-        else:
-            app.logger.debug('ERROR:user_signup:invalidation failed: {0}'.format(post_data))
-            return make_response(jsonify({'ok': False, 'data': post_data}), 400)
+                # return response_with_msg_data(201, "Signup Success!", data['data'])
+                return make_response({"ok":True, 'data':signup_data}, 201)
+            else:
+                app.logger.error('ERROR:exist user:{}'.format(signup_data))
+                return make_response({"ok":False, 'data':signup_data}, 500)
+        except ValidationError as e:
+            app.logger.error('ERROR:invalid signup data format:{}'.format(request.get_json()))
+            app.logger.debug(e)
+            return make_response({'ok': False, 'data': request.get_json()}, 400)
+        except Exception as e:
+            app.logger.error('ERROR:exist user:{}'.format(request.get_json()))
+            app.logger.debug(e)
+            return make_response({'ok': False, 'data': signup_data}, 400)
+
+
 
 
 @api.route('/signin')
@@ -146,20 +150,20 @@ class Signin(Resource):
         post_data = request.get_json()
         try:
             valid_data = validate_user(post_data)
-            if valid_data['ok']:
-                data = valid_data['data']
-                user = db.session.query(User).filter_by(email=data['email']).first()
-                token_data = {'user_id': user.id, 'username':user.username, 'email':user.email}
 
-                if user is not None and check_password_hash(user.password, data['password']):
-                    access_token = create_access_token(identity=token_data)
-                    refresh_token = create_refresh_token(identity=token_data)
-                    res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
-                    app.logger.debug('success:user signin:{}'.format(token_data))
-                    return make_response(res, 200)
-                else:
-                    app.logger.error('ERROR:user signin failed:password unmatched: {0}'.format(data))
-                    return make_response({'ok': False, 'data': data}, 400)
+            data = valid_data['data']
+            user = db.session.query(User).filter_by(email=data['email']).first()
+            token_data = {'user_id': user.id, 'username':user.username, 'email':user.email}
+
+            if user is not None and check_password_hash(user.password, data['password']):
+                access_token = create_access_token(identity=token_data)
+                refresh_token = create_refresh_token(identity=token_data)
+                res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
+                app.logger.debug('success:user signin:{}'.format(token_data))
+                return make_response(res, 200)
+            else:
+                app.logger.error('ERROR:user signin failed:password unmatched: {0}'.format(data))
+                return make_response({'ok': False, 'data': data}, 400)
 
         except ValidationError as e:
             app.logger.error('ERROR: email or password invalid:{0}'.format(e.message))
