@@ -54,7 +54,7 @@
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="primary" @click="attemptUpload" v-bind:class="{ disabled: !image }">
+              <v-btn color="primary" @click="attemptUpload">
                 <v-icon>mdi-upload</v-icon> Submit
               </v-btn>
             </v-card-actions>
@@ -85,31 +85,28 @@ export default {
     PictureInput,
   },
   methods: {
-    onChange(image) {
-      console.log('New picture selected!');
-      this.image = image;
-      console.log(`image: ${this.image}`);
 
-      if (image) {
-        EXIF.getData(this.$refs.pictureInput.file, function () {
+    onChange() {
+      console.log('New picture loaded');
+      if (this.$refs.pictureInput.file) {
+        this.image = this.$refs.pictureInput.file;
+
+        EXIF.getData(this.image, function () {
           console.log('image info', this);
           console.log('exif data', this.exifdata);
         });
-
-        console.log('Picture loaded.');
-        console.log();
-        this.image = image;
-        service.Photo.fileUpload();
       } else {
-        console.log('FileReader API not supported: use the <form>, Luke!');
+        console.log('Old browser. No support for Filereader API');
       }
     },
     onRemoved() {
       this.image = '';
     },
     attemptUpload() {
+      console.log('Attempting uploading..');
       if (this.image) {
-        service.Photo.fileUpload(this.image, 'myfile.jpg')
+        //console.log(`this.image: ${this.image}`);
+        service.Photo.fileUpload(this.image, 'file')
           .then((response) => {
             if (response.data.success) {
               this.image = '';
