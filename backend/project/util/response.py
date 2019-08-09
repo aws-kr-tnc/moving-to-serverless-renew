@@ -1,4 +1,11 @@
 import copy
+from flask import jsonify, make_response
+
+def m_response(bool, data, code):
+    return make_response({'ok':bool, 'data':data}, code)
+
+
+
 
 dic_default_response = {
     200: { 'code': 200,
