@@ -1,4 +1,4 @@
-from jsonschema import validate
+from jsonschema import validate, FormatChecker
 from jsonschema.exceptions import ValidationError
 from jsonschema.exceptions import SchemaError
 from flask import app
@@ -72,7 +72,7 @@ def validate_photo_info(data):
 
 def validate_user(data):
     try:
-        validate(data, user_schema)
+        validate(data, user_schema, format_checker=FormatChecker())
         return {'ok': True, 'data': data}
     except ValidationError as e:
         raise e
@@ -83,7 +83,7 @@ def validate_user(data):
 
 def validate_signin(data):
     try:
-        validate(data, user_signin_schema)
+        validate(data, user_signin_schema, format_checker=FormatChecker())
         return {'ok': True, 'data': data}
     except ValidationError as e:
         raise e
