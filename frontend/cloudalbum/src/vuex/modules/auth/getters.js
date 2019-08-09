@@ -1,5 +1,5 @@
 export default {
-  getIsAuth: (state) => {
+  isAuthenticated: (state) => {
     console.log(`state.accessToken: ${state.accessToken}`);
     console.log(`state.refreshToken: ${state.refreshToken}`);
 

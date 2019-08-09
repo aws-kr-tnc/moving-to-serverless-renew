@@ -74,7 +74,7 @@ export default {
   },
   computed: {
     ...mapGetters('Auth', [
-      'getIsAuth',
+      'isAuthenticated',
     ]),
   },
   methods: {
@@ -83,7 +83,7 @@ export default {
       try {
         const resp = await this.getTokens({ email: this.inputEmail, password: this.inputPassword });
         if (resp.status !== 200) this.popupAlert(resp);
-        if (this.getIsAuth) this.$router.push({ name: 'photolist' });
+        if (this.isAuthenticated) this.$router.push({ name: 'photolist' });
       } catch (err) {
         this.popupAlert(err);
       }
