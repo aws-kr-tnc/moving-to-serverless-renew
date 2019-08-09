@@ -8,6 +8,7 @@ user_schema = {
     "properties": {
         "username": {
             "type": "string",
+            "minLength": 4
         },
         "email": {
             "type": "string",
