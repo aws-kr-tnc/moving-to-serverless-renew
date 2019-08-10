@@ -24,6 +24,15 @@
           </v-list-item-content>
         </v-list-item>
 
+        <v-list-item @click="moveToUpload">
+          <v-list-item-action>
+            <v-icon>mdi-cloud-upload</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>Upload</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+
         <v-list-item @click="">
           <v-list-item-action>
             <v-icon>mdi-map-marker</v-icon>
@@ -72,11 +81,16 @@
 
 <script>
 export default {
-  name: "LayoutHeader",
+  name: 'LayoutHeader',
   data: () => ({
-    drawer: null
-  })
-}
+    drawer: null,
+  }),
+  methods: {
+    moveToUpload() {
+      this.$router.push({ name: 'upload' });
+    },
+  },
+};
 </script>
 
 <style scoped>
