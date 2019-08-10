@@ -117,14 +117,23 @@ class Signup(Resource):
             validated = validate_user(req_data)
             user_data = validated['data']
             db_user = User.query.filter_by(email=user_data['email']).first()
-
+            email = user_data['email']
             if not db_user:
                 db.session.add(User(username=user_data['username'],
-                                    email=user_data['email'],
+                                    email=email,
                                     password=generate_password_hash(user_data['password'])))
                 db.session.commit()
-                app.logger.debug('success:user_signup: {0}'.format(user_data))
-                return m_response(True, user_data, 201)
+
+                committed_user = User.query.filter_by(email=email).first()
+
+                user = {
+                    "id": committed_user.id,
+                    'username': committed_user.username,
+                    'email': committed_user.email
+
+                }
+                app.logger.debug('success:user_signup: {0}'.format(user))
+                return m_response(True, user, 201)
             else:
                 app.logger.error('ERROR:exist user: {0}'.format(user_data))
                 return m_response(False, user_data, 409)
