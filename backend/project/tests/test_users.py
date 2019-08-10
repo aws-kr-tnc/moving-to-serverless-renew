@@ -40,6 +40,8 @@ class TestUserService(BaseTestCase):
         resp = response.json
 
         self.assertEqual(response.status_code, 201)
+        del new_user['password']
+        del resp['data']['id']
         self.assertEquals(new_user, resp['data'])
 
     def test_add_user_invalid_json(self):
@@ -71,7 +73,7 @@ class TestUserService(BaseTestCase):
             )
             resp = response.json
             self.assert400(response, "response code is not 400")
-            self.asserte(data_invalid, resp['data'])
+            self.assertEqual(data_invalid, resp['data'])
 
 
     def test_add_user_duplicate_email(self):
