@@ -31,8 +31,7 @@ class TestUserService(BaseTestCase):
         response = self.client.get('/users/ping')
         resp = json.loads(response.data.decode())
 
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('pong!', resp['data']['msg'])
+        self.assert200(response, "pong failed?")
 
     def test_user_signup(self):
         """Ensure a new user signup resource."""
@@ -41,8 +40,7 @@ class TestUserService(BaseTestCase):
         resp = response.json
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(new_user['email'], resp['data']['email'])
-        self.assertEqual(new_user['username'], resp['data']['username'])
+        self.assertEquals(new_user, resp['data'])
 
     def test_add_user_invalid_json(self):
         """Ensure error is thrown if the JSON object is empty."""
@@ -57,23 +55,23 @@ class TestUserService(BaseTestCase):
             resp = response.json
 
             self.assertEqual({}, resp['data'])
-            self.assertEqual(400, response.status_code)
+            self.assert400(response, "response code is not 400")
 
 
     def test_add_user_invalid_json_keys(self):
         """
         Ensure error is thrown if the JSON object does not have a username key.
         """
+        data_invalid = {'email': 'super@mario.com'}
         with self.client:
             response = self.client.post(
                 '/users/signup',
-                data=json.dumps({'email': 'super@mario.com'}),
+                data=json.dumps(data_invalid),
                 content_type='application/json',
             )
-            data = response.json
-
-            self.assertEqual(response.status_code, 400)
-            self.assertIn('super@mario.com', data['data']['email'])
+            resp = response.json
+            self.assert400(response, "response code is not 400")
+            self.asserte(data_invalid, resp['data'])
 
 
     def test_add_user_duplicate_email(self):
@@ -88,8 +86,9 @@ class TestUserService(BaseTestCase):
                     content_type='application/json'
                 )
             duplicated_resp = second_response.json
-            self.assertEqual(second_response.status_code, 400)
-            self.assertIn(test_user, duplicated_resp['data'])
+
+            self.assertEqual(second_response.status_code, 409)
+            self.assertEqual(test_user, duplicated_resp['data'])
 
 
     def test_single_user_search(self):
@@ -99,21 +98,21 @@ class TestUserService(BaseTestCase):
         result = response.json
 
         with self.client:
-            response = self.client.get('/users/%s' % result['data']['user']['id'])
-            search_result_user =result['data']['user']
+            response = self.client.get('/users/%s' % result['data']['id'])
+            search_result_user =result['data']
+
+            del search_result_user['id']
+            del test_user['password']
 
             self.assertEqual(response.status_code, 200)
-            self.assertIn(test_user['username'], search_result_user['username'])
-            self.assertIn(test_user['email'], search_result_user['email'])
+            self.assertEqual(test_user, search_result_user)
+
 
     def test_single_user_no_id(self):
         """Ensure error is thrown if an id is not provided."""
         with self.client:
             response = self.client.get('/users/1000000000000')
-            result = response.json
-            self.assertEqual(response.status_code, 404)
-            self.assertIn('Not exist user id', result['message'])
-            self.assertEqual(404, result['code'])
+            self.assert404(response, "not exist user failed")
 
 
 if __name__ == '__main__':
