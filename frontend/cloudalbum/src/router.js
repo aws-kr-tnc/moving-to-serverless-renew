@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 import Home from './views/Home.vue';
+import Map from './views/Map.vue';
 import Signin from './views/SignIn.vue';
 import Signup from './views/SignUp.vue';
 import FileUpload from './views/FileUpload.vue';
@@ -44,6 +45,11 @@ export default new Router({
       name: 'photolist',
       component: PhotoList,
       beforeEnter: requireAuth(),
+    },
+    {
+      path: '/map',
+      name: 'map',
+      component: Map,
     },
   ],
 });

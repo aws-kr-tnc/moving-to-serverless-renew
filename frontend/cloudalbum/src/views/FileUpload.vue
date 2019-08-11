@@ -25,9 +25,12 @@
 
       <v-flex xs12>
         <v-card dark color="secondary">
-            <v-card-text>
-              MAP
-            </v-card-text>
+          <v-container>
+              <l-map style="height: 300px; width: 100%" :zoom="zoom" :center="center">
+                <l-tile-layer :url="url"></l-tile-layer>
+                <l-marker :lat-lng="markerLatLng" ></l-marker>
+              </l-map>
+          </v-container>
         </v-card>
       </v-flex>
 
@@ -74,6 +77,10 @@ export default {
   name: 'FileUpload',
   data() {
     return {
+      url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+      zoom: 5,
+      center: [45.43163333333333, 12.320180555555556],
+      markerLatLng: [45.43163333333333, 12.320180555555556],
     };
   },
   computed: {
@@ -90,11 +97,6 @@ export default {
       console.log('New picture loaded');
       if (this.$refs.pictureInput.file) {
         this.image = this.$refs.pictureInput.file;
-
-        EXIF.getData(this.image, function () {
-          console.log('image info', this);
-          console.log('exif data', this.exifdata);
-        });
       } else {
         console.log('Old browser. No support for Filereader API');
       }
@@ -105,17 +107,34 @@ export default {
     attemptUpload() {
       console.log('Attempting uploading..');
       if (this.image) {
-        //console.log(`this.image: ${this.image}`);
-        service.Photo.fileUpload(this.image, 'file')
-          .then((response) => {
-            if (response.data.success) {
-              this.image = '';
-              console.log('Image uploaded successfully ✨');
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-          });
+
+        EXIF.getData(this.image, function () {
+          console.log('image info', this);
+          console.log('exif data', this.exifdata);
+
+          // console.log(`make: ${this.exifdata.Make}`);
+          // console.log(`model: ${this.exifdata.Model}`);
+          // console.log(`width: ${this.exifdata.PixelXDimension}`);
+          // console.log(`height: ${this.exifdata.PixelYDimension}`);
+          // console.log(`GPSLatitude: ${this.exifdata.GPSLatitude}`);
+          // console.log(`GPSLatitudeRef: ${this.exifdata.GPSLatitudeRef}`);
+          // console.log(`GPSLongitude: ${this.exifdata.GPSLongitude}`);
+          // console.log(`GPSLongitudeRef: ${this.exifdata.GPSLongitudeRef}`);
+          // console.log(`converted GPSLatitude: ${service.Photo.gpsConverter(this.exifdata.GPSLatitude, this.exifdata.GPSLatitudeRef)}`);
+          // console.log(`converted GPSLongitude: ${service.Photo.gpsConverter(this.exifdata.GPSLongitude, this.exifdata.GPSLongitudeRef)}`);
+          // console.log(`taken_date: ${this.exifdata.DateTime}`);
+
+          service.Photo.fileUpload(this.image, 'file', this.exifdata)
+            .then((response) => {
+              if (response.data.success) {
+                this.image = '';
+                console.log('Image uploaded successfully ✨');
+              }
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+        });
       }
     },
   },
