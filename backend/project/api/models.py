@@ -1,8 +1,7 @@
-
-
 from project import db
 from sqlalchemy import Float, DateTime, ForeignKey, Integer, String
 from flask_login import UserMixin
+from datetime import datetime
 
 class User(UserMixin, db.Model):
     """
@@ -109,3 +108,20 @@ class Photo(db.Model):
 
     def insert_column(self, col, data):
         self[col] = data
+
+class BlacklistToken(db.Model):
+    """
+    Token Model for storing JWT tokens
+    """
+    __tablename__ = 'blacklist_tokens'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    token = db.Column(db.String(500), unique=True, nullable=False)
+    blacklisted_on = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, token):
+        self.token = token
+        self.blacklisted_on = datetime.now()
+
+    def __repr__(self):
+        return '<id: token: {}'.format(self.token)

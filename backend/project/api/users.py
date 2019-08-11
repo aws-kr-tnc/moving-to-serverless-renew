@@ -3,19 +3,20 @@ from flask import Blueprint, request
 from flask import current_app as app
 from jsonschema import ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
-from project import db
+from project import db, jwt
 from project.api.models import User
-from project import login
 from flask_restplus import Api, Resource, fields
 
 from project.schemas import validate_user
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt)
 from flask import jsonify, make_response
 from project.util.response import m_response
+from project.util.blacklist_helper import add_token_to_database
 
 users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint, doc='/swagger/', title='Users',
           description='CloudAlbum-users: \n prefix url "/users" is already exist.', version='0.1')
+
 
 response = api.model('Response', {
     'code': fields.Integer,
@@ -159,7 +160,6 @@ class Signin(Resource):
         """user signin"""
         req_data = request.get_json()
         try:
-
             signin_data = validate_user(req_data)['data']
 
             db_user = db.session.query(User).filter_by(email=signin_data['email']).first()
@@ -200,24 +200,17 @@ class Signout(Resource):
     def post(self):
         """user signout"""
         try:
-            # TODO: jwt token expire with set up blacklist
+            # TODO: jwt token stored in DB version
             user = get_jwt_identity()
+            add_token_to_database(get_raw_jwt())
+            return m_response(True, {'user':user, 'msg':'logged out'}, 200)
 
-            # jti = get_raw_jwt()['jti']
-            # blacklist.add(jti)
-
-            app.logger.debug('success:Sign-out:%s', user)
-            return m_response( True, user, 200)
+            # TODO: jwt token stored in memory version
+            # add_token_to_set(get_raw_jwt())
+            # return m_response(True, {'user': user, 'msg': 'logged out'}, 200)
 
         except Exception as e:
             app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_jwt_identity()))
             app.logger.error(e)
             return m_response(False, get_jwt_identity(), 500)
 
-
-@login.user_loader
-def user_loader(user_id):
-    result = User.query.get(user_id)
-    if not result:
-        return None
-    return result

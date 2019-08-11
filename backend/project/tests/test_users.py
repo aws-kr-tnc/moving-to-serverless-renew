@@ -22,6 +22,15 @@ def auto_signup(self):
         )
         return response, dic_user
 
+def auto_signin(self, test_user):
+    with self.client:
+        response = self.client.post(
+            '/users/signin',
+            data=json.dumps(test_user),
+            content_type='application/json',
+        )
+        return response
+
 
 class TestUserService(BaseTestCase):
     """Tests for the Users Service."""
@@ -29,8 +38,6 @@ class TestUserService(BaseTestCase):
     def test_users_ping(self):
         """Ensure the /ping route behaves correctly."""
         response = self.client.get('/users/ping')
-        resp = json.loads(response.data.decode())
-
         self.assert200(response, "pong failed?")
 
     def test_user_signup(self):
@@ -115,6 +122,39 @@ class TestUserService(BaseTestCase):
         with self.client:
             response = self.client.get('/users/1000000000000')
             self.assert404(response, "not exist user failed")
+
+    def test_signout(self):
+        # signup user
+        response, test_user = auto_signup(self)
+
+        #signin user -> get jwt token
+        del test_user['username']
+        signing_resp = auto_signin(self, test_user)
+        access_token = signing_resp.get_json()['accessToken']
+
+        # signout with token
+        response = self.client.post(
+            '/users/signout',
+            headers=dict(
+                Authorization='Bearer ' + signing_resp.get_json()['accessToken']
+            ),
+            content_type='application/json',
+        )
+
+        #first signout success
+        self.assert200(response)
+
+        self.assertRaises(Exception, self.client.post(
+                                        '/users/signout',
+                                        headers=dict(
+                                            Authorization='Bearer ' + signing_resp.get_json()['accessToken']
+                                        ),
+                                        content_type='application/json',
+                                    ))
+
+
+        # second signout should fail
+        # self.assert500(response)
 
 
 if __name__ == '__main__':
