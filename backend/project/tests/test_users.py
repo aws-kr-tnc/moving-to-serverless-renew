@@ -141,11 +141,20 @@ class TestUserService(BaseTestCase):
             content_type='application/json',
         )
 
+        #first signout success
         self.assert200(response)
 
+        self.assertRaises(Exception, self.client.post(
+                                        '/users/signout',
+                                        headers=dict(
+                                            Authorization='Bearer ' + signing_resp.get_json()['accessToken']
+                                        ),
+                                        content_type='application/json',
+                                    ))
 
 
-
+        # second signout should fail
+        # self.assert500(response)
 
 
 if __name__ == '__main__':
