@@ -8,8 +8,7 @@ from project.api.models import User
 from flask_restplus import Api, Resource, fields
 
 from project.schemas import validate_user
-from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt,
-                                JWTManager)
+from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt)
 from flask import jsonify, make_response
 from project.util.response import m_response
 from project.util.blacklist_helper import add_token_to_database
@@ -18,7 +17,6 @@ users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint, doc='/swagger/', title='Users',
           description='CloudAlbum-users: \n prefix url "/users" is already exist.', version='0.1')
 
-# blacklist = set()
 
 response = api.model('Response', {
     'code': fields.Integer,
@@ -208,12 +206,11 @@ class Signout(Resource):
             return m_response(True, {'user':user, 'msg':'logged out'}, 200)
 
             # TODO: jwt token stored in memory version
-            # user = get_jwt_identity()
-            # jti = get_raw_jwt()['jti']
-            # blacklist.add(jti)
+            # add_token_to_set(get_raw_jwt())
             # return m_response(True, {'user': user, 'msg': 'logged out'}, 200)
 
         except Exception as e:
             app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_jwt_identity()))
             app.logger.error(e)
             return m_response(False, get_jwt_identity(), 500)
+
