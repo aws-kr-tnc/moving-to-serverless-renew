@@ -58,6 +58,16 @@ photo_get_parser.add_argument('mode', type=str, location='args')
 
 file_upload_parser = api.parser()
 file_upload_parser.add_argument('file', location='files', type=FileStorage, required=True)
+file_upload_parser.add_argument('tags', type=str, location='form')
+file_upload_parser.add_argument('desc', type=str, location='form')
+file_upload_parser.add_argument('make', type=str, location='form')
+file_upload_parser.add_argument('model', type=str, location='form')
+file_upload_parser.add_argument('width', type=str, location='form')
+file_upload_parser.add_argument('height', type=str, location='form')
+file_upload_parser.add_argument('taken_date', type=str, location='form')
+file_upload_parser.add_argument('geotag_lat', type=str, location='form')
+file_upload_parser.add_argument('geotag_lng', type=str, location='form')
+
 
 
 @api.route('/ping')
@@ -77,8 +87,9 @@ class FileUpload(Resource):
     @jwt_required
     def post(self):
         try:
-            uploaded_file = file_upload_parser.parse_args()['file']
-            filename_orig = uploaded_file.filename
+            app.logger.debug(dir(file_upload_parser))
+            form = file_upload_parser.parse_args()
+            filename_orig = form['file'].filename
 
             extension = (filename_orig.rsplit('.', 1)[1]).lower()
             if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
@@ -88,10 +99,10 @@ class FileUpload(Resource):
 
             current_user = get_jwt_identity()
             filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
-            filesize = save(uploaded_file, filename, current_user['email'])
+            filesize = save(form['file'], filename, current_user['email'])
 
             user_id = current_user['user_id']
-            insert_basic_info(user_id, filename, filename_orig, filesize)
+            insert_basic_info(user_id, filename, filename_orig, filesize, form)
 
             committed = Photo.query.filter_by(user_id=user_id,
                                               filename=filename,

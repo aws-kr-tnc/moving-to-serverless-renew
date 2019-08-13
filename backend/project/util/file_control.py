@@ -8,9 +8,12 @@ from project import db
 
 from datetime import datetime
 import os, uuid
+from datetime import datetime
+
 
 def email_normalize(email):
     return email.replace('@', '_at_').replace('.', '_dot_')
+
 
 def make_thumbnail(path, filename):
     """
@@ -35,6 +38,7 @@ def make_thumbnail(path, filename):
     except Exception as e:
         app.logger.error("ERROR:Thumbnails creation error:{}".format(str(thumb_file_location)))
         app.logger.error(e)
+
 
 def delete(filename, email):
     """
@@ -67,6 +71,7 @@ def delete(filename, email):
         app.logger.error(e)
         raise e
 
+
 def save(upload_file, filename, email):
     """
     Upload input file (photo) to specific path for individual user.
@@ -77,7 +82,7 @@ def save(upload_file, filename, email):
     :param app: Flask.application
     :return: file size (byte)
     """
-    path= Path(conf['UPLOAD_DIR']) / email_normalize(email)
+    path = Path(conf['UPLOAD_DIR']) / email_normalize(email)
 
     try:
         if not path.exists():
@@ -97,12 +102,24 @@ def save(upload_file, filename, email):
         app.logger.error(e)
         raise e
 
-def insert_basic_info(user_id, filename, filename_orig, filesize):
 
+def insert_basic_info(user_id, filename, filename_orig, filesize, form):
     new_photo = Photo(user_id=user_id,
                       filename=filename,
                       filename_orig=filename_orig,
                       filesize=filesize,
-                      upload_date=datetime.today())
+                      upload_date=datetime.today(),
+                      tags=form['tags'],
+                      desc=form['desc'],
+                      geotag_lat=form['geotag_lat'],
+                      geotag_lng=form['geotag_lng'],
+                      taken_date=datetime.strptime(form['taken_date'], "%Y:%m:%d %H:%M:%S"),
+                      make=form['make'],
+                      model=form['model'],
+                      width=form['width'],
+                      height=form['height'])
+    app.logger.debug('new_photo: {0}'.format(new_photo))
     db.session.add(new_photo)
     db.session.commit()
+
+
