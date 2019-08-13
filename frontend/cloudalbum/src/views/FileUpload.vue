@@ -13,6 +13,7 @@
               accept="image/jpeg,image/png"
               size="10"
               button-class="btn"
+              zIndex="0"
               :custom-strings="{
                 upload: '<h1>Bummer!</h1>',
                 drag: 'Drag your photo =)'
@@ -39,6 +40,7 @@
             <v-card-text>
               <v-form>
                 <v-text-field
+                  v-model = "tags"
                   id="tags"
                   label="Tags (separated by comma)"
                   name="tags"
@@ -47,6 +49,7 @@
                 ></v-text-field>
 
                 <v-text-field
+                  v-model = "description"
                   id="description"
                   label="Description"
                   name="description"
@@ -78,10 +81,12 @@ export default {
   data() {
     return {
       url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-      zoom: 15,
+      zoom: 14,
       center: [45.43163333333333, 12.320180555555556],
       markerLatLng: [45.43163333333333, 12.320180555555556],
       exifObj: {},
+      tags: '',
+      description: '',
     };
   },
   computed: {
@@ -95,26 +100,34 @@ export default {
   methods: {
     onChange() {
       console.log('New picture loaded');
-      var self = this
+      let self = this;
       if (this.$refs.pictureInput.file) {
         EXIF.getData(this.$refs.pictureInput.file, function () {
-          console.log(self)
-          console.log(this.exifdata)
-          self.exifObj = this.exifdata
-          // console.log(this.exifdata);
-          // console.log(this.exifdata.GPSLatitude);
-          // console.log(this.exifdata.GPSLatitudeRef);
-          // console.log(this.exifdata.GPSLongitude);
-          // console.log(this.exifdata.GPSLongitudeRef);
-          //
-          // const latitude = service.Photo.gpsConverter(this.exifdata.GPSLatitude, this.exifdata.GPSLatitudeRef);
-          // const longitude = service.Photo.gpsConverter(this.exifdata.GPSLongitude, this.exifdata.GPSLongitudeRef);
-          //
-          // console.log(`GPSLatitude: ${latitude}`);
-          // console.log(`GPSLongitude: ${longitude}`);
-          //
-          // this.center = [latitude, longitude];
-          // this.markerLatLng = [latitude, longitude];
+          self.tags = '';
+          console.log(self);
+          console.log(this.exifdata);
+          self.exifObj = this.exifdata;
+
+          if (Object.keys(self.exifObj).length === 0) {
+            self.image = '';
+            self.$swal(
+              {
+                title: 'WARNING',
+                text: 'This image has no EXIF information!',
+                type: 'warning',
+                onClose: () => {
+                  self.$router.push({ name: 'upload' });
+                },
+              },
+            );
+          } else {
+            const latitude = service.Photo.gpsConverter(self.exifObj.GPSLatitude, self.exifObj.GPSLatitudeRef);
+            const longitude = service.Photo.gpsConverter(self.exifObj.GPSLongitude, self.exifObj.GPSLongitudeRef);
+            self.center = [latitude, longitude];
+            self.markerLatLng = [latitude, longitude];
+            self.tags = `EXIF, ${self.exifObj.Make}, ${self.exifObj.Model}, ${self.exifObj.DateTime}`;
+            console.log(self.tags);
+          }
         });
       } else {
         console.log('Old browser. No support for Filereader API');
@@ -125,37 +138,23 @@ export default {
     },
     attemptUpload() {
       console.log('Attempting uploading..');
+      let self = this;
       const param = {};
       if (this.image) {
         EXIF.getData(this.image, function () {
           console.log('image info', this);
           console.log('exif data', this.exifdata);
-
-          param.make = this.exifdata.Make;
-          param.model = this.exifdata.Model;
-          param.width = this.exifdata.PixelXDimension;
-          param.height = this.exifdata.PixelYDimension;
-          param.GPSLatitude = service.Photo.gpsConverter(this.exifdata.GPSLatitude, this.exifdata.GPSLatitudeRef);
-          param.GPSLongitude = service.Photo.gpsConverter(this.exifdata.GPSLongitude, this.exifdata.GPSLongitudeRef);
-          param.takenDate = this.exifdata.DateTime;
-
-          this.center = [param.GPSLatitude, param.GPSLongitude];
-          this.markerLatLng = [param.GPSLatitude, param.GPSLongitude];
-
-          // console.log(`make: ${this.exifdata.Make}`);
-          // console.log(`model: ${this.exifdata.Model}`);
-          // console.log(`width: ${this.exifdata.PixelXDimension}`);
-          // console.log(`height: ${this.exifdata.PixelYDimension}`);
-          // console.log(`GPSLatitude: ${this.exifdata.GPSLatitude}`);
-          // console.log(`GPSLatitudeRef: ${this.exifdata.GPSLatitudeRef}`);
-          // console.log(`GPSLongitude: ${this.exifdata.GPSLongitude}`);
-          // console.log(`GPSLongitudeRef: ${this.exifdata.GPSLongitudeRef}`);
-          // console.log(`converted GPSLatitude: ${service.Photo.gpsConverter(this.exifdata.GPSLatitude, this.exifdata.GPSLatitudeRef)}`);
-          // console.log(`converted GPSLongitude: ${service.Photo.gpsConverter(this.exifdata.GPSLongitude, this.exifdata.GPSLongitudeRef)}`);
-          // console.log(`taken_date: ${this.exifdata.DateTime}`);
-
+          const exif = this.exifdata;
+          param.make = exif.Make;
+          param.model = exif.Model;
+          param.width = exif.PixelXDimension;
+          param.height = exif.PixelYDimension;
+          param.GPSLatitude = service.Photo.gpsConverter(exif.GPSLatitude, exif.GPSLatitudeRef);
+          param.GPSLongitude = service.Photo.gpsConverter(exif.GPSLongitude, exif.GPSLongitudeRef);
+          param.takenDate = exif.DateTime;
+          param.tags = self.tags;
+          param.description = self.description;
           console.log(param);
-          console.log(this);
 
           service.Photo.fileUpload(this, 'file', param)
             .then((response) => {
