@@ -76,6 +76,24 @@ import PictureInput from 'vue-picture-input';
 import EXIF from 'exif-js';
 import service from '@/service';
 
+function makeParam(exif, self) {
+  const param = {};
+  param.make = exif.Make;
+  param.model = exif.Model;
+  param.width = exif.PixelXDimension;
+  param.height = exif.PixelYDimension;
+  param.GPSLatitude = service.Photo.gpsConverter(exif.GPSLatitude, exif.GPSLatitudeRef);
+  param.GPSLongitude = service.Photo.gpsConverter(exif.GPSLongitude, exif.GPSLongitudeRef);
+  param.takenDate = exif.DateTimeOriginal;
+  param.tags = self.tags;
+  param.description = self.description;
+
+
+  console.log(`param: ${param}`);
+
+  return param;
+}
+
 export default {
   name: 'FileUpload',
   data() {
@@ -100,6 +118,7 @@ export default {
   methods: {
     onChange() {
       console.log('New picture loaded');
+      this.image = this.$refs.pictureInput.file;
       let self = this;
       if (this.$refs.pictureInput.file) {
         EXIF.getData(this.$refs.pictureInput.file, function () {
@@ -116,7 +135,7 @@ export default {
                 text: 'This image has no EXIF information!',
                 type: 'warning',
                 onClose: () => {
-                  self.$router.push({ name: 'upload' });
+                  this.$router.push({ name: 'upload' });
                 },
               },
             );
@@ -136,31 +155,20 @@ export default {
     onRemoved() {
       this.image = '';
     },
-    attemptUpload() {
+    async attemptUpload() {
       console.log('Attempting uploading..');
       let self = this;
-      const param = {};
       if (this.image) {
         EXIF.getData(this.image, function () {
           console.log('image info', this);
           console.log('exif data', this.exifdata);
           const exif = this.exifdata;
-          param.make = exif.Make;
-          param.model = exif.Model;
-          param.width = exif.PixelXDimension;
-          param.height = exif.PixelYDimension;
-          param.GPSLatitude = service.Photo.gpsConverter(exif.GPSLatitude, exif.GPSLatitudeRef);
-          param.GPSLongitude = service.Photo.gpsConverter(exif.GPSLongitude, exif.GPSLongitudeRef);
-          param.takenDate = exif.DateTime;
-          param.tags = self.tags;
-          param.description = self.description;
-          console.log(param);
-
-          service.Photo.fileUpload(this, 'file', param)
+          await service.Photo.fileUpload(this, 'file', makeParam(exif, self))
             .then((response) => {
               if (response.data.success) {
                 this.image = '';
                 console.log('Image uploaded successfully ✨');
+                this.$router.push({ name: 'photolist' });
               }
             })
             .catch((err) => {

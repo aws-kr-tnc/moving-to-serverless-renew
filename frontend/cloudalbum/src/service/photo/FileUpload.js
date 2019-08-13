@@ -13,8 +13,9 @@ const fileUpload = (file, name = 'file', param) => {
   formData.append('height', param.height);
   formData.append('geotag_lat', param.GPSLatitude);
   formData.append('geotag_lng', param.GPSLongitude);
+  formData.append('taken_date', param.takenDate);
 
-  console.log(formData.getAll());
+  console.log(formData.keys());
 
 
 
@@ -27,7 +28,6 @@ const fileUpload = (file, name = 'file', param) => {
   console.log('upload');
   console.log(param);
   console.log(axiosInstance.defaults.headers.common.Authorization);
-
 
   return axiosInstance.post(apiUri, formData, config);
 };
