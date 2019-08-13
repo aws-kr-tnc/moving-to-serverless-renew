@@ -81,6 +81,7 @@ export default {
       zoom: 15,
       center: [45.43163333333333, 12.320180555555556],
       markerLatLng: [45.43163333333333, 12.320180555555556],
+      exifObj: {},
     };
   },
   computed: {
@@ -92,29 +93,30 @@ export default {
     PictureInput,
   },
   methods: {
-
     onChange() {
       console.log('New picture loaded');
+      var self = this
       if (this.$refs.pictureInput.file) {
-        this.image = this.$refs.pictureInput.file;
-        EXIF.getData(this.image, function () {
-          console.log(this.exifdata);
-          console.log(this.exifdata.GPSLatitude);
-          console.log(this.exifdata.GPSLatitudeRef);
-          console.log(this.exifdata.GPSLongitude);
-          console.log(this.exifdata.GPSLongitudeRef);
-
-          let latitude = service.Photo.gpsConverter(this.exifdata.GPSLatitude, this.exifdata.GPSLatitudeRef);
-          let longitude = service.Photo.gpsConverter(this.exifdata.GPSLongitude, this.exifdata.GPSLongitudeRef);
-
-          console.log(`GPSLatitude: ${latitude}`);
-          console.log(`GPSLongitude: ${longitude}`);
-
-          this.center = [latitude, longitude];
-          this.markerLatLng = [latitude, longitude];
-
+        EXIF.getData(this.$refs.pictureInput.file, function () {
+          console.log(self)
+          console.log(this.exifdata)
+          self.exifObj = this.exifdata
+          // console.log(this.exifdata);
+          // console.log(this.exifdata.GPSLatitude);
+          // console.log(this.exifdata.GPSLatitudeRef);
+          // console.log(this.exifdata.GPSLongitude);
+          // console.log(this.exifdata.GPSLongitudeRef);
+          //
+          // const latitude = service.Photo.gpsConverter(this.exifdata.GPSLatitude, this.exifdata.GPSLatitudeRef);
+          // const longitude = service.Photo.gpsConverter(this.exifdata.GPSLongitude, this.exifdata.GPSLongitudeRef);
+          //
+          // console.log(`GPSLatitude: ${latitude}`);
+          // console.log(`GPSLongitude: ${longitude}`);
+          //
+          // this.center = [latitude, longitude];
+          // this.markerLatLng = [latitude, longitude];
         });
-     } else {
+      } else {
         console.log('Old browser. No support for Filereader API');
       }
     },
