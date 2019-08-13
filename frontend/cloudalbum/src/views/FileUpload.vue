@@ -100,7 +100,6 @@ export default {
   methods: {
     onChange() {
       console.log('New picture loaded');
-      this.image = this.$refs.pictureInput.file;
       const self = this;
       if (this.$refs.pictureInput.file) {
         EXIF.getData(this.$refs.pictureInput.file, function () {
@@ -134,8 +133,11 @@ export default {
         console.log('Old browser. No support for Filereader API');
       }
     },
+    removeImage() {
+      this.$refs.pictureInput.removeImage();
+    },
     onRemoved() {
-      this.image = '';
+      this.removeImage();
     },
     async attemptUpload() {
       console.log('Attempting uploading..');
