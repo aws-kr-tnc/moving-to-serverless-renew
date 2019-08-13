@@ -78,7 +78,7 @@ export default {
   data() {
     return {
       url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-      zoom: 5,
+      zoom: 15,
       center: [45.43163333333333, 12.320180555555556],
       markerLatLng: [45.43163333333333, 12.320180555555556],
     };
@@ -97,7 +97,24 @@ export default {
       console.log('New picture loaded');
       if (this.$refs.pictureInput.file) {
         this.image = this.$refs.pictureInput.file;
-      } else {
+        EXIF.getData(this.image, function () {
+          console.log(this.exifdata);
+          console.log(this.exifdata.GPSLatitude);
+          console.log(this.exifdata.GPSLatitudeRef);
+          console.log(this.exifdata.GPSLongitude);
+          console.log(this.exifdata.GPSLongitudeRef);
+
+          let latitude = service.Photo.gpsConverter(this.exifdata.GPSLatitude, this.exifdata.GPSLatitudeRef);
+          let longitude = service.Photo.gpsConverter(this.exifdata.GPSLongitude, this.exifdata.GPSLongitudeRef);
+
+          console.log(`GPSLatitude: ${latitude}`);
+          console.log(`GPSLongitude: ${longitude}`);
+
+          this.center = [latitude, longitude];
+          this.markerLatLng = [latitude, longitude];
+
+        });
+     } else {
         console.log('Old browser. No support for Filereader API');
       }
     },
@@ -106,11 +123,22 @@ export default {
     },
     attemptUpload() {
       console.log('Attempting uploading..');
+      const param = {};
       if (this.image) {
-
         EXIF.getData(this.image, function () {
           console.log('image info', this);
           console.log('exif data', this.exifdata);
+
+          param.make = this.exifdata.Make;
+          param.model = this.exifdata.Model;
+          param.width = this.exifdata.PixelXDimension;
+          param.height = this.exifdata.PixelYDimension;
+          param.GPSLatitude = service.Photo.gpsConverter(this.exifdata.GPSLatitude, this.exifdata.GPSLatitudeRef);
+          param.GPSLongitude = service.Photo.gpsConverter(this.exifdata.GPSLongitude, this.exifdata.GPSLongitudeRef);
+          param.takenDate = this.exifdata.DateTime;
+
+          this.center = [param.GPSLatitude, param.GPSLongitude];
+          this.markerLatLng = [param.GPSLatitude, param.GPSLongitude];
 
           // console.log(`make: ${this.exifdata.Make}`);
           // console.log(`model: ${this.exifdata.Model}`);
@@ -124,7 +152,10 @@ export default {
           // console.log(`converted GPSLongitude: ${service.Photo.gpsConverter(this.exifdata.GPSLongitude, this.exifdata.GPSLongitudeRef)}`);
           // console.log(`taken_date: ${this.exifdata.DateTime}`);
 
-          service.Photo.fileUpload(this.image, 'file', this.exifdata)
+          console.log(param);
+          console.log(this);
+
+          service.Photo.fileUpload(this, 'file', param)
             .then((response) => {
               if (response.data.success) {
                 this.image = '';
