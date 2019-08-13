@@ -13,7 +13,7 @@
               accept="image/jpeg,image/png"
               size="10"
               button-class="btn"
-              zIndex="0"
+              :zIndex=0
               :custom-strings="{
                 upload: '<h1>Bummer!</h1>',
                 drag: 'Drag your photo =)'
@@ -76,24 +76,6 @@ import PictureInput from 'vue-picture-input';
 import EXIF from 'exif-js';
 import service from '@/service';
 
-function makeParam(exif, self) {
-  const param = {};
-  param.make = exif.Make;
-  param.model = exif.Model;
-  param.width = exif.PixelXDimension;
-  param.height = exif.PixelYDimension;
-  param.GPSLatitude = service.Photo.gpsConverter(exif.GPSLatitude, exif.GPSLatitudeRef);
-  param.GPSLongitude = service.Photo.gpsConverter(exif.GPSLongitude, exif.GPSLongitudeRef);
-  param.takenDate = exif.DateTimeOriginal;
-  param.tags = self.tags;
-  param.description = self.description;
-
-
-  console.log(`param: ${param}`);
-
-  return param;
-}
-
 export default {
   name: 'FileUpload',
   data() {
@@ -119,7 +101,7 @@ export default {
     onChange() {
       console.log('New picture loaded');
       this.image = this.$refs.pictureInput.file;
-      let self = this;
+      const self = this;
       if (this.$refs.pictureInput.file) {
         EXIF.getData(this.$refs.pictureInput.file, function () {
           self.tags = '';
@@ -157,26 +139,33 @@ export default {
     },
     async attemptUpload() {
       console.log('Attempting uploading..');
-      let self = this;
-      if (this.image) {
-        EXIF.getData(this.image, function () {
-          console.log('image info', this);
-          console.log('exif data', this.exifdata);
-          const exif = this.exifdata;
-          await service.Photo.fileUpload(this, 'file', makeParam(exif, self))
-            .then((response) => {
-              if (response.data.success) {
-                this.image = '';
-                console.log('Image uploaded successfully ✨');
-                this.$router.push({ name: 'photolist' });
-              }
-            })
-            .catch((err) => {
-              console.error(err);
-            });
-        });
+      const params = this.makeParam();
+      try {
+        const resp = await service.Photo.fileUpload(this.$refs.pictureInput.file, 'file', params);
+        if (resp.data.ok === true) {
+          console.log('Image uploaded successfully ✨');
+          this.$router.push({ name: 'photolist' });
+        }
+      } catch (error) {
+        console.error(error);
       }
     },
+    makeParam() {
+      const param = {};
+      param.make = this.exifObj.Make;
+      param.model = this.exifObj.Model;
+      param.width = this.exifObj.PixelXDimension;
+      param.height = this.exifObj.PixelYDimension;
+      param.GPSLatitude = service.Photo.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
+      param.GPSLongitude = service.Photo.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
+      param.takenDate = this.exifObj.DateTimeOriginal;
+      param.tags = this.exifObj.tags;
+      param.description = this.exifObj.description;
+
+      console.log(`param: ${param}`);
+
+      return param;
+    }
   },
 };
 
