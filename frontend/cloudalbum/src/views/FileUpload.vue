@@ -127,17 +127,7 @@ export default {
           self.exifObj = this.exifdata;
 
           if (Object.keys(self.exifObj).length === 0) {
-            self.image = '';
-            self.$swal(
-              {
-                title: 'WARNING',
-                text: 'This image has no EXIF information!',
-                type: 'warning',
-                onClose: () => {
-                  this.$router.push({ name: 'upload' });
-                },
-              },
-            );
+            self.popupNoExif();
           }
         });
       } else {
@@ -162,6 +152,19 @@ export default {
       } catch (error) {
         console.error(error);
       }
+    },
+    popupNoExif() {
+      this.removeImage();
+      this.$swal(
+        {
+          title: 'WARNING',
+          text: 'This image has no EXIF information!',
+          type: 'warning',
+          onClose: () => {
+            this.$router.push({ name: 'upload' });
+          },
+        },
+      );
     },
     makeParam() {
       const param = {};
