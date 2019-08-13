@@ -144,7 +144,15 @@ export default {
         const resp = await service.Photo.fileUpload(this.$refs.pictureInput.file, 'file', params);
         if (resp.data.ok === true) {
           console.log('Image uploaded successfully ✨');
-          this.$router.push({ name: 'photolist' });
+          this.$swal(
+            {
+              title: 'Upload completed!',
+              type: 'success',
+              onClose: () => {
+                this.$router.push({ name: 'photolist' });
+              },
+            },
+          );
         }
       } catch (error) {
         console.error(error);
@@ -156,11 +164,11 @@ export default {
       param.model = this.exifObj.Model;
       param.width = this.exifObj.PixelXDimension;
       param.height = this.exifObj.PixelYDimension;
-      param.GPSLatitude = service.Photo.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
-      param.GPSLongitude = service.Photo.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
+      param.geotag_lat = service.Photo.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
+      param.geotag_lng = service.Photo.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
       param.takenDate = this.exifObj.DateTimeOriginal;
       param.tags = this.exifObj.tags;
-      param.description = this.exifObj.description;
+      param.desc = this.exifObj.description;
 
       console.log(`param: ${param}`);
 
