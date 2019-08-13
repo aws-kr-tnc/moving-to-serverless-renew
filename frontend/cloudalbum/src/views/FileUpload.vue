@@ -82,10 +82,10 @@ export default {
     return {
       url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
       zoom: 14,
-      center: [45.43163333333333, 12.320180555555556],
-      markerLatLng: [45.43163333333333, 12.320180555555556],
+      // center: [45.43163333333333, 12.320180555555556],
+      // markerLatLng: [45.43163333333333, 12.320180555555556],
       exifObj: {},
-      tags: '',
+      // tags: '',
       description: '',
     };
   },
@@ -93,6 +93,25 @@ export default {
     ...mapGetters('Auth', [
       'isAuthenticated',
     ]),
+    latitude() {
+      return service.Photo.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
+    },
+    longitude() {
+      return service.Photo.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
+    },
+    center() {
+      if (JSON.stringify(this.exifObj) === JSON.stringify({})) {
+        return [45.43163333333333, 12.320180555555556];
+      }
+      return [this.latitude, this.longitude];
+    },
+    markerLatLng() {
+      return this.center;
+    },
+    tags() {
+      if (JSON.stringify(this.exifObj) === JSON.stringify({})) return '';
+      return `EXIF, ${this.exifObj.Make}, ${this.exifObj.Model}, ${this.exifObj.DateTime}`;
+    },
   },
   components: {
     PictureInput,
@@ -103,7 +122,6 @@ export default {
       const self = this;
       if (this.$refs.pictureInput.file) {
         EXIF.getData(this.$refs.pictureInput.file, function () {
-          self.tags = '';
           console.log(self);
           console.log(this.exifdata);
           self.exifObj = this.exifdata;
@@ -120,13 +138,6 @@ export default {
                 },
               },
             );
-          } else {
-            const latitude = service.Photo.gpsConverter(self.exifObj.GPSLatitude, self.exifObj.GPSLatitudeRef);
-            const longitude = service.Photo.gpsConverter(self.exifObj.GPSLongitude, self.exifObj.GPSLongitudeRef);
-            self.center = [latitude, longitude];
-            self.markerLatLng = [latitude, longitude];
-            self.tags = `EXIF, ${self.exifObj.Make}, ${self.exifObj.Model}, ${self.exifObj.DateTime}`;
-            console.log(self.tags);
           }
         });
       } else {
