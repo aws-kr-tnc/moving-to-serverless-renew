@@ -82,10 +82,10 @@ export default {
     return {
       url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
       zoom: 14,
-      center: [45.43163333333333, 12.320180555555556],
-      markerLatLng: [45.43163333333333, 12.320180555555556],
+      // center: [45.43163333333333, 12.320180555555556],
+      // markerLatLng: [45.43163333333333, 12.320180555555556],
       exifObj: {},
-      tags: '',
+      // tags: '',
       description: '',
     };
   },
@@ -93,6 +93,25 @@ export default {
     ...mapGetters('Auth', [
       'isAuthenticated',
     ]),
+    latitude() {
+      return service.Photo.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
+    },
+    longitude() {
+      return service.Photo.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
+    },
+    center() {
+      if (JSON.stringify(this.exifObj) === JSON.stringify({})) {
+        return [45.43163333333333, 12.320180555555556];
+      }
+      return [this.latitude, this.longitude];
+    },
+    markerLatLng() {
+      return this.center;
+    },
+    tags() {
+      if (JSON.stringify(this.exifObj) === JSON.stringify({})) return '';
+      return `EXIF, ${this.exifObj.Make}, ${this.exifObj.Model}, ${this.exifObj.DateTime}`;
+    },
   },
   components: {
     PictureInput,
@@ -100,42 +119,26 @@ export default {
   methods: {
     onChange() {
       console.log('New picture loaded');
-      this.image = this.$refs.pictureInput.file;
       const self = this;
       if (this.$refs.pictureInput.file) {
         EXIF.getData(this.$refs.pictureInput.file, function () {
-          self.tags = '';
           console.log(self);
           console.log(this.exifdata);
           self.exifObj = this.exifdata;
 
           if (Object.keys(self.exifObj).length === 0) {
-            self.image = '';
-            self.$swal(
-              {
-                title: 'WARNING',
-                text: 'This image has no EXIF information!',
-                type: 'warning',
-                onClose: () => {
-                  this.$router.push({ name: 'upload' });
-                },
-              },
-            );
-          } else {
-            const latitude = service.Photo.gpsConverter(self.exifObj.GPSLatitude, self.exifObj.GPSLatitudeRef);
-            const longitude = service.Photo.gpsConverter(self.exifObj.GPSLongitude, self.exifObj.GPSLongitudeRef);
-            self.center = [latitude, longitude];
-            self.markerLatLng = [latitude, longitude];
-            self.tags = `EXIF, ${self.exifObj.Make}, ${self.exifObj.Model}, ${self.exifObj.DateTime}`;
-            console.log(self.tags);
+            self.popupNoExif();
           }
         });
       } else {
         console.log('Old browser. No support for Filereader API');
       }
     },
+    removeImage() {
+      this.$refs.pictureInput.removeImage();
+    },
     onRemoved() {
-      this.image = '';
+      this.removeImage();
     },
     async attemptUpload() {
       console.log('Attempting uploading..');
@@ -157,6 +160,19 @@ export default {
       } catch (error) {
         console.error(error);
       }
+    },
+    popupNoExif() {
+      this.removeImage();
+      this.$swal(
+        {
+          title: 'WARNING',
+          text: 'This image has no EXIF information!',
+          type: 'warning',
+          onClose: () => {
+            this.$router.push({ name: 'upload' });
+          },
+        },
+      );
     },
     makeParam() {
       const param = {};
