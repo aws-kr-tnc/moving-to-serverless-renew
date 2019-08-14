@@ -26,31 +26,30 @@ authorizations = {
 
 photos_blueprint = Blueprint('photos', __name__)
 api = Api(photos_blueprint, doc='/swagger/',
-                            title='Photos',
-                            description='CloudAlbum-photos: \n prefix url "/photos" is already exist.\n '
-                                        'Due to JWT token is required, to test this api, please follow under instruction.\n'
-                                        '1. Get  your access token which you can get /users/signin with registered user email. \n'
-                                        '2. Copy your access token, and click Authorize button which located in right bottom of this description \n'
-                                        '3. Input your access token with this format: "Bearer <copied jwt token>", into value box.'
-                                        '4. click Authorize, and close the popup. now you can start your test.',
-                            version='0.1',
-                            security='Bearer Auth',
-                            authorizations=authorizations)
-
+          title='Photos',
+          description='CloudAlbum-photos: \n prefix url "/photos" is already exist.\n '
+                      'Due to JWT token is required, to test this api, please follow under instruction.\n'
+                      '1. Get  your access token which you can get /users/signin with registered user email. \n'
+                      '2. Copy your access token, and click Authorize button which located in right bottom of this description \n'
+                      '3. Input your access token with this format: "Bearer <copied jwt token>", into value box.'
+                      '4. click Authorize, and close the popup. now you can start your test.',
+          version='0.1',
+          security='Bearer Auth',
+          authorizations=authorizations)
 
 photo_info = api.model('New_photo', {
-    'tags' : fields.String,
-    'desc' : fields.String,
-    'geotag_lat' : fields.Float,
-    'geotag_lng' : fields.Float,
-    'taken_date' : fields.DateTime("%Y:%m:%d %H:%M:%S"),
-    'make' : fields.String,
-    'model' : fields.String,
-    'width' : fields.String,
-    'height' : fields.String,
-    'city' : fields.String,
-    'nation'  : fields.String,
-    'address' : fields.String
+    'tags': fields.String,
+    'desc': fields.String,
+    'geotag_lat': fields.Float,
+    'geotag_lng': fields.Float,
+    'taken_date': fields.DateTime("%Y:%m:%d %H:%M:%S"),
+    'make': fields.String,
+    'model': fields.String,
+    'width': fields.String,
+    'height': fields.String,
+    'city': fields.String,
+    'nation': fields.String,
+    'address': fields.String
 })
 
 photo_get_parser = api.parser()
@@ -69,16 +68,14 @@ file_upload_parser.add_argument('geotag_lat', type=str, location='form')
 file_upload_parser.add_argument('geotag_lng', type=str, location='form')
 
 
-
 @api.route('/ping')
 @api.doc('photos ping!')
 class Ping(Resource):
-    @api.doc(responses={ 200 : 'pong success'})
+    @api.doc(responses={200: 'pong success'})
     @jwt_required
     def get(self):
         app.logger.debug('success:pong!')
-        return m_response(True, {'msg':'pong!'}, 200)
-
+        return m_response(True, {'msg': 'pong!'}, 200)
 
 
 @api.route('/file')
@@ -94,8 +91,8 @@ class FileUpload(Resource):
             extension = (filename_orig.rsplit('.', 1)[1]).lower()
             if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
                 app.logger.error('ERROR:file format is not supported:{0}'.format(filename_orig))
-                return m_response(False, {'filename':filename_orig,
-                                          'msg':'not supported file format:{}'.format(extension)}, 400)
+                return m_response(False, {'filename': filename_orig,
+                                          'msg': 'not supported file format:{}'.format(extension)}, 400)
 
             current_user = get_jwt_identity()
             filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
@@ -112,7 +109,7 @@ class FileUpload(Resource):
         except Exception as e:
             app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
-            return make_response({'ok':False, 'data':{'user_id': get_jwt_identity()['user_id']}}, 500)
+            return make_response({'ok': False, 'data': {'user_id': get_jwt_identity()['user_id']}}, 500)
 
 
 @api.route('/<photo_id>/info')
@@ -136,45 +133,44 @@ class InfoUpload(Resource):
                 if key not in valid_data.keys():
                     valid_data[key] = None
 
-
             photo.taken_date = datetime.strptime(valid_data['taken_date'], "%Y:%m:%d %H:%M:%S")
 
-            photo.id= photo_id
+            photo.id = photo_id
             photo.tags = valid_data['tags']
             photo.desc = valid_data['desc']
             photo.geotag_lat = valid_data['geotag_lat']
-            photo.geotag_lng= valid_data['geotag_lng']
-            photo.make= valid_data['make']
-            photo.model= valid_data['model']
-            photo.width= valid_data['width']
-            photo.height= valid_data['height']
-            photo.city= valid_data['city']
-            photo.nation= valid_data['nation']
-            photo.address= valid_data['address']
+            photo.geotag_lng = valid_data['geotag_lng']
+            photo.make = valid_data['make']
+            photo.model = valid_data['model']
+            photo.width = valid_data['width']
+            photo.height = valid_data['height']
+            photo.city = valid_data['city']
+            photo.nation = valid_data['nation']
+            photo.address = valid_data['address']
 
             db.session.add(photo)
             db.session.commit()
             app.logger.debug('success:photo info update:{}'.format(valid_data))
-            return m_response(True, {'photo_id':photo_id, 'infos':valid_data}, 200)
+            return m_response(True, {'photo_id': photo_id, 'infos': valid_data}, 200)
         except ValidationError as e:
             app.logger.error('ERROR:wrong photo information format :{}'.format(body))
             app.logger.error(e)
-            return m_response(False, {'photo_id': photo_id, 'msg':'information format wrong','body': body}, 500)
+            return m_response(False, {'photo_id': photo_id, 'msg': 'information format wrong', 'body': body}, 500)
         except Exception as e:
             app.logger.error('ERROR:photo info update failed:{}'.format(body))
             app.logger.error(e)
-            return m_response(False, {'photo_id':photo_id, 'msg':e,'body':body}, 500)
+            return m_response(False, {'photo_id': photo_id, 'msg': e, 'body': body}, 500)
 
 
 @api.route('/')
 class List(Resource):
     @api.doc(
         responses=
-            {
-                200:"Return the whole photos list",
-                500: "Internal server error"
-            }
-        )
+        {
+            200: "Return the whole photos list",
+            500: "Internal server error"
+        }
+    )
     @jwt_required
     def get(self):
         """Get all photos as list"""
@@ -189,8 +185,7 @@ class List(Resource):
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
             app.logger.error(e)
-            return m_response(False, None ,500)
-
+            return m_response(False, None, 500)
 
 
 @api.route('/<photo_id>')
@@ -211,7 +206,7 @@ class OnePhoto(Resource):
 
             if db_photo is None:
                 app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
-                return m_response(False, {'photo_id':photo_id}, 404)
+                return m_response(False, {'photo_id': photo_id}, 404)
 
             filename = db_photo.filename
 
@@ -223,13 +218,13 @@ class OnePhoto(Resource):
 
             if file_deleted:
                 app.logger.error("success:photo deleted: photo_id:{}".format(photo_id))
-                return m_response(True, {'photo_id':photo_id}, 200)
+                return m_response(True, {'photo_id': photo_id}, 200)
             else:
                 raise FileNotFoundError
         except Exception as e:
             app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
             app.logger.error(e)
-            return m_response(False, {'photo_id':photo_id}, 500)
+            return m_response(False, {'photo_id': photo_id}, 500)
 
     @api.doc(
         responses=
@@ -271,7 +266,5 @@ class OnePhoto(Resource):
             app.logger.error('ERROR:get photo failed:photo_id:{}'.format(photo_id))
             app.logger.error(e)
             return 'http://placehold.it/400x300'
-
-
 
 # photo edit
