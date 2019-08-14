@@ -14,13 +14,13 @@
           wrap
         >
           <v-flex
-            v-for="photo in photoList"
-            :key="photo.desc"
-            v-bind="{ [xs4]: true }"
+            v-for="card in cards"
+            :key="card.title"
+            v-bind="{ [`xs${card.flex}`]: true }"
           >
             <v-card>
               <v-img
-                :src="photo.src"
+                :src="card.src"
                 class="white--text"
                 height="200px"
                 gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
@@ -88,6 +88,7 @@ export default {
         if (resp.data.ok === true) {
           console.log('Photo list retrieved successfully ✨');
           this.photoList = JSON.stringify(resp.data.photos);
+          console.log(`photosList: ${this.photoList}`);
         }
       } catch (error) {
         console.error(error);
