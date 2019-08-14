@@ -39,17 +39,12 @@
 
               <v-card-actions>
                 <v-spacer></v-spacer>
-
                 <v-btn icon>
-                  <v-icon>mdi-favorite</v-icon>
+                  <v-icon>mdi-map-marker-check</v-icon>
                 </v-btn>
 
                 <v-btn icon>
-                  <v-icon>mdi-bookmark</v-icon>
-                </v-btn>
-
-                <v-btn icon>
-                  <v-icon>mdi-share</v-icon>
+                  <v-icon>mdi-delete</v-icon>
                 </v-btn>
               </v-card-actions>
             </v-card>

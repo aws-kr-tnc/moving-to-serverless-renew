@@ -80,6 +80,8 @@ export default {
   methods: {
     ...mapActions('Auth', ['getTokens']),
     async userSignIn() {
+      if (!this.isValide()) return false;
+
       try {
         const resp = await this.getTokens({ email: this.inputEmail, password: this.inputPassword });
         if (resp.status !== 200) this.popupAlert(resp);
@@ -101,8 +103,16 @@ export default {
         },
       );
     },
+    isValide() {
+      if (this.inputEmail.length === 0 || this.inputPassword.length === 0) {
+        this.$swal({
+          title: 'Please check your input value.',
+          type: 'warning',
+        });
+        return false;
+      } return true;
+    },
   },
-
 };
 </script>
 

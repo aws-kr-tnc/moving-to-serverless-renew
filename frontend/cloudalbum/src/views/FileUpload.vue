@@ -147,7 +147,7 @@ export default {
       this.removeImage();
     },
     async attemptUpload() {
-      if (!this.isInputValide()) return false;
+      if (!this.isValide()) return false;
       console.log('Attempting uploading..');
       const params = this.makeParam();
       try {
@@ -197,11 +197,11 @@ export default {
 
       return param;
     },
-    isInputValide() {
+    isValide() {
       if (this.tags.length === 0 || this.description.length === 0 || this.$refs.pictureInput.file === undefined) {
         this.$swal(
           {
-            title: 'Please insert your tags and descrption',
+            title: 'Please insert your tags and description',
             type: 'warning',
           },
         );

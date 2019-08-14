@@ -2,8 +2,9 @@ import Vue from 'vue';
 import Router from 'vue-router';
 import Home from './views/Home.vue';
 import Map from './views/Map.vue';
-import Signin from './views/SignIn.vue';
-import Signup from './views/SignUp.vue';
+import SignIn from './views/SignIn.vue';
+import SignOut from './views/SignOut.vue';
+import SignUp from './views/SignUp.vue';
 import FileUpload from './views/FileUpload.vue';
 import PhotoList from './views/PhotoList.vue';
 import store from '@/vuex';
@@ -27,12 +28,18 @@ export default new Router({
     {
       path: '/users/signin',
       name: 'signin',
-      component: Signin,
+      component: SignIn,
+    },
+    {
+      path: '/users/signout',
+      name: 'signout',
+      component: SignOut,
+      beforeEnter: requireAuth(),
     },
     {
       path: '/users/signup',
       name: 'signup',
-      component: Signup,
+      component: SignUp,
     },
     {
       path: '/photos/upload',
@@ -50,6 +57,7 @@ export default new Router({
       path: '/map',
       name: 'map',
       component: Map,
+      beforeEnter: requireAuth(),
     },
   ],
 });

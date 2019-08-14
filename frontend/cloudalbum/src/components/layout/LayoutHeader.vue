@@ -81,7 +81,7 @@
 
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
-        <v-btn icon v-on="on">
+        <v-btn icon v-on="on" @click="moveToList">
           <v-icon>mdi-format-list-bulleted-square</v-icon>
         </v-btn>
       </template>
@@ -99,7 +99,7 @@
 
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
-        <v-btn icon v-on="on">
+        <v-btn icon v-on="on" @click="moveToMap">
           <v-icon>mdi-map-marker</v-icon>
         </v-btn>
       </template>
@@ -117,7 +117,7 @@
 
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
-        <v-btn icon v-on="on">
+        <v-btn icon v-on="on" @click="signOut">
           <v-icon>mdi-logout</v-icon>
         </v-btn>
       </template>
@@ -138,6 +138,32 @@ export default {
   methods: {
     moveToUpload() {
       this.$router.push({ name: 'upload' });
+    },
+    moveToList() {
+      this.$router.push({ name: 'photolist' });
+    },
+    moveToMap() {
+      this.$router.push({ name: 'map' });
+    },
+    signOut() {
+      // this.$swal({
+      //   title: 'Are you sure?',
+      //   type: 'warning',
+      //   showCancelButton: true,
+      //   confirmButtonColor: '#3085d6',
+      //   cancelButtonColor: '#d33',
+      //   confirmButtonText: 'Yes, sign-out!'
+      // }).then((result) => {
+      //   if (result.value) {
+      //     this.$swal(
+      //       'Success!',
+      //       'Your account has been signed out successfully.',
+      //       'success',
+      //     );
+      //   }
+      //   this.$router.push({ name: 'signin' });
+      // });
+      this.$router.push({ name: 'signout' });
     },
   },
 };
