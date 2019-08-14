@@ -8,8 +8,8 @@
             <picture-input
               ref="pictureInput"
               margin="16"
-              width="450"
-              height="450"
+              width="400"
+              height="300"
               accept="image/jpeg,image/png"
               size="10"
               button-class="btn"
@@ -26,8 +26,8 @@
 
       <v-flex xs12>
         <v-card dark color="secondary">
-          <v-container>
-              <l-map style="height: 300px; width: 100%" :zoom="zoom" :center="center">
+          <v-container v-if="seen">
+              <l-map style="height: 350px; width: 100%" :zoom="zoom" :center="center">
                 <l-tile-layer :url="url"></l-tile-layer>
                 <l-marker :lat-lng="markerLatLng" ></l-marker>
               </l-map>
@@ -41,6 +41,7 @@
               <v-form>
                 <v-text-field
                   v-model = "tags"
+                  :rules="['Required']"
                   id="tags"
                   label="Tags (separated by comma)"
                   name="tags"
@@ -50,6 +51,7 @@
 
                 <v-text-field
                   v-model = "description"
+                  :rules="['Required']"
                   id="description"
                   label="Description"
                   name="description"
@@ -87,6 +89,9 @@ export default {
       exifObj: {},
       // tags: '',
       description: '',
+      seen: false,
+      loader: null,
+      loading: false,
     };
   },
   computed: {
@@ -125,6 +130,7 @@ export default {
           console.log(self);
           console.log(this.exifdata);
           self.exifObj = this.exifdata;
+          self.seen = true;
 
           if (Object.keys(self.exifObj).length === 0) {
             self.popupNoExif();
@@ -141,6 +147,7 @@ export default {
       this.removeImage();
     },
     async attemptUpload() {
+      if (!this.isInputValide()) return false;
       console.log('Attempting uploading..');
       const params = this.makeParam();
       try {
@@ -183,13 +190,25 @@ export default {
       param.geotag_lat = service.Photo.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
       param.geotag_lng = service.Photo.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
       param.takenDate = this.exifObj.DateTimeOriginal;
-      param.tags = this.exifObj.tags;
-      param.desc = this.exifObj.description;
+      param.tags = this.tags;
+      param.desc = this.description;
 
       console.log(`param: ${param}`);
 
       return param;
-    }
+    },
+    isInputValide() {
+      if (this.tags.length === 0 || this.description.length === 0 || this.$refs.pictureInput.file === undefined) {
+        this.$swal(
+          {
+            title: 'Please insert your tags and descrption',
+            type: 'warning',
+          },
+        );
+        return false;
+      }
+      return true;
+    },
   },
 };
 
