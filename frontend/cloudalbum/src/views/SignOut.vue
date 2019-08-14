@@ -24,7 +24,7 @@
 import { mapActions, mapGetters } from 'vuex';
 
 export default {
-  name: 'SignIn',
+  name: 'SignOut',
 
   data() {
     return {

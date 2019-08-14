@@ -2,7 +2,7 @@ import copy
 from flask import jsonify, make_response
 
 def m_response(bool, data, code):
-    return make_response({'ok':bool, 'data':data}, code)
+    return make_response({'ok': bool, 'photos': data}, code)
 
 
 

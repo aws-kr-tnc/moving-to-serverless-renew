@@ -180,7 +180,7 @@ class List(Resource):
                 'photos': photos
             }
             app.logger.debug("success:photos_list:%s" % data)
-            return m_response(True, data, 200)
+            return m_response(True, data['photos'], 200)
 
         except Exception as e:
             app.logger.error("ERROR:photos list failed")

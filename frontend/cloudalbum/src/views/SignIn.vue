@@ -79,6 +79,7 @@ export default {
   },
   methods: {
     ...mapActions('Auth', ['getTokens']),
+
     async userSignIn() {
       if (!this.isValide()) return false;
 
