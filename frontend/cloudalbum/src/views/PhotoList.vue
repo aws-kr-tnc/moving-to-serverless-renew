@@ -21,7 +21,7 @@
             <v-card>
               <v-img
                 ref="photos"
-                lazy-src="https://cdn.vuetifyjs.com/images/cards/road.jpg"
+                :src="photo.src"
                 class="white--text"
                 height="200px"
                 gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
@@ -58,7 +58,6 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
-import axiosInstance from '@/plugins/axios';
 import service from '@/service';
 
 export default {
@@ -94,21 +93,9 @@ export default {
   methods: {
     ...mapActions('Auth', ['getTokens']),
     async buildImgSrc(id) {
-      const res = await this.getBlobAxios(id);
+      const res = await service.Photo.getPhotoBlob(id);
       const blobImgUrl = URL.createObjectURL(res.data);
       return blobImgUrl;
-    },
-    getBlobAxios(id) {
-      return axiosInstance.get(`/photos/${id}?mode=original`, {
-        responseType: 'blob',
-        timeout: 10000,
-      });
-    },
-    setImgSrc() {
-      let self = this
-      this.photoList.map(async (elem, index) => {
-        self.$refs.photos[index]._props.src = await self.buildImgSrc(elem.id);
-      });
     },
     async getPhotos() {
       console.log('Get photo list..');
@@ -116,13 +103,15 @@ export default {
         const resp = await service.Photo.photoList();
         if (resp.data.ok !== true) return;
         console.log('Photo list retrieved successfully ✨');
-        this.photoList = resp.data.photos;
+        this.photoList = await Promise.all(resp.data.photos.map(async (obj) => {
+          const blobUrl = await this.buildImgSrc(obj.id);
+          return { ...obj, src: blobUrl };
+        }));
         console.log(`photosList: ${this.photoList}`);
       } catch (error) {
         console.error(error);
       }
     },
-
     popupAlert(resp) {
       let msg = '';
       if (resp.status === 400) msg = '400 error';
@@ -137,14 +126,8 @@ export default {
       );
     },
   },
-
   created() {
     this.getPhotos();
   },
-
-  updated() {
-    this.setImgSrc();
-  },
-
 };
 </script>
