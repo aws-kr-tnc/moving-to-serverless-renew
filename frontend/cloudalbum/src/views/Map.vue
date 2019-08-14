@@ -1,8 +1,8 @@
 <template>
-  <l-map style="height: 80%; width: 100%" :zoom="zoom" :center="center">
-    <l-tile-layer :url="url"></l-tile-layer>
-    <l-marker :lat-lng="markerLatLng" ></l-marker>
-  </l-map>
+    <div>
+      <img v-auth-img="http://127.0.0.1:5000/photos/1">
+    </div>
+
 </template>
 
 <script>
