@@ -95,10 +95,8 @@ export default {
     ...mapActions('Auth', ['getTokens']),
     async buildImgSrc(id) {
       const res = await this.getBlobAxios(id);
-      const mimeType = res.headers['content-type'];
-      const imgData = await (new Response(res.data)).text();
-      const blobSrc = `data:${mimeType};base64,${imgData}`;
-      return blobSrc;
+      const blobImgUrl = URL.createObjectURL(res.data);
+      return blobImgUrl;
     },
     getBlobAxios(id) {
       return axiosInstance.get(`/photos/${id}?mode=original`, {
