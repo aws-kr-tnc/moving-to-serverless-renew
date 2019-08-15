@@ -14,20 +14,21 @@
           wrap
         >
           <v-flex
-            v-for="card in cards"
-            :key="card.title"
-            v-bind="{ [`xs${card.flex}`]: true }"
+            v-for="photo in photoList"
+            :key="photo.id"
+            v-bind="{ ['xs4']: true }"
           >
             <v-card>
               <v-img
-                :src="card.src"
+                ref="photos"
+                :src="photo.src"
                 class="white--text"
                 height="200px"
                 gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
               >
                 <v-card-title
                   class="fill-height align-end"
-                  v-text="card.title"
+                  v-text="photo.title"
                 ></v-card-title>
               </v-img>
               <v-card-text>
@@ -63,15 +64,26 @@ export default {
   name: 'PhotoList',
 
   data: () => ({
-    cards: [
-      { title: '1Favorite road trips', src: 'https://cdn.vuetifyjs.com/images/cards/road.jpg', flex: 4 },
-      { title: '2Best ', src: 'https://cdn.vuetifyjs.com/images/cards/plane.jpg', flex: 4 },
-      { title: '3Best airlines', src: 'https://cdn.vuetifyjs.com/images/cards/plane.jpg', flex: 4 },
-      { title: '4Favorite road trips', src: 'https://cdn.vuetifyjs.com/images/cards/road.jpg', flex: 4 },
-      { title: '5Best ', src: 'https://cdn.vuetifyjs.com/images/cards/plane.jpg', flex: 4 },
-      { title: '6Best airlines', src: 'https://cdn.vuetifyjs.com/images/cards/plane.jpg', flex: 4 },
-    ],
-    photoList: [],
+    photoList: [{
+      address: null,
+      city: null,
+      desc: 'undefined',
+      filename: '2c78ab7d-9cf4-49e1-a740-289fc3ee2e0c.jpg',
+      filename_orig: 'DSC07570.jpg',
+      filesize: 850996,
+      geotag_lat: 45.43472222222222,
+      geotag_lng: 12.346736111111111,
+      height: '1371',
+      id: 1,
+      make: 'SONY ',
+      model: 'DSLR-A300',
+      nation: null,
+      tags: 'undefined',
+      taken_date: '2012-07-15 09:46:46',
+      upload_date: '2019-08-13 07:25:55.770169',
+      user_id: '1',
+      width: '2048',
+    }],
   }),
   computed: {
     ...mapGetters('Auth', [
@@ -80,21 +92,26 @@ export default {
   },
   methods: {
     ...mapActions('Auth', ['getTokens']),
-
+    async buildImgSrc(id) {
+      const res = await service.Photo.getPhotoBlob(id);
+      const blobImgUrl = URL.createObjectURL(res.data);
+      return blobImgUrl;
+    },
     async getPhotos() {
       console.log('Get photo list..');
       try {
         const resp = await service.Photo.photoList();
-        if (resp.data.ok === true) {
-          console.log('Photo list retrieved successfully ✨');
-          this.photoList = JSON.stringify(resp.data.photos);
-          console.log(`photosList: ${this.photoList}`);
-        }
+        if (resp.data.ok !== true) return;
+        console.log('Photo list retrieved successfully ✨');
+        this.photoList = await Promise.all(resp.data.photos.map(async (obj) => {
+          const blobUrl = await this.buildImgSrc(obj.id);
+          return { ...obj, src: blobUrl };
+        }));
+        console.log(`photosList: ${this.photoList}`);
       } catch (error) {
         console.error(error);
       }
     },
-
     popupAlert(resp) {
       let msg = '';
       if (resp.status === 400) msg = '400 error';
@@ -109,11 +126,8 @@ export default {
       );
     },
   },
-
   created() {
     this.getPhotos();
   },
-
-
 };
 </script>
