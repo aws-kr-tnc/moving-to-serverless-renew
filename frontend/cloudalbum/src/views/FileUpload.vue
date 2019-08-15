@@ -8,7 +8,7 @@
             <picture-input
               ref="pictureInput"
               margin="16"
-              width="400"
+              width="300"
               height="300"
               accept="image/jpeg,image/png"
               size="10"
@@ -27,11 +27,29 @@
       <v-flex xs12>
         <v-card dark color="secondary">
           <v-container v-if="seen">
-              <l-map style="height: 350px; width: 100%" :zoom="zoom" :center="center">
+              <l-map style="height: 305px; width: 100%" :zoom="zoom" :center="center">
                 <l-tile-layer :url="url"></l-tile-layer>
                 <l-marker :lat-lng="markerLatLng" ></l-marker>
               </l-map>
+             <v-layout align-left>
+              <v-chip
+                class="ma-2"
+                color="green"
+                label
+                text-color="white"
+                small
+              >
+                <v-icon left>mdi-map</v-icon>
+                {{address}}
+              </v-chip>
+             </v-layout>
+
           </v-container>
+<!--          <v-container v-if="seen === false">-->
+<!--            <div style="border: 1px solid gray; padding: 10px; height: 350px; overflow: auto;">-->
+<!--              MAP-->
+<!--            </div>-->
+<!--          </v-container>-->
         </v-card>
       </v-flex>
 
@@ -39,6 +57,83 @@
         <v-card dark color="secondary">
             <v-card-text>
               <v-form>
+
+                <v-container v-if="seen">
+                  <v-layout align-left>
+                    <v-chip
+                      class="ma-2"
+                      small
+                      color="primary"
+                      label
+                      text-color="white"
+                    >
+                      <v-icon left>mdi-tag-multiple</v-icon>
+                      EXIF
+                    </v-chip>
+
+                    <v-chip
+                      class="ma-2"
+                      small
+                      close
+                      color="teal"
+                      text-color="white"
+                      close-icon="mdi-check-circle"
+                      @click:close="addTag;"
+                    >
+                      {{country}}
+                    </v-chip>
+
+                    <v-chip
+                      class="ma-2"
+                      small
+                      close
+                      color="teal"
+                      text-color="white"
+                      close-icon="mdi-check-circle"
+                      @click:close="addTag"
+                    >
+                      {{city}}
+                    </v-chip>
+
+                    <v-chip
+                      class="ma-2"
+                      small
+                      close
+                      color="teal"
+                      text-color="white"
+                      close-icon="mdi-check-circle"
+                      @click:close="addTag"
+                    >
+                      {{make}}
+                    </v-chip>
+
+                    <v-chip
+                      class="ma-2"
+                      small
+                      close
+                      color="teal"
+                      text-color="white"
+                      close-icon="mdi-check-circle"
+                      @click:close="addTag"
+                    >
+                      {{model}}
+                    </v-chip>
+
+                    <v-chip
+                      class="ma-2"
+                      small
+                      close
+                      color="teal"
+                      text-color="white"
+                      close-icon="mdi-check-circle"
+                      @click:close="addTag"
+                    >
+                      {{width}} x {{height}}
+                    </v-chip>
+
+                  </v-layout>
+                </v-container>
+
                 <v-text-field
                   v-model = "tags"
                   :rules="['Required']"
@@ -76,6 +171,7 @@
 import { mapActions, mapGetters } from 'vuex';
 import PictureInput from 'vue-picture-input';
 import EXIF from 'exif-js';
+import * as esri from 'esri-leaflet-geocoder';
 import service from '@/service';
 
 export default {
@@ -90,8 +186,13 @@ export default {
       // tags: '',
       description: '',
       seen: false,
-      loader: null,
-      loading: false,
+      address: '',
+      city: '',
+      country: '',
+      model: '',
+      make: '',
+      width: '',
+      height: '',
     };
   },
   computed: {
@@ -99,10 +200,24 @@ export default {
       'isAuthenticated',
     ]),
     latitude() {
-      return service.Photo.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
+      let result;
+      try {
+        result = service.Photo.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
+      } catch (e) {
+        console.log(e);
+        this.noLatLng();
+      }
+      return result;
     },
     longitude() {
-      return service.Photo.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
+      let result;
+      try {
+        result = service.Photo.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
+      } catch (e) {
+        console.log(e);
+        this.noLatLng();
+      }
+      return result;
     },
     center() {
       if (JSON.stringify(this.exifObj) === JSON.stringify({})) {
@@ -115,7 +230,7 @@ export default {
     },
     tags() {
       if (JSON.stringify(this.exifObj) === JSON.stringify({})) return '';
-      return `EXIF, ${this.exifObj.Make}, ${this.exifObj.Model}, ${this.exifObj.DateTime}`;
+      return `${this.country}, ${this.city}, ${this.exifObj.Make}, ${this.exifObj.Model}`;
     },
   },
   components: {
@@ -130,11 +245,11 @@ export default {
           console.log(self);
           console.log(this.exifdata);
           self.exifObj = this.exifdata;
-          self.seen = true;
-
           if (Object.keys(self.exifObj).length === 0) {
             self.popupNoExif();
           }
+          self.reverseGeocoding(this.exifdata);
+          self.seen = true;
         });
       } else {
         console.log('Old browser. No support for Filereader API');
@@ -176,10 +291,36 @@ export default {
           text: 'This image has no EXIF information!',
           type: 'warning',
           onClose: () => {
+            this.seen = false;
             this.$router.push({ name: 'upload' });
           },
         },
       );
+    },
+    reverseGeocoding(exif) {
+      try {
+        esri.reverseGeocode()
+          .latlng([
+            service.Photo.gpsConverter(exif.GPSLatitude, exif.GPSLatitudeRef),
+            service.Photo.gpsConverter(exif.GPSLongitude, exif.GPSLongitudeRef),
+          ])
+          .run((error, result, response) => {
+            console.log(result)
+            this.address = result.address.LongLabel;
+            this.city = result.address.City;
+            this.country = result.address.CountryCode;
+            //Additional information assign from EXIF.
+            this.make = exif.Make;
+            this.model = exif.Model;
+            this.width = exif.PixelXDimension;
+            this.height = exif.PixelYDimension;
+          });
+      } catch {
+        this.noLatLng();
+      }
+    },
+    addTag(tag) {
+      console.log(tag);
     },
     makeParam() {
       const param = {};
@@ -192,6 +333,9 @@ export default {
       param.takenDate = this.exifObj.DateTimeOriginal;
       param.tags = this.tags;
       param.desc = this.description;
+      param.city = this.city;
+      param.address = this.address;
+      param.nation = this.country;
 
       console.log(`param: ${param}`);
 
@@ -208,6 +352,19 @@ export default {
         return false;
       }
       return true;
+    },
+    noLatLng() {
+      console.log('This image has no GPS information!');
+      // this.$swal(
+      //   {
+      //     title: 'WARNING',
+      //     text: 'This image has no GPS information!',
+      //     type: 'warning',
+      //     onClose: () => {
+      //       this.$router.push({ name: 'upload' });
+      //     },
+      //   },
+      // );
     },
   },
 };

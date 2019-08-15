@@ -14,6 +14,9 @@ const fileUpload = (file, name = 'file', param) => {
   formData.append('geotag_lat', param.geotag_lat);
   formData.append('geotag_lng', param.geotag_lng);
   formData.append('taken_date', param.takenDate);
+  formData.append('city', param.city);
+  formData.append('nation', param.nation);
+  formData.append('address', param.address);
 
   console.log(formData.keys());
 

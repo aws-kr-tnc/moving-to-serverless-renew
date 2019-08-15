@@ -117,7 +117,11 @@ def insert_basic_info(user_id, filename, filename_orig, filesize, form):
                       make=form['make'],
                       model=form['model'],
                       width=form['width'],
-                      height=form['height'])
+                      height=form['height'],
+                      city=form['city'],
+                      nation=form['nation'],
+                      address=form['address'])
+
     app.logger.debug('new_photo: {0}'.format(new_photo))
     db.session.add(new_photo)
     db.session.commit()

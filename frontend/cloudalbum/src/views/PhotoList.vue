@@ -28,25 +28,50 @@
               >
                 <v-card-title
                   class="fill-height align-end"
-                  v-text="photo.title"
+                  v-text="photo.desc"
                 ></v-card-title>
               </v-img>
-              <v-card-text>
                 <div class="text--primary">
-                  well meaning and kindly.<br>
-                  "a benevolent smile"
-                </div>
-              </v-card-text>
+                  <v-chip
+                    class="ma-2"
+                    x-small
+                    color="primary"
+                    label
+                    text-color="white"
+                  >
+                    <v-icon left>mdi-tag-multiple</v-icon>
+                    TAGS
+                  </v-chip>
+                  <v-chip v-for="tag in (photo.tags.split(','))"
+                    class="ma-2"
+                    color="teal"
+                    label
+                    text-color="white"
+                    x-small
+                  >
+                    {{tag}}
+                  </v-chip>
+                </div >
 
               <v-card-actions>
                 <v-spacer></v-spacer>
-                <v-btn icon>
-                  <v-icon>mdi-map-marker-check</v-icon>
-                </v-btn>
+                <v-tooltip top>
+                  <template v-slot:activator="{ on }">
+                    <v-btn icon v-on="on" @click="showMap(photo.geotag_lat, photo.geotag_lng)">
+                      <v-icon>mdi-map-marker-check</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Show map</span>
+                </v-tooltip>
 
-                <v-btn icon>
-                  <v-icon>mdi-delete</v-icon>
-                </v-btn>
+                <v-tooltip top>
+                  <template v-slot:activator="{ on }">
+                    <v-btn icon v-on="on" @click="deleteConfirm(photo.id)">
+                      <v-icon>mdi-delete</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Delete photo</span>
+                </v-tooltip>
               </v-card-actions>
             </v-card>
           </v-flex>
@@ -64,26 +89,7 @@ export default {
   name: 'PhotoList',
 
   data: () => ({
-    photoList: [{
-      address: null,
-      city: null,
-      desc: 'undefined',
-      filename: '2c78ab7d-9cf4-49e1-a740-289fc3ee2e0c.jpg',
-      filename_orig: 'DSC07570.jpg',
-      filesize: 850996,
-      geotag_lat: 45.43472222222222,
-      geotag_lng: 12.346736111111111,
-      height: '1371',
-      id: 1,
-      make: 'SONY ',
-      model: 'DSLR-A300',
-      nation: null,
-      tags: 'undefined',
-      taken_date: '2012-07-15 09:46:46',
-      upload_date: '2019-08-13 07:25:55.770169',
-      user_id: '1',
-      width: '2048',
-    }],
+    photoList: [],
   }),
   computed: {
     ...mapGetters('Auth', [
@@ -107,11 +113,55 @@ export default {
           const blobUrl = await this.buildImgSrc(obj.id);
           return { ...obj, src: blobUrl };
         }));
-        console.log(`photosList: ${this.photoList}`);
+        // console.log(`photosList: ${this.photoList}`);
       } catch (error) {
         console.error(error);
       }
     },
+    showMap(lat, lng) {
+      console.log(lat);
+      console.log(lng);
+      this.$router.push({ name: 'map', params: { gps_lat: lat, gps_lng: lng } });
+    },
+    deleteConfirm(id) {
+      console.log(id);
+      console.log('deletePhoto loaded');
+      this.$swal({
+        title: 'Are you sure?',
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes!',
+      }).then((result) => {
+        if (result.value) {
+          this.deletePhoto(id);
+        }
+        this.$router.push({ name: 'photolist' });
+      });
+    },
+
+    async deletePhoto(id) {
+      try {
+        const resp = await service.Photo.deletePhoto(id);
+        if (resp.data.ok === true) {
+          console.log('Image deleted successfully ✨');
+          this.$swal(
+            {
+              title: 'Success!',
+              text: 'Your photo has been deleted successfully.',
+              type: 'success',
+              onClose: () => {
+                this.$router.push({ name: 'photolist' });
+              },
+            },
+          );
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    },
+
     popupAlert(resp) {
       let msg = '';
       if (resp.status === 400) msg = '400 error';
@@ -126,6 +176,7 @@ export default {
       );
     },
   },
+
   created() {
     this.getPhotos();
   },
