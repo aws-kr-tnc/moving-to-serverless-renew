@@ -7,7 +7,6 @@ import App from './App.vue';
 import router from './router';
 import store from './vuex';
 import vuetify from './plugins/vuetify';
-
 import 'leaflet/dist/leaflet.css';
 
 Vue.component('l-map', LMap);
