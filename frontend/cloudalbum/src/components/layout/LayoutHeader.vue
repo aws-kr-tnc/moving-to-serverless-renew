@@ -81,20 +81,20 @@
 
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
-        <v-btn icon v-on="on" @click="moveToList">
-          <v-icon>mdi-format-list-bulleted-square</v-icon>
-        </v-btn>
-      </template>
-      <span>List</span>
-    </v-tooltip>
-
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
         <v-btn icon v-on="on" @click="moveToUpload">
           <v-icon>mdi-cloud-upload</v-icon>
         </v-btn>
       </template>
       <span>Upload</span>
+    </v-tooltip>
+
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
+        <v-btn icon v-on="on" @click="moveToList">
+          <v-icon>mdi-format-list-bulleted-square</v-icon>
+        </v-btn>
+      </template>
+      <span>List</span>
     </v-tooltip>
 
     <v-tooltip bottom>
