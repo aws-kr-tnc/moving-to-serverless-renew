@@ -4,10 +4,32 @@
       <v-flex xs12 v-if="$route.params.gps_lat">
         <v-card height="100%" dark color="secondary">
           <v-container>
-              <l-map style="height: 550px; width: 100%" :zoom="zoom" :center="center">
-                <l-tile-layer :url="url"></l-tile-layer>
-                <l-marker :lat-lng="markerLatLng" ></l-marker>
-              </l-map>
+            <l-map style="height: 550px; width: 100%" :zoom="zoom" :center="center">
+              <l-tile-layer :url="url"></l-tile-layer>
+              <l-marker :lat-lng="markerLatLng" ></l-marker>
+            </l-map>
+          </v-container>
+          <v-container>
+            <p>{{$route.params.desc}}</p>
+            <v-chip
+              class="ma-1"
+              small
+              color="primary"
+              label
+              text-color="white"
+            >
+              <v-icon left>mdi-tag-multiple</v-icon>
+              TAGS
+            </v-chip>
+            <v-chip v-for="tag in ($route.params.tags.split(','))"
+              class="ma-1"
+              color="teal"
+              label
+              text-color="white"
+              small
+            >
+              {{tag}}
+            </v-chip>
           </v-container>
         </v-card>
       </v-flex>

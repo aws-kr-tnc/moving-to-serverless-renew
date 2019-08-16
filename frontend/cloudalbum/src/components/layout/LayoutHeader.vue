@@ -106,14 +106,14 @@
       <span>Map</span>
     </v-tooltip>
 
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
-        <v-btn icon v-on="on">
-          <v-icon>mdi-magnify</v-icon>
-        </v-btn>
-      </template>
-      <span>Search</span>
-    </v-tooltip>
+<!--    <v-tooltip bottom>-->
+<!--      <template v-slot:activator="{ on }">-->
+<!--        <v-btn icon v-on="on">-->
+<!--          <v-icon>mdi-magnify</v-icon>-->
+<!--        </v-btn>-->
+<!--      </template>-->
+<!--      <span>Search</span>-->
+<!--    </v-tooltip>-->
 
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
