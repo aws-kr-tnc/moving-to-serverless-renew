@@ -33,8 +33,8 @@
               </v-img>
                 <div class="text--primary">
                   <v-chip
-                    class="ma-2"
-                    x-small
+                    class="ma-1"
+                    small
                     color="primary"
                     label
                     text-color="white"
@@ -43,17 +43,17 @@
                     TAGS
                   </v-chip>
                   <v-chip v-for="tag in (photo.tags.split(','))"
-                    class="ma-2"
+                    class="ma-1"
                     color="teal"
                     label
                     text-color="white"
-                    x-small
+                    small
                   >
                     {{tag}}
                   </v-chip>
                 </div >
 
-              <v-card-actions>
+              <v-card-actions class="ma-0 pa-0">
                 <v-spacer></v-spacer>
                 <v-tooltip top>
                   <template v-slot:activator="{ on }">
