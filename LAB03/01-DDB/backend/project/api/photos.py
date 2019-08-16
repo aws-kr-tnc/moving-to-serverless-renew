@@ -12,9 +12,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from pathlib import Path
 from project.util.config import conf
-from project.util.file_control import email_normalize, delete, save, insert_basic_info
+from project.util.file_control import email_normalize, delete, save, insert_photo_info
 from jsonschema.exceptions import ValidationError
 import os, uuid
+
 
 authorizations = {
     'Bearer Auth': {
@@ -66,6 +67,9 @@ file_upload_parser.add_argument('height', type=str, location='form')
 file_upload_parser.add_argument('taken_date', type=str, location='form')
 file_upload_parser.add_argument('geotag_lat', type=str, location='form')
 file_upload_parser.add_argument('geotag_lng', type=str, location='form')
+file_upload_parser.add_argument('city', type=str, location='form')
+file_upload_parser.add_argument('address', type=str, location='form')
+file_upload_parser.add_argument('nation', type=str, location='form')
 
 
 @api.route('/ping')
@@ -95,21 +99,18 @@ class FileUpload(Resource):
                                           'msg': 'not supported file format:{}'.format(extension)}, 400)
 
             current_user = get_jwt_identity()
-            filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
+            photo_id = uuid.uuid4()
+            filename = secure_filename("{0}.{1}".format(photo_id, extension))
             filesize = save(form['file'], filename, current_user['email'])
 
             user_id = current_user['user_id']
-            insert_basic_info(user_id, filename, filename_orig, filesize, form)
+            insert_photo_info(user_id, filename, filesize, form)
 
-            committed = Photo.query.filter_by(user_id=user_id,
-                                              filename=filename,
-                                              filename_orig=filename_orig).first()
-
-            return make_response({'ok': True, "photo_id": committed.id}, 200)
+            return make_response({'ok': True, "photo_id": str(photo_id)}, 200)
         except Exception as e:
             app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
-            return make_response({'ok': False, 'data': {'user_id': get_jwt_identity()['user_id']}}, 500)
+            return make_response({'ok': False, 'data': {'user_id': str(user_id)}}, 500)
 
 
 @api.route('/<photo_id>/info')

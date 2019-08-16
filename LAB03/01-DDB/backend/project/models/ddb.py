@@ -1,14 +1,20 @@
+from datetime import datetime
+
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute, ListAttribute, MapAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
 
-from project.util.file_control import local_time_now
+# from project.util.file_control import local_time_now
+from tzlocal import get_localzone
+
 from project.util.config import conf
 
-
-
+def local_time_now():
+    local_tz = get_localzone()
+    return datetime.now(local_tz)
 
 class Photo(MapAttribute):
+    id= UnicodeAttribute(null=False)
     filename = UnicodeAttribute(null=False)
     tags = UnicodeAttribute(null=False)
     desc = UnicodeAttribute(null=False)
@@ -45,12 +51,13 @@ class EmailIndex(GlobalSecondaryIndex):
     email = UnicodeAttribute(hash_key=True)
 
 
+
+
+
 class User(Model):
     """
     User table for DynamoDB
     """
-
-
 
     class Meta:
         table_name = 'User'
@@ -63,12 +70,5 @@ class User(Model):
     password = UnicodeAttribute(null=False)
     photos = ListAttribute(of=Photo, null=True)
 
-    def __iter__(self):
-        for name, attr in self._get_attributes().items():
-            if isinstance(attr, MapAttribute):
-                yield name, getattr(self, name).as_dict()
-            if isinstance(attr, ListAttribute):
-                yield name, [el.as_dict() for el in getattr(self, name)]
-            else:
-                yield name, attr.serialize(getattr(self, name))
+
 

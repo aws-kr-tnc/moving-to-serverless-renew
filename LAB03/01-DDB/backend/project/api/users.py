@@ -4,7 +4,7 @@ from flask import Blueprint, request
 from flask import current_app as app
 from jsonschema import ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
-from project.models.ddb import User as ddb_user
+from project.models.ddb import User
 from flask_restplus import Api, Resource, fields
 
 from project.schemas import validate_user
@@ -59,7 +59,7 @@ class UsersList(Resource):
         try:
             data = []
 
-            for user in ddb_user.scan():
+            for user in User.scan():
                 one_user = {
                     'id': user.id,
                     'email': user.email,
@@ -85,7 +85,7 @@ class Users(Resource):
     def get(self, user_id):
         """Get a single user details"""
         try:
-            for user in ddb_user.query(hash_key=user_id):
+            for user in User.query(hash_key=user_id):
                 if user is None:
                     app.logger.error('ERROR:user_id not exist:{}'.format(user_id))
                     return m_response(False, {'user_id': user_id}, 404)
@@ -127,17 +127,18 @@ class Signup(Resource):
             exist_user = None
             email = user_data['email']
 
-            for item in ddb_user.email_index.query(email):
+            for item in User.email_index.query(email):
                 exist_user = item
 
             if not exist_user:
                 # TODO #1 : Review following code to save user information into DynamoDB
                 user_id = uuid.uuid4().hex
 
-                user = ddb_user(user_id)
+                user = User(user_id)
                 user.email = email
                 user.password = generate_password_hash(user_data['password'])
                 user.username = user_data['username']
+                user.photos = []
                 user.save()
 
                 user = {
@@ -176,7 +177,7 @@ class Signin(Resource):
             signin_data = validate_user(req_data)['data']
 
             db_user = None
-            for item in ddb_user.email_index.query(signin_data['email']):
+            for item in User.email_index.query(signin_data['email']):
                 db_user = item
 
             if db_user is None:

@@ -3,18 +3,11 @@ from PIL import Image
 from pathlib import Path
 
 from project.util.config import conf
-from project.api.models import Photo
-from project import db
-from tzlocal import get_localzone
+from project.models.ddb import User, Photo
 
-from datetime import datetime
-import os, uuid
+import os
 from datetime import datetime
 
-
-def local_time_now():
-    local_tz = get_localzone()
-    return datetime.now(local_tz)
 
 
 def email_normalize(email):
@@ -109,23 +102,35 @@ def save(upload_file, filename, email):
         raise e
 
 
-def insert_basic_info(user_id, filename, filename_orig, filesize, form):
-    new_photo = Photo(user_id=user_id,
-                      filename=filename,
-                      filename_orig=filename_orig,
-                      filesize=filesize,
-                      upload_date=datetime.today(),
-                      tags=form['tags'],
-                      desc=form['desc'],
-                      geotag_lat=form['geotag_lat'],
-                      geotag_lng=form['geotag_lng'],
-                      taken_date=datetime.strptime(form['taken_date'], "%Y:%m:%d %H:%M:%S"),
-                      make=form['make'],
-                      model=form['model'],
-                      width=form['width'],
-                      height=form['height'])
-    app.logger.debug('new_photo: {0}'.format(new_photo))
-    db.session.add(new_photo)
-    db.session.commit()
 
+def insert_photo_info(user_id, filename, filesize, form):
+    try:
+        new_photo = Photo(id=filename,
+                          filename=filename,
+                          filename_orig=form['file'].filename,
+                          filesize=filesize,
+                          upload_date=datetime.today(),
+                          tags=form['tags'],
+                          desc=form['desc'],
+                          geotag_lat=form['geotag_lat'],
+                          geotag_lng=form['geotag_lng'],
+                          taken_date=datetime.strptime(form['taken_date'], "%Y:%m:%d %H:%M:%S"),
+                          make=form['make'],
+                          model=form['model'],
+                          width=form['width'],
+                          height=form['height'],
+                          city=form['city'],
+                          nation=form['nation'],
+                          address=form['address'])
 
+        app.logger.debug('new_photo: {0}'.format(new_photo))
+
+        User(id=user_id).update(
+            actions=[
+                User.photos.set((User.photos | []).append([new_photo]))
+            ]
+        )
+
+    except Exception as e:
+        app.logger.error(e)
+        raise e

@@ -1,4 +1,3 @@
-from flask import app
 from project.util.config import conf
 from project.models.ddb import User
 
