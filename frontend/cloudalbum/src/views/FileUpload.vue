@@ -34,10 +34,10 @@
              <v-layout align-left>
               <v-chip
                 class="ma-2"
-                color="green"
                 label
                 text-color="white"
                 small
+                color="primary"
               >
                 <v-icon left>mdi-map</v-icon>
                 {{address}}
