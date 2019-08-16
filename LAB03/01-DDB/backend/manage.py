@@ -2,17 +2,16 @@ import sys
 import unittest
 
 from flask.cli import FlaskGroup
-from project import create_app, db
-from project.api.models import User
+from project import create_app
+from project.models import create_table, delete_table
 
 app = create_app()
 cli = FlaskGroup(create_app=create_app)
 
 @cli.command('recreate_db')
 def recreate_db():
-    db.drop_all()
-    db.create_all()
-    db.session.commit()
+    # delete_table()
+    create_table()
 
 
 @cli.command()
@@ -28,9 +27,9 @@ def test():
 @cli.command('seed_db')
 def seed_db():
     """Seeds the database."""
-    db.session.add(User(username='mario', email='super@mario.com', password='asdf'))
-    db.session.add(User(username='luigi', email='super@luigi.com', password='asdf'))
-    db.session.commit()
+    # db.session.add(User(username='mario', email='super@mario.com', password='asdf'))
+    # db.session.add(User(username='luigi', email='super@luigi.com', password='asdf'))
+    # db.session.commit()
 
 
 if __name__ == '__main__':
