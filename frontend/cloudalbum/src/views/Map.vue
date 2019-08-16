@@ -1,6 +1,7 @@
 <template>
   <v-container grid-list-md text-center>
     <v-layout wrap>
+      <!-- For specific photo -->
       <v-flex xs12 v-if="$route.params.gps_lat">
         <v-card height="100%" dark color="secondary">
           <v-container>
@@ -34,12 +35,13 @@
         </v-card>
       </v-flex>
 
+      <!-- For all photos -->
       <v-flex xs4 v-for="photo in photoList">
         <v-card height="100%" dark color="secondary">
           <v-container>
-              <l-map style="height: 300px; width: 100%" :zoom="zoom" :center="center">
+              <l-map style="height: 300px; width: 100%" :zoom="zoom" :center="[photo.gps_lat, photo.gps_lng]">
                 <l-tile-layer :url="url"></l-tile-layer>
-                <l-marker :lat-lng="markerLatLng" ></l-marker>
+                <l-marker :lat-lng="[photo.gps_lat, photo.gps_lng]" ></l-marker>
               </l-map>
           </v-container>
         </v-card>
@@ -81,8 +83,8 @@ export default {
         const resp = await service.Photo.photoList();
         if (resp.data.ok !== true) return;
         console.log('Photo list retrieved successfully ✨');
-        this.photoList = resp.data;
-        console.log(this.photoList);
+        console.log(resp.data.photos);
+        this.photoList = resp.data.photos;
       } catch (error) {
         console.error(error);
       }
