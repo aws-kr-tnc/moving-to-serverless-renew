@@ -76,6 +76,7 @@ def create_app(script_info=None):
     with app.app_context():
         try:
             db.create_all()
+            pass
         except Exception as e:
             app.logger.error(e)
 
@@ -94,6 +95,5 @@ def create_app(script_info=None):
     # shell context for flask cli
     @app.shell_context_processor
     def ctx():
-        return {'app': app, 'db': db}
-
+        return {'app': app}
     return app

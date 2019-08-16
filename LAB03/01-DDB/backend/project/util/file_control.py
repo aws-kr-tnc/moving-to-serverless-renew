@@ -5,10 +5,16 @@ from pathlib import Path
 from project.util.config import conf
 from project.api.models import Photo
 from project import db
+from tzlocal import get_localzone
 
 from datetime import datetime
 import os, uuid
 from datetime import datetime
+
+
+def local_time_now():
+    local_tz = get_localzone()
+    return datetime.now(local_tz)
 
 
 def email_normalize(email):
