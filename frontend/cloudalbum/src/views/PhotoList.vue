@@ -20,6 +20,7 @@
           >
             <v-card>
               <v-img
+                @click="originalSize(photo.id)"
                 ref="photos"
                 :src="photo.src"
                 class="white--text"
@@ -55,16 +56,16 @@
 
               <v-card-actions class="ma-0 pa-0">
                 <v-spacer></v-spacer>
-                <v-tooltip top>
+                <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
-                    <v-btn icon v-on="on" @click="showMap(photo.geotag_lat, photo.geotag_lng)">
+                    <v-btn icon v-on="on" @click="showMap(photo.geotag_lat, photo.geotag_lng, photo.desc, photo.tags)">
                       <v-icon>mdi-map-marker-check</v-icon>
                     </v-btn>
                   </template>
                   <span>Show map</span>
                 </v-tooltip>
 
-                <v-tooltip top>
+                <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
                     <v-btn icon v-on="on" @click="deleteConfirm(photo.id)">
                       <v-icon>mdi-delete</v-icon>
@@ -110,7 +111,7 @@ export default {
         if (resp.data.ok !== true) return;
         console.log('Photo list retrieved successfully ✨');
         this.photoList = await Promise.all(resp.data.photos.map(async (obj) => {
-          const blobUrl = await this.buildImgSrc(obj.id);
+          const blobUrl = await this.buildImgSrc(obj.id, 'thmubnail');
           return { ...obj, src: blobUrl };
         }));
         // console.log(`photosList: ${this.photoList}`);
@@ -118,10 +119,10 @@ export default {
         console.error(error);
       }
     },
-    showMap(lat, lng) {
-      console.log(lat);
-      console.log(lng);
-      this.$router.push({ name: 'map', params: { gps_lat: lat, gps_lng: lng } });
+    showMap(_lat, _lng, _desc, _tags) {
+      this.$router.push({ name: 'map',
+        params: { gps_lat: _lat, gps_lng: _lng, desc: _desc, tags: _tags },
+      });
     },
     deleteConfirm(id) {
       console.log(id);
@@ -161,7 +162,18 @@ export default {
         console.error(error);
       }
     },
+    async originalSize(id) {
+      console.log(id);
+      const blobUrl = await this.buildImgSrc(id, 'original');
 
+      this.$swal(
+        {
+          width: '95%',
+          height: '95%',
+          html: `<div><a href='${blobUrl}' target=_blank><img src='${blobUrl}' width=90%></a></div>`,
+        },
+      );
+    },
     popupAlert(resp) {
       let msg = '';
       if (resp.status === 400) msg = '400 error';

@@ -1,7 +1,7 @@
 import axiosInstance from '@/plugins/axios';
 
-const getPhotoBlob = (id) => {
-  return axiosInstance.get(`/photos/${id}?mode=thumbnail`, {
+const getPhotoBlob = (id, mode) => {
+  return axiosInstance.get(`/photos/${id}?mode=${mode}`, {
     responseType: 'blob',
     timeout: 10000,
   });
