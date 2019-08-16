@@ -37,9 +37,9 @@
       <v-flex xs4 v-for="photo in photoList">
         <v-card height="100%" dark color="secondary">
           <v-container>
-              <l-map style="height: 300px; width: 100%" :zoom="zoom" :center="center">
+              <l-map style="height: 300px; width: 100%" :zoom="zoom" :center="getCenterGps(photo.geotag_lat, photo.geotag_lng)">
                 <l-tile-layer :url="url"></l-tile-layer>
-                <l-marker :lat-lng="markerLatLng" ></l-marker>
+                <l-marker :lat-lng="getCenterGps(photo.geotag_lat, photo.geotag_lng)" ></l-marker>
               </l-map>
           </v-container>
         </v-card>
@@ -51,7 +51,6 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex';
 import service from '@/service';
 
 export default {
@@ -81,13 +80,15 @@ export default {
         const resp = await service.Photo.photoList();
         if (resp.data.ok !== true) return;
         console.log('Photo list retrieved successfully ✨');
-        this.photoList = resp.data;
+        this.photoList = resp.data.photos;
         console.log(this.photoList);
       } catch (error) {
         console.error(error);
       }
     },
+    getCenterGps(lat, lng) {
+      return [lat, lng];
+    },
   },
-
 };
 </script>
