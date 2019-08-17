@@ -209,16 +209,19 @@ class OnePhoto(Resource):
         """
         try:
             mode = request.args.get('mode')
-            email = get_jwt_identity()['email']
+            user = get_jwt_identity()
+            email = user['email']
             path = os.path.join(conf['UPLOAD_DIR'], email_normalize(email))
             full_path = Path(path)
 
-            photo = db.session.query(Photo).filter_by(id=photo_id).first()
+            photos = User.get(user['user_id']).photos
 
-            if mode == "thumbnail":
-                full_path = full_path / "thumbnails" / photo.filename
-            else:
-                full_path = full_path / photo.filename
+            for photo in photos:
+                if photo.id == photo_id:
+                    if mode == "thumbnail":
+                        full_path = full_path / "thumbnails" / photo.filename
+                    else:
+                        full_path = full_path / photo.filename
 
             with full_path.open('rb') as f:
                 contents = f.read()
