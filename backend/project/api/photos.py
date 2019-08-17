@@ -66,9 +66,7 @@ file_upload_parser.add_argument('height', type=str, location='form')
 file_upload_parser.add_argument('taken_date', type=str, location='form')
 file_upload_parser.add_argument('geotag_lat', type=str, location='form')
 file_upload_parser.add_argument('geotag_lng', type=str, location='form')
-file_upload_parser.add_argument('city', type=str, location='form')
-file_upload_parser.add_argument('nation', type=str, location='form')
-file_upload_parser.add_argument('address', type=str, location='form')
+
 
 @api.route('/ping')
 @api.doc('photos ping!')
