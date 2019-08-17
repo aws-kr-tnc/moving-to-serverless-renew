@@ -56,97 +56,90 @@
       <v-flex xs12>
         <v-card dark color="secondary">
             <v-card-text>
-              <v-form>
-
-                <v-container v-if="seen">
-                  <v-layout align-left>
-                    <v-chip
-                      class="ma-2"
-                      small
-                      color="primary"
-                      label
-                      text-color="white"
-                    >
-                      <v-icon left>mdi-tag-multiple</v-icon>
-                      EXIF
-                    </v-chip>
-
-                    <v-chip
-                      class="ma-2"
-                      small
-                      close
-                      color="teal"
-                      text-color="white"
-                      close-icon="mdi-check-circle"
-                      @click:close="addTag;"
-                    >
-                      {{country}}
-                    </v-chip>
-
-                    <v-chip
-                      class="ma-2"
-                      small
-                      close
-                      color="teal"
-                      text-color="white"
-                      close-icon="mdi-check-circle"
-                      @click:close="addTag"
-                    >
-                      {{city}}
-                    </v-chip>
-
-                    <v-chip
-                      class="ma-2"
-                      small
-                      close
-                      color="teal"
-                      text-color="white"
-                      close-icon="mdi-check-circle"
-                      @click:close="addTag"
-                    >
-                      {{make}}
-                    </v-chip>
-
-                    <v-chip
-                      class="ma-2"
-                      small
-                      close
-                      color="teal"
-                      text-color="white"
-                      close-icon="mdi-check-circle"
-                      @click:close="addTag"
-                    >
-                      {{model}}
-                    </v-chip>
-
-                    <v-chip
-                      class="ma-2"
-                      small
-                      close
-                      color="teal"
-                      text-color="white"
-                      close-icon="mdi-check-circle"
-                      @click:close="addTag"
-                    >
-                      {{width}} x {{height}}
-                    </v-chip>
-
-                  </v-layout>
-                </v-container>
-
+              <v-container v-if="seen">
+                <v-layout align-left>
+                  <v-chip
+                    class="ma-2"
+                    small
+                    color="primary"
+                    label
+                    text-color="white"
+                  >
+                    <v-icon left>mdi-tag-multiple</v-icon>
+                    EXIF
+                  </v-chip>
+                  <v-chip
+                    class="ma-2"
+                    small
+                    close
+                    color="teal"
+                    text-color="white"
+                    close-icon="mdi-check-circle"
+                    @click:close="addTag;"
+                  >
+                    {{country}}
+                  </v-chip>
+                  <v-chip
+                    class="ma-2"
+                    small
+                    close
+                    color="teal"
+                    text-color="white"
+                    close-icon="mdi-check-circle"
+                    @click:close="addTag"
+                  >
+                    {{city}}
+                  </v-chip>
+                  <v-chip
+                    class="ma-2"
+                    small
+                    close
+                    color="teal"
+                    text-color="white"
+                    close-icon="mdi-check-circle"
+                    @click:close="addTag"
+                  >
+                    {{make}}
+                  </v-chip>
+                  <v-chip
+                    class="ma-2"
+                    small
+                    close
+                    color="teal"
+                    text-color="white"
+                    close-icon="mdi-check-circle"
+                    @click:close="addTag"
+                  >
+                    {{model}}
+                  </v-chip>
+                  <v-chip
+                    class="ma-2"
+                    small
+                    close
+                    color="teal"
+                    text-color="white"
+                    close-icon="mdi-check-circle"
+                    @click:close="addTag"
+                  >
+                    {{width}} x {{height}}
+                  </v-chip>
+                </v-layout>
+              </v-container>
+              <v-form
+                ref="form"
+                lazy-validation>
                 <v-text-field
                   v-model = "tags"
-                  :rules="['Required']"
+                  :rules="requiredRule"
                   id="tags"
                   label="Tags (separated by comma)"
                   name="tags"
                   prepend-icon="mdi-tag-multiple"
                   type="text"
                 ></v-text-field>
-
                 <v-text-field
                   v-model = "description"
-                  :rules="['Required']"
+                  :rules="requiredRule"
                   id="description"
                   label="Description"
                   name="description"
@@ -168,7 +161,6 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex';
 import PictureInput from 'vue-picture-input';
 import EXIF from 'exif-js';
 import * as esri from 'esri-leaflet-geocoder';
@@ -180,8 +172,6 @@ export default {
     return {
       url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
       zoom: 14,
-      // center: [45.43163333333333, 12.320180555555556],
-      // markerLatLng: [45.43163333333333, 12.320180555555556],
       exifObj: {},
       tags: '',
       description: '',
@@ -193,12 +183,10 @@ export default {
       make: '',
       width: '',
       height: '',
+      requiredRule: [v => !!v || 'Required!'],
     };
   },
   computed: {
-    ...mapGetters('Auth', [
-      'isAuthenticated',
-    ]),
     latitude() {
       let result;
       try {
@@ -301,11 +289,11 @@ export default {
             service.Photo.gpsConverter(exif.GPSLongitude, exif.GPSLongitudeRef),
           ])
           .run((error, result, response) => {
-            console.log(result)
+            console.log(result);
             this.address = result.address.LongLabel;
             this.city = result.address.City;
             this.country = result.address.CountryCode;
-            //Additional information assign from EXIF.
+            // Additional information assign from EXIF.
             this.make = exif.Make;
             this.model = exif.Model;
             this.width = exif.PixelXDimension;
@@ -339,7 +327,7 @@ export default {
       return param;
     },
     isValide() {
-      if (this.tags.length === 0 || this.description.length === 0 || this.$refs.pictureInput.file === undefined) {
+      if (!this.$refs.form.validate() || !this.$refs.pictureInput.file) {
         this.$swal(
           {
             title: 'Please insert your tags and description',
