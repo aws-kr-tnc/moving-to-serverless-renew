@@ -13,7 +13,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from pathlib import Path
 from project.util.config import conf
 from project.util.file_control import email_normalize, delete, save, insert_photo_info
-from project.models.ddb import User
+from project.models.ddb import User, photo_deserialize
 import os, uuid
 
 authorizations = {
@@ -112,6 +112,8 @@ class FileUpload(Resource):
             return make_response({'ok': False, 'data': {'user_id': str(user_id)}}, 500)
 
 
+
+
 @api.route('')
 class List(Resource):
     @api.doc(
@@ -133,7 +135,7 @@ class List(Resource):
             }
 
             for photo in photos:
-                data['photos'].append(dict(photo))
+                data['photos'].append(photo_deserialize(photo))
 
             app.logger.debug("success:photos_list:%s" % data)
             return m_response(True, data, 200)

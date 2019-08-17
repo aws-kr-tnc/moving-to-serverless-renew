@@ -12,16 +12,39 @@ def local_time_now():
     local_tz = get_localzone()
     return datetime.now(local_tz)
 
+def photo_deserialize(photo):
+    photo_json = {}
+    photo_json['id'] = photo.id
+    photo_json['filename'] = photo.filename
+    photo_json['filename_orig'] = photo.filename_orig
+    photo_json['filesize'] = photo.filesize
+    photo_json['upload_date'] = photo.upload_date
+    photo_json['tags'] = photo.tags
+    photo_json['desc'] = photo.desc
+    photo_json['geotag_lat'] = photo.geotag_lat
+    photo_json['geotag_lng'] = photo.geotag_lng
+    photo_json['taken_date'] = photo.taken_date
+    photo_json['make'] = photo.make
+    photo_json['model'] = photo.model
+    photo_json['width'] = photo.width
+    photo_json['height'] = photo.height
+    photo_json['city'] = photo.city
+    photo_json['nation'] = photo.nation
+    photo_json['address'] = photo.address
+    return photo_json
+
+
 class Photo(MapAttribute):
     id= UnicodeAttribute(null=False)
     filename = UnicodeAttribute(null=False)
-    tags = UnicodeAttribute(null=False)
-    desc = UnicodeAttribute(null=False)
     filename_orig = UnicodeAttribute(null=False)
-    filesize = NumberAttribute(null=True)
+    filesize = NumberAttribute(null=False)
+    upload_date = UTCDateTimeAttribute(default=local_time_now())
+
+    tags = UnicodeAttribute(null=True)
+    desc = UnicodeAttribute(null=True)
     geotag_lat = UnicodeAttribute(null=True)
     geotag_lng = UnicodeAttribute(null=True)
-    upload_date = UTCDateTimeAttribute(default=local_time_now())
     taken_date = UTCDateTimeAttribute(default=local_time_now())
     make = UnicodeAttribute(null=True)
     model = UnicodeAttribute(null=True)
@@ -30,20 +53,6 @@ class Photo(MapAttribute):
     city = UnicodeAttribute(null=True)
     nation = UnicodeAttribute(null=True)
     address = UnicodeAttribute(null=True)
-
-    def __iter__(self):
-        for name, attr in self.get_attributes().items():
-            if isinstance(attr, MapAttribute):
-                if getattr(self, name):
-                    yield name, getattr(self, name).as_dict()
-            elif isinstance(attr, UTCDateTimeAttribute):
-                if getattr(self, name):
-                    yield name, attr.serialize(getattr(self, name))
-            elif isinstance(attr, NumberAttribute):
-                # if numeric return value as is.
-                yield name, getattr(self, name)
-            else:
-                yield name, attr.serialize(getattr(self, name))
 
 
 class EmailIndex(GlobalSecondaryIndex):
@@ -79,16 +88,16 @@ class User(Model):
     password = UnicodeAttribute(null=False)
     photos = ListAttribute(of=Photo, null=True)
 
-    def __iter__(self):
-        for name, attr in self.get_attributes().items():
-            if isinstance(attr, MapAttribute):
-                if getattr(self, name):
-                    yield name, getattr(self, name).as_dict()
-            elif isinstance(attr, UTCDateTimeAttribute):
-                if getattr(self, name):
-                    yield name, attr.serialize(getattr(self, name))
-            elif isinstance(attr, NumberAttribute):
-                # if numeric return value as is.
-                yield name, getattr(self, name)
-            else:
-                yield name, attr.serialize(getattr(self, name))
+    # def __iter__(self):
+    #     for name, attr in self.get_attributes().items():
+    #         if isinstance(attr, MapAttribute):
+    #             if getattr(self, name):
+    #                 yield name, getattr(self, name).as_dict()
+    #         elif isinstance(attr, UTCDateTimeAttribute):
+    #             if getattr(self, name):
+    #                 yield name, attr.serialize(getattr(self, name))
+    #         elif isinstance(attr, NumberAttribute):
+    #             # if numeric return value as is.
+    #             yield name, getattr(self, name)
+    #         else:
+    #             yield name, attr.serialize(getattr(self, name))
