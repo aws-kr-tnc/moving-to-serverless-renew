@@ -88,7 +88,6 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex';
 import service from '@/service';
 import MapDialog from '@/components/map/MapDialog';
 
@@ -105,13 +104,7 @@ export default {
     mapDialogDesc: '',
     mapDialogTags: '',
   }),
-  computed: {
-    ...mapGetters('Auth', [
-      'isAuthenticated',
-    ]),
-  },
   methods: {
-    ...mapActions('Auth', ['getTokens']),
     async buildImgSrc(id) {
       const res = await service.Photo.getPhotoBlob(id);
       const blobImgUrl = URL.createObjectURL(res.data);
@@ -182,7 +175,6 @@ export default {
     async originalSize(id) {
       console.log(id);
       const blobUrl = await this.buildImgSrc(id, 'original');
-
       this.$swal(
         {
           width: '95%',
@@ -205,7 +197,6 @@ export default {
       );
     },
   },
-
   created() {
     this.getPhotos();
   },
