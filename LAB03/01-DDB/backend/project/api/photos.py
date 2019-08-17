@@ -1,7 +1,5 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
-from project import db
-from project.api.models import Photo
 
 from project.util.response import m_response
 from werkzeug.datastructures import FileStorage
@@ -13,7 +11,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from pathlib import Path
 from project.util.config import conf
 from project.util.file_control import email_normalize, delete, save, insert_photo_info
-from project.models.ddb import User, photo_deserialize
+from project.db.model_ddb import User, photo_deserialize
 import os, uuid
 
 authorizations = {
@@ -90,26 +88,26 @@ class FileUpload(Resource):
             app.logger.debug(dir(file_upload_parser))
             form = file_upload_parser.parse_args()
             filename_orig = form['file'].filename
-
             extension = (filename_orig.rsplit('.', 1)[1]).lower()
+
             if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
                 app.logger.error('ERROR:file format is not supported:{0}'.format(filename_orig))
                 return m_response(False, {'filename': filename_orig,
                                           'msg': 'not supported file format:{}'.format(extension)}, 400)
 
             current_user = get_jwt_identity()
-            photo_id = uuid.uuid4()
+            photo_id = str(uuid.uuid4())
             filename = secure_filename("{0}.{1}".format(photo_id, extension))
             filesize = save(form['file'], filename, current_user['email'])
-
             user_id = current_user['user_id']
+
             insert_photo_info(user_id, filename, filesize, form)
 
-            return make_response({'ok': True, "photo_id": str(photo_id)}, 200)
+            return make_response({'ok': True, "photo_id": photo_id}, 200)
         except Exception as e:
             app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
-            return make_response({'ok': False, 'data': {'user_id': str(user_id)}}, 500)
+            return make_response({'ok': False, 'data': {'user_id': get_jwt_identity()['user_id']}}, 500)
 
 
 
@@ -183,9 +181,9 @@ class OnePhoto(Resource):
                 else:
                     raise FileNotFoundError
 
+        except FileNotFoundError as e:
             app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
             return m_response(False, {'photo_id': photo_id}, 404)
-
         except Exception as e:
             app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
             app.logger.error(e)
@@ -235,4 +233,3 @@ class OnePhoto(Resource):
             app.logger.error(e)
             return 'http://placehold.it/400x300'
 
-# photo edit

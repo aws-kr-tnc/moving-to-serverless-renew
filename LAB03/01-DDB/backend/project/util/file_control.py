@@ -3,7 +3,7 @@ from PIL import Image
 from pathlib import Path
 
 from project.util.config import conf
-from project.models.ddb import User, Photo
+from project.db.model_ddb import User, Photo, photo_deserialize
 
 import os
 from datetime import datetime
@@ -123,7 +123,7 @@ def insert_photo_info(user_id, filename, filesize, form):
                           nation=form['nation'],
                           address=form['address'])
 
-        app.logger.debug('new_photo: {0}'.format(new_photo))
+        app.logger.debug('new_photo: {0}'.format(photo_deserialize(new_photo)))
 
         User(id=user_id).update(
             actions=[
