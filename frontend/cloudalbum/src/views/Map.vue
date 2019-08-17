@@ -16,7 +16,7 @@
           <v-flex xs12 v-if="$route.params.gps_lat">
             <v-card height="100%" dark color="secondary">
               <v-container>
-                <l-map style="height: 550px; width: 100%" :zoom="zoom" :center="center">
+                <l-map class="mapCards" :zoom="zoom" :center="center">
                   <l-tile-layer :url="url"></l-tile-layer>
                   <l-marker :lat-lng="markerLatLng" ></l-marker>
                 </l-map>
@@ -50,7 +50,7 @@
           <v-flex xs4 v-for="photo in photoList">
             <v-card class="ma-0">
               <v-container>
-                <l-map style="height: 300px; width: 100%" :zoom="zoom" :center="getCenterGps(photo.geotag_lat, photo.geotag_lng)">
+                <l-map style="height: 300px; width: 100%; z-index: 0;" :zoom="zoom" :center="getCenterGps(photo.geotag_lat, photo.geotag_lng)">
                   <l-tile-layer :url="url"></l-tile-layer>
                   <l-marker :lat-lng="getCenterGps(photo.geotag_lat, photo.geotag_lng)" ></l-marker>
                 </l-map>
@@ -136,3 +136,10 @@ export default {
   },
 };
 </script>
+<style scoped>
+  .mapCards {
+    height: 300px;
+    width: 100%;
+    z-index: 0;
+  }
+</style>
