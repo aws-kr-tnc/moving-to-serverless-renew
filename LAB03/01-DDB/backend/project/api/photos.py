@@ -113,57 +113,7 @@ class FileUpload(Resource):
             return make_response({'ok': False, 'data': {'user_id': str(user_id)}}, 500)
 
 
-@api.route('/<photo_id>/info')
-@api.doc('upload a photo information with photo_id')
-class InfoUpload(Resource):
-    @api.doc(responses={200: 'success photo information upload',
-                        500: 'internal server error'})
-    @api.expect(photo_info)
-    @jwt_required
-    def post(self, photo_id):
-        """update photo additional information"""
-        infos_column = ['tags', 'desc', 'model', 'geotag_lat', 'geotag_lng', 'make',
-                        'width', 'height', 'city', 'nation', 'address']
-        body = request.get_json()
-        try:
-            valid_data = validate_photo_info(body)['data']
-
-            photo = Photo.query.filter_by(id=photo_id).first()
-
-            for key in infos_column:
-                if key not in valid_data.keys():
-                    valid_data[key] = None
-
-            photo.taken_date = datetime.strptime(valid_data['taken_date'], "%Y:%m:%d %H:%M:%S")
-
-            photo.id = photo_id
-            photo.tags = valid_data['tags']
-            photo.desc = valid_data['desc']
-            photo.geotag_lat = valid_data['geotag_lat']
-            photo.geotag_lng = valid_data['geotag_lng']
-            photo.make = valid_data['make']
-            photo.model = valid_data['model']
-            photo.width = valid_data['width']
-            photo.height = valid_data['height']
-            photo.city = valid_data['city']
-            photo.nation = valid_data['nation']
-            photo.address = valid_data['address']
-
-            db.session.add(photo)
-            db.session.commit()
-            app.logger.debug('success:photo info update:{}'.format(valid_data))
-            return m_response(True, {'photo_id': photo_id, 'infos': valid_data}, 200)
-        except ValidationError as e:
-            app.logger.error('ERROR:wrong photo information format :{}'.format(body))
-            app.logger.error(e)
-            return m_response(False, {'photo_id': photo_id, 'msg': 'information format wrong', 'body': body}, 500)
-        except Exception as e:
-            app.logger.error('ERROR:photo info update failed:{}'.format(body))
-            app.logger.error(e)
-            return m_response(False, {'photo_id': photo_id, 'msg': e, 'body': body}, 500)
-
-
-@api.route('/')
+@api.route('')
 class List(Resource):
     @api.doc(
         responses=
