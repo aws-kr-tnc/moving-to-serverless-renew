@@ -162,7 +162,7 @@ class InfoUpload(Resource):
             return m_response(False, {'photo_id': photo_id, 'msg': e, 'body': body}, 500)
 
 
-@api.route('')
+@api.route('/')
 class List(Resource):
     @api.doc(
         responses=
@@ -175,7 +175,8 @@ class List(Resource):
     def get(self):
         """Get all photos as list"""
         try:
-            photos = [photo.to_json() for photo in Photo.query.all()]
+            user_id = get_jwt_identity()['user_id']
+            photos = [photo.to_json() for photo in Photo.query.filter_by(user_id=user_id)]
             data = {
                 'photos': photos
             }
