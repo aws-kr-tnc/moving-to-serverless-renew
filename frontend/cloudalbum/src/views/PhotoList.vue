@@ -135,13 +135,11 @@ export default {
         cancelButtonColor: '#d33',
         confirmButtonText: 'Yes!',
       }).then((result) => {
-        if (result.value) {
-          this.deletePhoto(id);
-        }
-        this.$router.push({ name: 'photolist' });
+        if (!result.value) return;
+        this.deletePhoto(id);
+        this.getPhotos();
       });
     },
-
     async deletePhoto(id) {
       try {
         const resp = await service.Photo.deletePhoto(id);
@@ -152,9 +150,6 @@ export default {
               title: 'Success!',
               text: 'Your photo has been deleted successfully.',
               type: 'success',
-              onClose: () => {
-                this.$router.push({ name: 'photolist' });
-              },
             },
           );
         }
