@@ -188,6 +188,7 @@ export default {
   },
   computed: {
     latitude() {
+      if (JSON.stringify(this.exifObj) === JSON.stringify({})) return 45.43163333333333;
       let result;
       try {
         result = service.Photo.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
@@ -198,6 +199,7 @@ export default {
       return result;
     },
     longitude() {
+      if (JSON.stringify(this.exifObj) === JSON.stringify({})) return 12.320180555555556;
       let result;
       try {
         result = service.Photo.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
@@ -208,9 +210,6 @@ export default {
       return result;
     },
     center() {
-      if (JSON.stringify(this.exifObj) === JSON.stringify({})) {
-        return [45.43163333333333, 12.320180555555556];
-      }
       return [this.latitude, this.longitude];
     },
     markerLatLng() {
