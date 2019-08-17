@@ -103,35 +103,24 @@ def save(upload_file, filename, email):
 
 
 
-def insert_photo_info(user_id, filename, filesize, form):
-    try:
-        new_photo = Photo(id=filename,
-                          filename=filename,
-                          filename_orig=form['file'].filename,
-                          filesize=filesize,
-                          upload_date=datetime.today(),
-                          tags=form['tags'],
-                          desc=form['desc'],
-                          geotag_lat=form['geotag_lat'],
-                          geotag_lng=form['geotag_lng'],
-                          taken_date=datetime.strptime(form['taken_date'], "%Y:%m:%d %H:%M:%S"),
-                          make=form['make'],
-                          model=form['model'],
-                          width=form['width'],
-                          height=form['height'],
-                          city=form['city'],
-                          nation=form['nation'],
-                          address=form['address'])
+def create_photo_info(filename, filesize, form):
+    new_photo = Photo(id=filename,
+                      filename=filename,
+                      filename_orig=form['file'].filename,
+                      filesize=filesize,
+                      upload_date=datetime.today(),
+                      tags=form['tags'],
+                      desc=form['desc'],
+                      geotag_lat=form['geotag_lat'],
+                      geotag_lng=form['geotag_lng'],
+                      taken_date=datetime.strptime(form['taken_date'], "%Y:%m:%d %H:%M:%S"),
+                      make=form['make'],
+                      model=form['model'],
+                      width=form['width'],
+                      height=form['height'],
+                      city=form['city'],
+                      nation=form['nation'],
+                      address=form['address'])
 
-        app.logger.debug('new_photo: {0}'.format(photo_deserialize(new_photo)))
-
-        User(id=user_id).update(
-            actions=[
-                User.photos.set((User.photos | []).append([new_photo]))
-            ]
-        )
-
-    except Exception as e:
-        app.logger.error(e)
-        print(e.__cause__)
-        raise e
+    app.logger.debug('new_photo: {0}'.format(photo_deserialize(new_photo)))
+    return new_photo

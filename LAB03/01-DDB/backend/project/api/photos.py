@@ -10,8 +10,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from pathlib import Path
 from project.util.config import conf
-from project.util.file_control import email_normalize, delete, save, insert_photo_info
+from project.util.file_control import email_normalize, delete, save, create_photo_info
 from project.db.model_ddb import User, photo_deserialize
+from project.solution.solution import put_photo_info_ddb, delete_photo_from_ddb
 import os, uuid
 
 authorizations = {
@@ -101,7 +102,9 @@ class FileUpload(Resource):
             filesize = save(form['file'], filename, current_user['email'])
             user_id = current_user['user_id']
 
-            insert_photo_info(user_id, filename, filesize, form)
+            new_photo = create_photo_info(filename, filesize, form)
+            ## TODO 3: Update photo information into User table
+            put_photo_info_ddb(user_id, new_photo)
 
             return make_response({'ok': True, "photo_id": photo_id}, 200)
         except Exception as e:
@@ -167,13 +170,9 @@ class OnePhoto(Resource):
 
                 filename = photo.filename
                 file_deleted = delete(filename, user['email'])
-                photos.remove(photo)
 
-                User(id=user['user_id']).update(
-                    actions=[
-                        User.photos.set(photos)
-                    ]
-                )
+                ## TODO 4: Review how to delete a photo from Photos which is a list
+                delete_photo_from_ddb(user, photos, photo)
 
                 if file_deleted:
                     app.logger.error("success:photo deleted: photo_id:{}".format(photo_id))
