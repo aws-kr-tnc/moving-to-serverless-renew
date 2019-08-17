@@ -42,7 +42,9 @@
                     <v-icon left>mdi-tag-multiple</v-icon>
                     TAGS
                   </v-chip>
-                  <v-chip v-for="tag in (photo.tags.split(','))"
+                  <v-chip
+                    v-for="(tag, index) in (photo.tags.split(','))"
+                    :key="index"
                     class="ma-1"
                     color="teal"
                     label
@@ -56,7 +58,10 @@
                 <v-spacer></v-spacer>
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
-                    <v-btn icon v-on="on" @click="showMap(photo.geotag_lat, photo.geotag_lng, photo.desc, photo.tags)">
+                    <v-btn
+                      icon v-on="on"
+                      @click="showMap(photo.geotag_lat, photo.geotag_lng, photo.desc, photo.tags)"
+                    >
                       <v-icon>mdi-map-marker-check</v-icon>
                     </v-btn>
                   </template>
@@ -107,8 +112,7 @@ export default {
   methods: {
     async buildImgSrc(id) {
       const res = await service.Photo.getPhotoBlob(id);
-      const blobImgUrl = URL.createObjectURL(res.data);
-      return blobImgUrl;
+      return URL.createObjectURL(res.data);
     },
     async getPhotos() {
       console.log('Get photo list..');
@@ -120,7 +124,6 @@ export default {
           const blobUrl = await this.buildImgSrc(obj.id, 'thmubnail');
           return { ...obj, src: blobUrl };
         }));
-        // console.log(`photosList: ${this.photoList}`);
       } catch (error) {
         console.error(error);
       }
@@ -179,7 +182,11 @@ export default {
         {
           width: '95%',
           height: '95%',
-          html: `<div><a href='${blobUrl}' target=_blank><img src='${blobUrl}' width=90%></a></div>`,
+          html: `<div>
+                   <a href='${blobUrl}' target=_blank>
+                     <img src='${blobUrl}' width=90%>
+                   </a>
+                 </div>`,
         },
       );
     },
