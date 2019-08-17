@@ -1,7 +1,6 @@
 <template>
   <v-container grid-list-md text-center>
     <v-layout wrap>
-
       <v-flex xs12>
         <v-card dark color="secondary">
           <v-container>
@@ -23,13 +22,16 @@
           </v-container>
         </v-card>
       </v-flex>
-
       <v-flex xs12>
         <v-card dark color="secondary">
           <v-container v-if="seen">
-              <l-map style="height: 305px; width: 100%" :zoom="zoom" :center="center">
+              <l-map
+                class="l-map"
+                :zoom="zoom"
+                :center="center"
+              >
                 <l-tile-layer :url="url"></l-tile-layer>
-                <l-marker :lat-lng="markerLatLng" ></l-marker>
+                <l-marker :lat-lng="center" ></l-marker>
               </l-map>
              <v-layout align-left>
               <v-chip
@@ -43,16 +45,9 @@
                 {{address}}
               </v-chip>
              </v-layout>
-
           </v-container>
-<!--          <v-container v-if="seen === false">-->
-<!--            <div style="border: 1px solid gray; padding: 10px; height: 350px; overflow: auto;">-->
-<!--              MAP-->
-<!--            </div>-->
-<!--          </v-container>-->
         </v-card>
       </v-flex>
-
       <v-flex xs12>
         <v-card dark color="secondary">
             <v-card-text>
@@ -75,7 +70,6 @@
                     color="teal"
                     text-color="white"
                     close-icon="mdi-check-circle"
-                    @click:close="addTag;"
                   >
                     {{country}}
                   </v-chip>
@@ -86,7 +80,6 @@
                     color="teal"
                     text-color="white"
                     close-icon="mdi-check-circle"
-                    @click:close="addTag"
                   >
                     {{city}}
                   </v-chip>
@@ -97,7 +90,6 @@
                     color="teal"
                     text-color="white"
                     close-icon="mdi-check-circle"
-                    @click:close="addTag"
                   >
                     {{make}}
                   </v-chip>
@@ -108,7 +100,6 @@
                     color="teal"
                     text-color="white"
                     close-icon="mdi-check-circle"
-                    @click:close="addTag"
                   >
                     {{model}}
                   </v-chip>
@@ -119,7 +110,6 @@
                     color="teal"
                     text-color="white"
                     close-icon="mdi-check-circle"
-                    @click:close="addTag"
                   >
                     {{width}} x {{height}}
                   </v-chip>
@@ -159,15 +149,19 @@
     </v-layout>
   </v-container>
 </template>
-
 <script>
 import PictureInput from 'vue-picture-input';
 import EXIF from 'exif-js';
 import * as esri from 'esri-leaflet-geocoder';
 import service from '@/service';
 
+const photoApi = service.Photo;
+
 export default {
   name: 'FileUpload',
+  components: {
+    PictureInput,
+  },
   data() {
     return {
       url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
@@ -188,23 +182,23 @@ export default {
   },
   computed: {
     latitude() {
-      if (JSON.stringify(this.exifObj) === JSON.stringify({})) return 45.43163333333333;
+      if (JSON.stringify(this.exifObj) === JSON.stringify({})) return 0;
       let result;
       try {
-        result = service.Photo.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
+        result = photoApi.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
       } catch (e) {
-        console.log(e);
+        console.error(e);
         this.noLatLng();
       }
       return result;
     },
     longitude() {
-      if (JSON.stringify(this.exifObj) === JSON.stringify({})) return 12.320180555555556;
+      if (JSON.stringify(this.exifObj) === JSON.stringify({})) return 0;
       let result;
       try {
-        result = service.Photo.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
+        result = photoApi.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
       } catch (e) {
-        console.log(e);
+        console.error(e);
         this.noLatLng();
       }
       return result;
@@ -212,30 +206,25 @@ export default {
     center() {
       return [this.latitude, this.longitude];
     },
-    markerLatLng() {
-      return this.center;
-    },
-  },
-  components: {
-    PictureInput,
   },
   methods: {
     onChange() {
       console.log('New picture loaded');
       const self = this;
-      if (this.$refs.pictureInput.file) {
+      try {
+        if (!this.$refs.pictureInput.file) throw new Error('Old browser. No support for Filereader API');
         EXIF.getData(this.$refs.pictureInput.file, function () {
-          console.log(self);
-          console.log(this.exifdata);
           self.exifObj = this.exifdata;
           if (Object.keys(self.exifObj).length === 0) {
             self.popupNoExif();
+            self.seen = false;
+            return;
           }
           self.reverseGeocoding(this.exifdata);
           self.seen = true;
         });
-      } else {
-        console.log('Old browser. No support for Filereader API');
+      } catch (error) {
+        console.error(error);
       }
     },
     removeImage() {
@@ -249,19 +238,18 @@ export default {
       console.log('Attempting uploading..');
       const params = this.makeParam();
       try {
-        const resp = await service.Photo.fileUpload(this.$refs.pictureInput.file, 'file', params);
-        if (resp.data.ok === true) {
-          console.log('Image uploaded successfully ✨');
-          this.$swal(
-            {
-              title: 'Upload completed!',
-              type: 'success',
-              onClose: () => {
-                this.$router.push({ name: 'photolist' });
-              },
+        const resp = await photoApi.fileUpload(this.$refs.pictureInput.file, 'file', params);
+        if (resp.data.ok !== true) throw new Error(resp);
+        console.log('Image uploaded successfully ✨');
+        this.$swal(
+          {
+            title: 'Upload completed!',
+            type: 'success',
+            onClose: () => {
+              this.$router.push({ name: 'photolist' });
             },
-          );
-        }
+          },
+        );
       } catch (error) {
         console.error(error);
       }
@@ -284,10 +272,10 @@ export default {
       try {
         esri.reverseGeocode()
           .latlng([
-            service.Photo.gpsConverter(exif.GPSLatitude, exif.GPSLatitudeRef),
-            service.Photo.gpsConverter(exif.GPSLongitude, exif.GPSLongitudeRef),
+            photoApi.gpsConverter(exif.GPSLatitude, exif.GPSLatitudeRef),
+            photoApi.gpsConverter(exif.GPSLongitude, exif.GPSLongitudeRef),
           ])
-          .run((error, result, response) => {
+          .run((error, result) => {
             console.log(result);
             this.address = result.address.LongLabel;
             this.city = result.address.City;
@@ -299,12 +287,10 @@ export default {
             this.height = exif.PixelYDimension;
             this.tags = `${this.country}, ${this.city}, ${this.exifObj.Make}, ${this.exifObj.Model}, ${this.width} x ${this.height}`;
           });
-      } catch {
+      } catch (error) {
+        console.error(error);
         this.noLatLng();
       }
-    },
-    addTag(tag) {
-      console.log(tag);
     },
     makeParam() {
       const param = {};
@@ -312,8 +298,8 @@ export default {
       param.model = this.exifObj.Model;
       param.width = this.exifObj.PixelXDimension;
       param.height = this.exifObj.PixelYDimension;
-      param.geotag_lat = service.Photo.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
-      param.geotag_lng = service.Photo.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
+      param.geotag_lat = photoApi.gpsConverter(this.exifObj.GPSLatitude, this.exifObj.GPSLatitudeRef);
+      param.geotag_lng = photoApi.gpsConverter(this.exifObj.GPSLongitude, this.exifObj.GPSLongitudeRef);
       param.takenDate = this.exifObj.DateTimeOriginal;
       param.tags = this.tags;
       param.desc = this.description;
@@ -339,23 +325,13 @@ export default {
     },
     noLatLng() {
       console.log('This image has no GPS information!');
-      // this.$swal(
-      //   {
-      //     title: 'WARNING',
-      //     text: 'This image has no GPS information!',
-      //     type: 'warning',
-      //     onClose: () => {
-      //       this.$router.push({ name: 'upload' });
-      //     },
-      //   },
-      // );
     },
   },
 };
-
 </script>
-
-
 <style scoped>
-
+.l-map {
+  height: 305px;
+  width: 100%;
+}
 </style>
