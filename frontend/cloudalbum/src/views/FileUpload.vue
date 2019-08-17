@@ -183,7 +183,7 @@ export default {
       // center: [45.43163333333333, 12.320180555555556],
       // markerLatLng: [45.43163333333333, 12.320180555555556],
       exifObj: {},
-      // tags: '',
+      tags: '',
       description: '',
       seen: false,
       address: '',
@@ -227,10 +227,6 @@ export default {
     },
     markerLatLng() {
       return this.center;
-    },
-    tags() {
-      if (JSON.stringify(this.exifObj) === JSON.stringify({})) return '';
-      return `${this.country}, ${this.city}, ${this.exifObj.Make}, ${this.exifObj.Model}`;
     },
   },
   components: {
@@ -314,6 +310,7 @@ export default {
             this.model = exif.Model;
             this.width = exif.PixelXDimension;
             this.height = exif.PixelYDimension;
+            this.tags = `${this.country}, ${this.city}, ${this.exifObj.Make}, ${this.exifObj.Model}, ${this.width} x ${this.height}`;
           });
       } catch {
         this.noLatLng();
