@@ -16,7 +16,6 @@ from project.util.file_control import email_normalize, delete, save, insert_phot
 from project.models.ddb import User
 import os, uuid
 
-
 authorizations = {
     'Bearer Auth': {
         'type': 'apiKey',
@@ -159,25 +158,32 @@ class OnePhoto(Resource):
     def delete(self, photo_id):
         """one photo delete"""
         try:
-            db_photo = Photo.query.filter_by(id=photo_id).first()
-
-            if db_photo is None:
-                app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
-                return m_response(False, {'photo_id': photo_id}, 404)
-
-            filename = db_photo.filename
-
-            db.session.delete(db_photo)
-            db.session.commit()
-
             user = get_jwt_identity()
-            file_deleted = delete(filename, user['email'])
+            photos = User.get(user['user_id']).photos
 
-            if file_deleted:
-                app.logger.error("success:photo deleted: photo_id:{}".format(photo_id))
-                return m_response(True, {'photo_id': photo_id}, 200)
-            else:
-                raise FileNotFoundError
+            for photo in photos:
+                if photo.id != photo_id:
+                    continue
+
+                filename = photo.filename
+                file_deleted = delete(filename, user['email'])
+                photos.remove(photo)
+
+                User(id=user['user_id']).update(
+                    actions=[
+                        User.photos.set(photos)
+                    ]
+                )
+
+                if file_deleted:
+                    app.logger.error("success:photo deleted: photo_id:{}".format(photo_id))
+                    return m_response(True, {'photo_id': photo_id}, 200)
+                else:
+                    raise FileNotFoundError
+
+            app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
+            return m_response(False, {'photo_id': photo_id}, 404)
+
         except Exception as e:
             app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
             app.logger.error(e)
