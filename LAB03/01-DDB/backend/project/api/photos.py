@@ -2,20 +2,19 @@ from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
 from project import db
 from project.api.models import Photo
-from datetime import datetime
+
 from project.util.response import m_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
-from project.schemas import validate_photo_info
+
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from pathlib import Path
 from project.util.config import conf
 from project.util.file_control import email_normalize, delete, save, insert_photo_info
-from jsonschema.exceptions import ValidationError
+from project.models.ddb import User, photo_deserialize
 import os, uuid
-
 
 authorizations = {
     'Bearer Auth': {
@@ -113,57 +112,9 @@ class FileUpload(Resource):
             return make_response({'ok': False, 'data': {'user_id': str(user_id)}}, 500)
 
 
-@api.route('/<photo_id>/info')
-@api.doc('upload a photo information with photo_id')
-class InfoUpload(Resource):
-    @api.doc(responses={200: 'success photo information upload',
-                        500: 'internal server error'})
-    @api.expect(photo_info)
-    @jwt_required
-    def post(self, photo_id):
-        """update photo additional information"""
-        infos_column = ['tags', 'desc', 'model', 'geotag_lat', 'geotag_lng', 'make',
-                        'width', 'height', 'city', 'nation', 'address']
-        body = request.get_json()
-        try:
-            valid_data = validate_photo_info(body)['data']
-
-            photo = Photo.query.filter_by(id=photo_id).first()
-
-            for key in infos_column:
-                if key not in valid_data.keys():
-                    valid_data[key] = None
-
-            photo.taken_date = datetime.strptime(valid_data['taken_date'], "%Y:%m:%d %H:%M:%S")
-
-            photo.id = photo_id
-            photo.tags = valid_data['tags']
-            photo.desc = valid_data['desc']
-            photo.geotag_lat = valid_data['geotag_lat']
-            photo.geotag_lng = valid_data['geotag_lng']
-            photo.make = valid_data['make']
-            photo.model = valid_data['model']
-            photo.width = valid_data['width']
-            photo.height = valid_data['height']
-            photo.city = valid_data['city']
-            photo.nation = valid_data['nation']
-            photo.address = valid_data['address']
-
-            db.session.add(photo)
-            db.session.commit()
-            app.logger.debug('success:photo info update:{}'.format(valid_data))
-            return m_response(True, {'photo_id': photo_id, 'infos': valid_data}, 200)
-        except ValidationError as e:
-            app.logger.error('ERROR:wrong photo information format :{}'.format(body))
-            app.logger.error(e)
-            return m_response(False, {'photo_id': photo_id, 'msg': 'information format wrong', 'body': body}, 500)
-        except Exception as e:
-            app.logger.error('ERROR:photo info update failed:{}'.format(body))
-            app.logger.error(e)
-            return m_response(False, {'photo_id': photo_id, 'msg': e, 'body': body}, 500)
 
 
-@api.route('/')
+@api.route('')
 class List(Resource):
     @api.doc(
         responses=
@@ -176,12 +127,18 @@ class List(Resource):
     def get(self):
         """Get all photos as list"""
         try:
-            photos = [photo.to_json() for photo in Photo.query.all()]
+            user = get_jwt_identity()
+            photos = User.get(user['user_id']).photos
+
             data = {
-                'photos': photos
+                'photos': []
             }
+
+            for photo in photos:
+                data['photos'].append(photo_deserialize(photo))
+
             app.logger.debug("success:photos_list:%s" % data)
-            return m_response(True, data['photos'], 200)
+            return m_response(True, data, 200)
 
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
@@ -203,25 +160,32 @@ class OnePhoto(Resource):
     def delete(self, photo_id):
         """one photo delete"""
         try:
-            db_photo = Photo.query.filter_by(id=photo_id).first()
-
-            if db_photo is None:
-                app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
-                return m_response(False, {'photo_id': photo_id}, 404)
-
-            filename = db_photo.filename
-
-            db.session.delete(db_photo)
-            db.session.commit()
-
             user = get_jwt_identity()
-            file_deleted = delete(filename, user['email'])
+            photos = User.get(user['user_id']).photos
 
-            if file_deleted:
-                app.logger.error("success:photo deleted: photo_id:{}".format(photo_id))
-                return m_response(True, {'photo_id': photo_id}, 200)
-            else:
-                raise FileNotFoundError
+            for photo in photos:
+                if photo.id != photo_id:
+                    continue
+
+                filename = photo.filename
+                file_deleted = delete(filename, user['email'])
+                photos.remove(photo)
+
+                User(id=user['user_id']).update(
+                    actions=[
+                        User.photos.set(photos)
+                    ]
+                )
+
+                if file_deleted:
+                    app.logger.error("success:photo deleted: photo_id:{}".format(photo_id))
+                    return m_response(True, {'photo_id': photo_id}, 200)
+                else:
+                    raise FileNotFoundError
+
+            app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
+            return m_response(False, {'photo_id': photo_id}, 404)
+
         except Exception as e:
             app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
             app.logger.error(e)
@@ -245,16 +209,19 @@ class OnePhoto(Resource):
         """
         try:
             mode = request.args.get('mode')
-            email = get_jwt_identity()['email']
+            user = get_jwt_identity()
+            email = user['email']
             path = os.path.join(conf['UPLOAD_DIR'], email_normalize(email))
             full_path = Path(path)
 
-            photo = db.session.query(Photo).filter_by(id=photo_id).first()
+            photos = User.get(user['user_id']).photos
 
-            if mode == "thumbnail":
-                full_path = full_path / "thumbnails" / photo.filename
-            else:
-                full_path = full_path / photo.filename
+            for photo in photos:
+                if photo.id == photo_id:
+                    if mode == "thumbnail":
+                        full_path = full_path / "thumbnails" / photo.filename
+                    else:
+                        full_path = full_path / photo.filename
 
             with full_path.open('rb') as f:
                 contents = f.read()

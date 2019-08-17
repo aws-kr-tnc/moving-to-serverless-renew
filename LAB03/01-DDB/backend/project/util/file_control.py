@@ -133,4 +133,5 @@ def insert_photo_info(user_id, filename, filesize, form):
 
     except Exception as e:
         app.logger.error(e)
+        print(e.__cause__)
         raise e
