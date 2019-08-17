@@ -1,5 +1,5 @@
 from project.util.config import conf
-from project.models.ddb import User
+from project.db.model_ddb import User
 
 
 if not User.exists():
