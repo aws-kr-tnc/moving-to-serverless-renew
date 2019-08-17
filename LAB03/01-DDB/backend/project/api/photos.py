@@ -2,18 +2,18 @@ from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
 from project import db
 from project.api.models import Photo
-from datetime import datetime
+
 from project.util.response import m_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
-from project.schemas import validate_photo_info
+
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from pathlib import Path
 from project.util.config import conf
 from project.util.file_control import email_normalize, delete, save, insert_photo_info
-from jsonschema.exceptions import ValidationError
+from project.models.ddb import User
 import os, uuid
 
 
@@ -126,12 +126,18 @@ class List(Resource):
     def get(self):
         """Get all photos as list"""
         try:
-            photos = [photo.to_json() for photo in Photo.query.all()]
+            user = get_jwt_identity()
+            photos = User.get(user['user_id']).photos
+
             data = {
-                'photos': photos
+                'photos': []
             }
+
+            for photo in photos:
+                data['photos'].append(dict(photo))
+
             app.logger.debug("success:photos_list:%s" % data)
-            return m_response(True, data['photos'], 200)
+            return m_response(True, data, 200)
 
         except Exception as e:
             app.logger.error("ERROR:photos list failed")

@@ -162,7 +162,7 @@ class InfoUpload(Resource):
             return m_response(False, {'photo_id': photo_id, 'msg': e, 'body': body}, 500)
 
 
-@api.route('/')
+@api.route('')
 class List(Resource):
     @api.doc(
         responses=

@@ -4,7 +4,6 @@ from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute, ListAttribute, MapAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
 
-# from project.util.file_control import local_time_now
 from tzlocal import get_localzone
 
 from project.util.config import conf
@@ -32,6 +31,19 @@ class Photo(MapAttribute):
     nation = UnicodeAttribute(null=False)
     address = UnicodeAttribute(null=False)
 
+    def __iter__(self):
+        for name, attr in self.get_attributes().items():
+            if isinstance(attr, MapAttribute):
+                if getattr(self, name):
+                    yield name, getattr(self, name).as_dict()
+            elif isinstance(attr, UTCDateTimeAttribute):
+                if getattr(self, name):
+                    yield name, attr.serialize(getattr(self, name))
+            elif isinstance(attr, NumberAttribute):
+                # if numeric return value as is.
+                yield name, getattr(self, name)
+            else:
+                yield name, attr.serialize(getattr(self, name))
 
 
 class EmailIndex(GlobalSecondaryIndex):
@@ -51,9 +63,6 @@ class EmailIndex(GlobalSecondaryIndex):
     email = UnicodeAttribute(hash_key=True)
 
 
-
-
-
 class User(Model):
     """
     User table for DynamoDB
@@ -70,5 +79,16 @@ class User(Model):
     password = UnicodeAttribute(null=False)
     photos = ListAttribute(of=Photo, null=True)
 
-
-
+    def __iter__(self):
+        for name, attr in self.get_attributes().items():
+            if isinstance(attr, MapAttribute):
+                if getattr(self, name):
+                    yield name, getattr(self, name).as_dict()
+            elif isinstance(attr, UTCDateTimeAttribute):
+                if getattr(self, name):
+                    yield name, attr.serialize(getattr(self, name))
+            elif isinstance(attr, NumberAttribute):
+                # if numeric return value as is.
+                yield name, getattr(self, name)
+            else:
+                yield name, attr.serialize(getattr(self, name))
