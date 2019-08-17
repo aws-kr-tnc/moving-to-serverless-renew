@@ -15,17 +15,22 @@
           <v-flex xs4 v-for="(photo, index) in photoList" :key="index">
             <v-card class="ma-0">
               <v-container>
-                <l-map style="height: 300px; width: 100%; z-index: 0;" :zoom="zoom" :center="getCenterGps(photo.geotag_lat, photo.geotag_lng)">
+                <l-map
+                  class="l-map"
+                  :zoom="zoom"
+                  :center="getCenterGps(photo.geotag_lat, photo.geotag_lng)"
+                >
                   <l-tile-layer :url="url"></l-tile-layer>
                   <l-marker :lat-lng="getCenterGps(photo.geotag_lat, photo.geotag_lng)" ></l-marker>
                 </l-map>
               </v-container>
               <v-container class="ma-0 pa-2">
-                <kbd><v-icon left>mdi-map-marker-check</v-icon>{{photo.address}}</kbd>
+                <v-icon left>mdi-map-marker-check</v-icon>
+                {{photo.address}}
               </v-container>
               <v-card-title
-                  class="pa-1 ma-0 fill-height align-end"
-                  v-text="photo.desc"
+                class="pa-1 ma-0 fill-height align-end"
+                v-text="photo.desc"
               ></v-card-title>
               <div class="text--primary">
                 <v-chip
@@ -38,13 +43,14 @@
                   <v-icon left>mdi-tag-multiple</v-icon>
                   TAGS
                 </v-chip>
-                <v-chip v-for="(tag, index) in (photo.tags.split(','))"
+                <v-chip
                   :key="index"
                   class="ma-1"
                   color="teal"
                   label
-                  text-color="white"
                   small
+                  text-color="white"
+                  v-for="(tag, index) in (photo.tags.split(','))"
                 >
                   {{tag}}
                 </v-chip>
@@ -58,12 +64,10 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex';
 import service from '@/service';
 
 export default {
   name: 'PhotoList',
-
   data() {
     return {
       url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
@@ -74,21 +78,14 @@ export default {
     };
   },
   created() {
-    if (typeof (this.$route.params.gps_lat) === 'undefined') {
-      this.getPhotos();
-    } else {
-      this.center = [this.$route.params.gps_lat, this.$route.params.gps_lng];
-      this.markerLatLng = [this.$route.params.gps_lat, this.$route.params.gps_lng];
-    }
+    this.getPhotos();
   },
   methods: {
-    ...mapActions('Auth', ['getTokens']),
-
     async getPhotos() {
       console.log('Get photo list..');
       try {
         const resp = await service.Photo.photoList();
-        if (resp.data.ok !== true) return;
+        if (resp.data.ok !== true) throw new Error(resp);
         console.log('Photo list retrieved successfully ✨');
         this.photoList = resp.data.photos;
         console.log(this.photoList);
@@ -103,9 +100,9 @@ export default {
 };
 </script>
 <style scoped>
-  .mapCards {
-    height: 300px;
-    width: 100%;
-    z-index: 0;
-  }
+.l-map {
+  height: 300px;
+  width: 100%;
+  z-index: 0;
+}
 </style>
