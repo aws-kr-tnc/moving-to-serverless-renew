@@ -1,6 +1,5 @@
 <template>
   <v-container>
-
     <v-card
       class="mx-auto"
       max-width="95%"
@@ -53,7 +52,6 @@
                     {{tag}}
                   </v-chip>
                 </div >
-
               <v-card-actions class="ma-0 pa-0">
                 <v-spacer></v-spacer>
                 <v-tooltip bottom>
@@ -64,7 +62,6 @@
                   </template>
                   <span>Show map</span>
                 </v-tooltip>
-
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
                     <v-btn icon v-on="on" @click="deleteConfirm(photo.id)">
@@ -79,18 +76,34 @@
         </v-layout>
       </v-container>
     </v-card>
+    <map-dialog
+      v-model="showMapDialog"
+      :latitude="mapDialogLat"
+      :longitude="mapDialogLng"
+      :description="mapDialogDesc"
+      :tags="mapDialogTags"
+      v-on:close="cloeMapDialog"
+    />
   </v-container>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import service from '@/service';
+import MapDialog from '@/components/map/MapDialog';
 
 export default {
   name: 'PhotoList',
-
+  components: {
+    MapDialog,
+  },
   data: () => ({
     photoList: [],
+    showMapDialog: false,
+    mapDialogLat: 0,
+    mapDialogLng: 0,
+    mapDialogDesc: '',
+    mapDialogTags: '',
   }),
   computed: {
     ...mapGetters('Auth', [
@@ -119,10 +132,19 @@ export default {
         console.error(error);
       }
     },
-    showMap(_lat, _lng, _desc, _tags) {
-      this.$router.push({ name: 'map',
-        params: { gps_lat: _lat, gps_lng: _lng, desc: _desc, tags: _tags },
-      });
+    showMap(latitude, longitude, description, tags) {
+      this.mapDialogLat = latitude;
+      this.mapDialogLng = longitude;
+      this.mapDialogDesc = description;
+      this.mapDialogTags = tags;
+      this.showMapDialog = true;
+    },
+    cloeMapDialog() {
+      this.showMapDialog = false;
+      this.mapDialogLat = 0;
+      this.mapDialogLng = 0;
+      this.mapDialogDesc = '';
+      this.mapDialogTags = '';
     },
     deleteConfirm(id) {
       console.log(id);

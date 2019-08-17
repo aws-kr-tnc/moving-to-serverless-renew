@@ -12,42 +12,7 @@
         <v-layout
           wrap
         >
-          <!-- MAP for specific photos -->
-          <v-flex xs12 v-if="$route.params.gps_lat">
-            <v-card height="100%" dark color="secondary">
-              <v-container>
-                <l-map class="mapCards" :zoom="zoom" :center="center">
-                  <l-tile-layer :url="url"></l-tile-layer>
-                  <l-marker :lat-lng="markerLatLng" ></l-marker>
-                </l-map>
-              </v-container>
-              <v-container>
-                <p>{{$route.params.desc}}</p>
-                <v-chip
-                  class="ma-1"
-                  small
-                  color="primary"
-                  label
-                  text-color="white"
-                >
-                  <v-icon left>mdi-tag-multiple</v-icon>
-                  TAGS
-                </v-chip>
-                <v-chip v-for="tag in ($route.params.tags.split(','))"
-                  class="ma-1"
-                  color="teal"
-                  label
-                  text-color="white"
-                  small
-                >
-                  {{tag}}
-                </v-chip>
-              </v-container>
-            </v-card>
-          </v-flex>
-
-          <!-- MAP list for all photos -->
-          <v-flex xs4 v-for="photo in photoList">
+          <v-flex xs4 v-for="(photo, index) in photoList" :key="index">
             <v-card class="ma-0">
               <v-container>
                 <l-map style="height: 300px; width: 100%; z-index: 0;" :zoom="zoom" :center="getCenterGps(photo.geotag_lat, photo.geotag_lng)">
@@ -73,7 +38,8 @@
                   <v-icon left>mdi-tag-multiple</v-icon>
                   TAGS
                 </v-chip>
-                <v-chip v-for="tag in (photo.tags.split(','))"
+                <v-chip v-for="(tag, index) in (photo.tags.split(','))"
+                  :key="index"
                   class="ma-1"
                   color="teal"
                   label
