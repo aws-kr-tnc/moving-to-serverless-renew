@@ -7,7 +7,7 @@ from flask import jsonify, make_response
 from flask_restplus import Api, Resource, fields
 
 from jsonschema import ValidationError
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 
 from project.schemas import validate_user
 from project.db.model_ddb import User
