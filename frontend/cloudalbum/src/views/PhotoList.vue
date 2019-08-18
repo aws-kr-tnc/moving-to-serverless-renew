@@ -19,9 +19,9 @@
           >
             <v-card>
               <v-img
-                @click="originalSize(photo.id)"
+                @click="showOriginalPhoto(photo.originalSrc)"
                 ref="photos"
-                :src="photo.src"
+                :src="photo.thumbSrc"
                 class="white--text"
                 height="200px"
                 gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
@@ -93,6 +93,7 @@
 </template>
 
 <script>
+import { mapActions, mapState } from 'vuex';
 import service from '@/service';
 import MapDialog from '@/components/map/MapDialog';
 
@@ -102,28 +103,23 @@ export default {
     MapDialog,
   },
   data: () => ({
-    photoList: [],
     showMapDialog: false,
     mapDialogLat: 0,
     mapDialogLng: 0,
     mapDialogDesc: '',
     mapDialogTags: '',
   }),
+  computed: {
+    ...mapState('Photo', [
+      'photoList',
+    ]),
+  },
   methods: {
-    async buildImgSrc(id) {
-      const res = await service.Photo.getPhotoBlob(id);
-      return URL.createObjectURL(res.data);
-    },
+    ...mapActions('Photo', ['getAllPhotoList']),
     async getPhotos() {
       console.log('Get photo list..');
       try {
-        const resp = await service.Photo.photoList();
-        if (resp.data.ok !== true) return;
-        console.log('Photo list retrieved successfully ✨');
-        this.photoList = await Promise.all(resp.data.photos.map(async (obj) => {
-          const blobUrl = await this.buildImgSrc(obj.id, 'thmubnail');
-          return { ...obj, src: blobUrl };
-        }));
+        await this.getAllPhotoList();
       } catch (error) {
         console.error(error);
       }
@@ -174,16 +170,14 @@ export default {
         console.error(error);
       }
     },
-    async originalSize(id) {
-      console.log(id);
-      const blobUrl = await this.buildImgSrc(id, 'original');
+    async showOriginalPhoto(originalSrc) {
       this.$swal(
         {
           width: '95%',
           height: '95%',
           html: `<div>
-                   <a href='${blobUrl}' target=_blank>
-                     <img src='${blobUrl}' width=90%>
+                   <a href='${originalSrc}' target=_blank>
+                     <img src='${originalSrc}' width=90%>
                    </a>
                  </div>`,
         },
@@ -204,7 +198,7 @@ export default {
     },
   },
   created() {
-    this.getPhotos();
+    this.getAllPhotoList();
   },
 };
 </script>
