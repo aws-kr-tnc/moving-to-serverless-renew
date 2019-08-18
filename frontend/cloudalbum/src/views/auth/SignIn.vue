@@ -23,15 +23,18 @@
               <v-spacer></v-spacer>
             </v-toolbar>
             <v-card-text>
-              <v-form>
+              <v-form
+                ref="form"
+                lazy-validation
+              >
                 <v-text-field
                   label="Login (Email)"
                   name="email"
                   v-model="inputEmail"
                   prepend-icon="mdi-account"
                   type="text"
+                  :rules="requiredRule"
                 ></v-text-field>
-
                 <v-text-field
                   id="password"
                   label="Password"
@@ -39,19 +42,26 @@
                   v-model="inputPassword"
                   prepend-icon="mdi-lock"
                   type="password"
+                  :rules="requiredRule"
                 ></v-text-field>
               </v-form>
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="primary" @click="userSignIn()"><v-icon>mdi-send</v-icon> Submit</v-btn>
+              <v-btn
+                color="primary"
+                @click="userSignIn()"
+              >
+                <v-icon>mdi-send</v-icon> Submit
+              </v-btn>
             </v-card-actions>
             <v-card-actions>
               <v-spacer></v-spacer>
               Not yet registered?
               <v-btn text small href="/users/signup"
                      color="primary">
-                <v-icon>mdi-account-plus</v-icon>Sign up</v-btn>
+                <v-icon>mdi-account-plus</v-icon>Sign up
+              </v-btn>
             </v-card-actions>
           </v-card>
         </v-flex>
@@ -70,6 +80,7 @@ export default {
     return {
       inputEmail: '',
       inputPassword: '',
+      requiredRule: [v => !!v || 'Required!'],
     };
   },
   computed: {
@@ -79,10 +90,8 @@ export default {
   },
   methods: {
     ...mapActions('Auth', ['getTokens']),
-
     async userSignIn() {
       if (!this.isValide()) return false;
-
       try {
         const resp = await this.getTokens({ email: this.inputEmail, password: this.inputPassword });
         if (resp.status !== 200) this.popupAlert(resp);
@@ -90,6 +99,7 @@ export default {
       } catch (err) {
         this.popupAlert(err);
       }
+      return true;
     },
     popupAlert(resp) {
       let msg = '';
@@ -105,18 +115,13 @@ export default {
       );
     },
     isValide() {
-      if (this.inputEmail.length === 0 || this.inputPassword.length === 0) {
-        this.$swal({
-          title: 'Please check your input value.',
-          type: 'warning',
-        });
-        return false;
-      } return true;
+      if (this.$refs.form.validate()) return true;
+      this.$swal({
+        title: 'Please check your input value.',
+        type: 'warning',
+      });
+      return false;
     },
   },
 };
 </script>
-
-<style scoped>
-
-</style>

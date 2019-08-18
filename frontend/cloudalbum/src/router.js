@@ -1,10 +1,9 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-import Home from './views/Home.vue';
 import Map from './views/Map.vue';
-import SignIn from './views/SignIn.vue';
-import SignOut from './views/SignOut.vue';
-import SignUp from './views/SignUp.vue';
+import SignIn from './views/auth/SignIn.vue';
+import SignOut from './views/auth/SignOut.vue';
+import SignUp from './views/auth/SignUp.vue';
 import FileUpload from './views/FileUpload.vue';
 import PhotoList from './views/PhotoList.vue';
 import store from '@/vuex';
@@ -23,7 +22,7 @@ export default new Router({
     {
       path: '/',
       name: 'home',
-      component: Home,
+      component: SignIn,
     },
     {
       path: '/users/signin',
