@@ -94,7 +94,6 @@
 
 <script>
 import { mapActions, mapState } from 'vuex';
-import service from '@/service';
 import MapDialog from '@/components/map/MapDialog';
 
 export default {
@@ -115,15 +114,7 @@ export default {
     ]),
   },
   methods: {
-    ...mapActions('Photo', ['getAllPhotoList']),
-    async getPhotos() {
-      console.log('Get photo list..');
-      try {
-        await this.getAllPhotoList();
-      } catch (error) {
-        console.error(error);
-      }
-    },
+    ...mapActions('Photo', ['getAllPhotoList', 'deletePhoto']),
     showMap(latitude, longitude, description, tags) {
       this.mapDialogLat = latitude;
       this.mapDialogLng = longitude;
@@ -150,13 +141,13 @@ export default {
         confirmButtonText: 'Yes!',
       }).then((result) => {
         if (!result.value) return;
-        this.deletePhoto(id);
+        this.requestDeletePhoto(id);
       });
     },
-    async deletePhoto(id) {
+    async requestDeletePhoto(id) {
       try {
-        const resp = await service.Photo.deletePhoto(id);
-        if (!resp.data.ok) throw new Error(resp);
+        const isSuccess = await this.deletePhoto(id);
+        if (!isSuccess) throw new Error('Error on deletePhoto in PhotoList.vue');
         console.log('Image deleted successfully ✨');
         this.$swal(
           {
@@ -165,7 +156,6 @@ export default {
             type: 'success',
           },
         );
-        this.getPhotos();
       } catch (error) {
         console.error(error);
       }

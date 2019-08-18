@@ -1,8 +1,12 @@
 import service from '@/service';
-import { SET_ALL_PHOTO_LIST } from '@/vuex/mutation-types';
+import { SET_ALL_PHOTO_LIST, DELETE_ONE_PHOTO } from '@/vuex/mutation-types';
 
 const setAllPhotoList = ({ commit }, data) => {
   commit(SET_ALL_PHOTO_LIST, data);
+};
+
+const deleteOnePhoto = ({ commit }, id) => {
+  commit(DELETE_ONE_PHOTO, id);
 };
 
 const buildImgSrc = async (id, mode) => {
@@ -26,6 +30,19 @@ const getAllPhotoList = async (store) => {
   }
 };
 
+const deletePhoto = async (store, id) => {
+  try {
+    const resp = await service.Photo.deletePhoto(id);
+    if (!resp.data.ok) throw new Error(resp);
+    deleteOnePhoto(store, id);
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+};
+
 export default {
   getAllPhotoList,
+  deletePhoto,
 };
