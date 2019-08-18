@@ -24,9 +24,10 @@
                   <l-marker :lat-lng="getCenterGps(photo.geotag_lat, photo.geotag_lng)" ></l-marker>
                 </l-map>
               </v-container>
-              <v-container class="ma-0 pa-2">
-                <v-icon left>mdi-map-marker-check</v-icon>
-                {{photo.address}}
+              <v-container class="ma-0 pa-1">
+                <v-card class="ma-1 pa-1" outlined>
+                  <v-icon left>mdi-map-marker-check</v-icon>{{photo.address}}
+                </v-card>
               </v-container>
               <v-card-title
                 class="pa-1 ma-0 fill-height align-end"
@@ -39,8 +40,7 @@
                   color="primary"
                   label
                   text-color="white"
-                >    if (this.photoList.length !== 0) return;
-
+                >
                   <v-icon left>mdi-tag-multiple</v-icon>
                   TAGS
                 </v-chip>
