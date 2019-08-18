@@ -175,7 +175,7 @@ class OnePhoto(Resource):
                 delete_photo_from_ddb(user, photos, photo)
 
                 if file_deleted:
-                    app.logger.error("success:photo deleted: photo_id:{}".format(photo_id))
+                    app.logger.debug("success:photo deleted: photo_id:{}".format(photo_id))
                     return m_response(True, {'photo_id': photo_id}, 200)
                 else:
                     raise FileNotFoundError

@@ -89,6 +89,24 @@ def delete(filename, email):
         raise e
 
 
+def delete_s3(filename, email):
+    prefix = "photos/{0}/".format(email_normalize(email))
+    prefix_thumb = "photos/{0}/thumbnails/".format(email_normalize(email))
+
+    key = "{0}{1}".format(prefix, filename)
+    key_thumb = "{0}{1}".format(prefix_thumb, filename)
+
+    s3_client = boto3.client('s3')
+    try:
+        s3_client.delete_object(Bucket=conf['S3_PHOTO_BUCKET'], Key=key)
+        s3_client.delete_object(Bucket=conf['S3_PHOTO_BUCKET'], Key=key_thumb)
+        app.logger.debug("success:s3 file delete done:{}".format(filename))
+        return True
+    except Exception as e:
+        app.logger.error('ERROR:deleting file from s3 failed:%s', e)
+        raise e
+
+
 def save(upload_file, filename, email):
     """
     Upload input file (photo) to specific path for individual user.
@@ -185,3 +203,31 @@ def create_photo_info(filename, filesize, form):
 
     app.logger.debug('new_photo: {0}'.format(photo_deserialize(new_photo)))
     return new_photo
+
+def presigned_url(filename, email, Thumbnail=True):
+    prefix = "photos/{0}/".format(email_normalize(email))
+    prefix_thumb = "photos/{0}/thumbnails/".format(email_normalize(email))
+
+    try:
+        s3_client = boto3.client('s3')
+
+        ## TODO #6 : Review following code to retrieve pre-signed URL from S3.
+        ## -- begin --
+        if Thumbnail:
+            key_thumb = "{0}{1}".format(prefix_thumb, filename)
+            url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': conf['S3_PHOTO_BUCKET'],
+                        'Key': key_thumb})
+        else:
+            key = "{0}{1}".format(prefix, filename)
+            url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': conf['S3_PHOTO_BUCKET'],
+                        'Key': key})
+        ## -- end --
+
+    except Exception as e:
+        app.logger.error('Error occurred! Please try again : {0}'.format(e))
+
+    return url

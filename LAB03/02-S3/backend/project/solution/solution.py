@@ -19,6 +19,7 @@ def put_new_user_solution(new_user_id, user_data):
     user.save()
 
 
+
 def get_user_data_with_idx(signin_data):
     print(
         "\nRUNNING SOLUTION CODE:",
@@ -43,9 +44,10 @@ def put_photo_info_ddb(user_id, new_photo):
                 User.photos.set((User.photos | []).append([new_photo]))
             ]
         )
+        app.logger.debug('success:create photo into ddb: user_id:{}, photo_id:{}'.format(user_id, new_photo.id))
     except Exception as e:
+
         app.logger.error(e)
-        print(e.__cause__)
         raise e
 
 
@@ -54,9 +56,17 @@ def delete_photo_from_ddb(user, photos, photo):
         "\nRUNNING SOLUTION CODE:",
         "Delete a photo from photos list, and update!",
         "Follow the steps in the lab guide to replace this method with your own implementation.")
-    photos.remove(photo)
-    User(id=user['user_id']).update(
-        actions=[
-            User.photos.set(photos)
-        ]
-    )
+    try:
+        photos.remove(photo)
+        User(id=user['user_id']).update(
+            actions=[
+                User.photos.set(photos)
+            ]
+        )
+        app.logger.debug("success:delete photo from ddb: userid:{}, photo_id:{}".format(user['user_id'], photo.id))
+    except Exception as e:
+        app.logger.error("ERROR:delete photo from ddb failed: userid:{}, photo_id:{}".format(user['user_id'], photo.id))
+        app.logger.error(e)
+        raise e
+
+

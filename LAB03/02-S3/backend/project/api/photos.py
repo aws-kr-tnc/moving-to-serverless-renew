@@ -10,7 +10,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from pathlib import Path
 from project.util.config import conf
-from project.util.file_control import email_normalize, delete, save_s3, create_photo_info
+from project.util.file_control import email_normalize, delete_s3, save_s3, create_photo_info
 from project.db.model_ddb import User, photo_deserialize
 from project.solution.solution import put_photo_info_ddb, delete_photo_from_ddb
 import os, uuid
@@ -169,13 +169,13 @@ class OnePhoto(Resource):
                     continue
 
                 filename = photo.filename
-                file_deleted = delete(filename, user['email'])
+                file_deleted = delete_s3(filename, user['email'])
 
-                ## TODO 4: Review how to delete a photo from Photos which is a list
+
                 delete_photo_from_ddb(user, photos, photo)
 
                 if file_deleted:
-                    app.logger.error("success:photo deleted: photo_id:{}".format(photo_id))
+                    app.logger.debug("success:photo deleted: user_id:{}, photo_id:{}".format(user['user_id'], photo_id))
                     return m_response(True, {'photo_id': photo_id}, 200)
                 else:
                     raise FileNotFoundError
