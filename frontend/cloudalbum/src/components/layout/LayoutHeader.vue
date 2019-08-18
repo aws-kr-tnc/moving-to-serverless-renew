@@ -7,7 +7,7 @@
       <v-toolbar flat>
         <v-toolbar-title>
           <v-icon>mdi-image-plus</v-icon>
-          CloudAlbum
+          <strong>CloudAlbum</strong>
         </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-tooltip bottom>
