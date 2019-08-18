@@ -10,7 +10,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from pathlib import Path
 from project.util.config import conf
-from project.util.file_control import email_normalize, delete_s3, save_s3, create_photo_info
+from project.util.file_control import email_normalize, delete_s3, save_s3, create_photo_info, presigned_url
 from project.db.model_ddb import User, photo_deserialize
 from project.solution.solution import put_photo_info_ddb, delete_photo_from_ddb
 import os, uuid
@@ -115,7 +115,7 @@ class FileUpload(Resource):
 
 
 
-@api.route('')
+@api.route('/')
 class List(Resource):
     @api.doc(
         responses=
@@ -136,7 +136,8 @@ class List(Resource):
             }
 
             for photo in photos:
-                data['photos'].append(photo_deserialize(photo))
+                url = presigned_url(photo.id, user['email'], False)
+                data['photos'].append(url)
 
             app.logger.debug("success:photos_list:%s" % data)
             return m_response(True, data, 200)
@@ -198,35 +199,13 @@ class OnePhoto(Resource):
     @jwt_required
     @api.expect(photo_get_parser)
     def get(self, photo_id):
-        """
-        Return image for thumbnail and original photo.
-        :param photo_id: target photo id
-        :queryparam mode: None(original) or thumbnail
-        :return: image url for authenticated user
-        """
+
         try:
             mode = request.args.get('mode')
             user = get_jwt_identity()
             email = user['email']
-            path = os.path.join(conf['UPLOAD_DIR'], email_normalize(email))
-            full_path = Path(path)
 
-            photos = User.get(user['user_id']).photos
-
-            for photo in photos:
-                if photo.id == photo_id:
-                    if mode == "thumbnail":
-                        full_path = full_path / "thumbnails" / photo.filename
-                    else:
-                        full_path = full_path / photo.filename
-
-            with full_path.open('rb') as f:
-                contents = f.read()
-                resp = make_response(contents)
-
-            app.logger.debug("filepath:{}".format(str(full_path)))
-            resp.content_type = "image/jpeg"
-            return resp
+            return presigned_url(photo_id, email, True if mode else False)
         except Exception as e:
             app.logger.error('ERROR:get photo failed:photo_id:{}'.format(photo_id))
             app.logger.error(e)

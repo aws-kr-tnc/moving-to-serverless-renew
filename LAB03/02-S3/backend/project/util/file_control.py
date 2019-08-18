@@ -1,6 +1,4 @@
 from io import BytesIO
-
-import boto3 as boto3
 from flask import current_app as app
 from PIL import Image
 from pathlib import Path
@@ -205,29 +203,27 @@ def create_photo_info(filename, filesize, form):
     return new_photo
 
 def presigned_url(filename, email, Thumbnail=True):
-    prefix = "photos/{0}/".format(email_normalize(email))
-    prefix_thumb = "photos/{0}/thumbnails/".format(email_normalize(email))
 
     try:
+        # TODO 6 : Review following code to retrieve pre-signed URL from S3.
+        key = None
         s3_client = boto3.client('s3')
 
-        ## TODO #6 : Review following code to retrieve pre-signed URL from S3.
-        ## -- begin --
         if Thumbnail:
-            key_thumb = "{0}{1}".format(prefix_thumb, filename)
-            url = s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': conf['S3_PHOTO_BUCKET'],
-                        'Key': key_thumb})
+            key = "photos/{0}/thumbnails/{1}".format(email_normalize(email), filename)
         else:
-            key = "{0}{1}".format(prefix, filename)
-            url = s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': conf['S3_PHOTO_BUCKET'],
-                        'Key': key})
-        ## -- end --
+            key = "photos/{0}/{1}".format(email_normalize(email), filename)
+
+        url = s3_client.generate_presigned_url(
+            'get_object',
+            ExpiresIn=conf['S3_PRESIGNED_URL_EXPIRE_TIME'],
+            Params={'Bucket': conf['S3_PHOTO_BUCKET'],
+                    'Key': key
+                    })
+        app.logger.debug("success:presigned url created:{}".format(url))
+        return url
 
     except Exception as e:
-        app.logger.error('Error occurred! Please try again : {0}'.format(e))
+        app.logger.error('ERROR:creating presigned url failed:{0}'.format(e))
+        raise e
 
-    return url
