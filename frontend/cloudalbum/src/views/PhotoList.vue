@@ -155,22 +155,21 @@ export default {
       }).then((result) => {
         if (!result.value) return;
         this.deletePhoto(id);
-        this.getPhotos();
       });
     },
     async deletePhoto(id) {
       try {
         const resp = await service.Photo.deletePhoto(id);
-        if (resp.data.ok === true) {
-          console.log('Image deleted successfully ✨');
-          this.$swal(
-            {
-              title: 'Success!',
-              text: 'Your photo has been deleted successfully.',
-              type: 'success',
-            },
-          );
-        }
+        if (!resp.data.ok) throw new Error(resp);
+        console.log('Image deleted successfully ✨');
+        this.$swal(
+          {
+            title: 'Success!',
+            text: 'Your photo has been deleted successfully.',
+            type: 'success',
+          },
+        );
+        this.getPhotos();
       } catch (error) {
         console.error(error);
       }
