@@ -1,6 +1,5 @@
 <template>
   <v-container>
-
     <v-card
       class="mx-auto"
       max-width="95%"
@@ -43,7 +42,9 @@
                     <v-icon left>mdi-tag-multiple</v-icon>
                     TAGS
                   </v-chip>
-                  <v-chip v-for="tag in (photo.tags.split(','))"
+                  <v-chip
+                    v-for="(tag, index) in (photo.tags.split(','))"
+                    :key="index"
                     class="ma-1"
                     color="teal"
                     label
@@ -53,18 +54,19 @@
                     {{tag}}
                   </v-chip>
                 </div >
-
               <v-card-actions class="ma-0 pa-0">
                 <v-spacer></v-spacer>
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
-                    <v-btn icon v-on="on" @click="showMap(photo.geotag_lat, photo.geotag_lng, photo.desc, photo.tags)">
+                    <v-btn
+                      icon v-on="on"
+                      @click="showMap(photo.geotag_lat, photo.geotag_lng, photo.desc, photo.tags)"
+                    >
                       <v-icon>mdi-map-marker-check</v-icon>
                     </v-btn>
                   </template>
                   <span>Show map</span>
                 </v-tooltip>
-
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
                     <v-btn icon v-on="on" @click="deleteConfirm(photo.id)">
@@ -76,33 +78,53 @@
               </v-card-actions>
             </v-card>
           </v-flex>
+          <v-flex v-if="photoList.length === 0">
+            <v-alert
+              dismissible
+              color="primary"
+              border="left"
+              elevation="2"
+              colored-border
+              icon="mdi-information"
+            >
+              <strong>No data! Pleas upload your photos. (Click <v-icon>mdi-cloud-upload</v-icon> icon above)</strong>
+            </v-alert>
+          </v-flex>
         </v-layout>
       </v-container>
     </v-card>
+    <map-dialog
+      v-model="showMapDialog"
+      :latitude="mapDialogLat"
+      :longitude="mapDialogLng"
+      :description="mapDialogDesc"
+      :tags="mapDialogTags"
+      v-on:close="cloeMapDialog"
+    />
   </v-container>
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex';
 import service from '@/service';
+import MapDialog from '@/components/map/MapDialog';
 
 export default {
   name: 'PhotoList',
-
+  components: {
+    MapDialog,
+  },
   data: () => ({
     photoList: [],
+    showMapDialog: false,
+    mapDialogLat: 0,
+    mapDialogLng: 0,
+    mapDialogDesc: '',
+    mapDialogTags: '',
   }),
-  computed: {
-    ...mapGetters('Auth', [
-      'isAuthenticated',
-    ]),
-  },
   methods: {
-    ...mapActions('Auth', ['getTokens']),
     async buildImgSrc(id) {
       const res = await service.Photo.getPhotoBlob(id);
-      const blobImgUrl = URL.createObjectURL(res.data);
-      return blobImgUrl;
+      return URL.createObjectURL(res.data);
     },
     async getPhotos() {
       console.log('Get photo list..');
@@ -114,15 +136,23 @@ export default {
           const blobUrl = await this.buildImgSrc(obj.id, 'thmubnail');
           return { ...obj, src: blobUrl };
         }));
-        // console.log(`photosList: ${this.photoList}`);
       } catch (error) {
         console.error(error);
       }
     },
-    showMap(_lat, _lng, _desc, _tags) {
-      this.$router.push({ name: 'map',
-        params: { gps_lat: _lat, gps_lng: _lng, desc: _desc, tags: _tags },
-      });
+    showMap(latitude, longitude, description, tags) {
+      this.mapDialogLat = latitude;
+      this.mapDialogLng = longitude;
+      this.mapDialogDesc = description;
+      this.mapDialogTags = tags;
+      this.showMapDialog = true;
+    },
+    cloeMapDialog() {
+      this.showMapDialog = false;
+      this.mapDialogLat = 0;
+      this.mapDialogLng = 0;
+      this.mapDialogDesc = '';
+      this.mapDialogTags = '';
     },
     deleteConfirm(id) {
       console.log(id);
@@ -135,29 +165,23 @@ export default {
         cancelButtonColor: '#d33',
         confirmButtonText: 'Yes!',
       }).then((result) => {
-        if (result.value) {
-          this.deletePhoto(id);
-        }
-        this.$router.push({ name: 'photolist' });
+        if (!result.value) return;
+        this.deletePhoto(id);
       });
     },
-
     async deletePhoto(id) {
       try {
         const resp = await service.Photo.deletePhoto(id);
-        if (resp.data.ok === true) {
-          console.log('Image deleted successfully ✨');
-          this.$swal(
-            {
-              title: 'Success!',
-              text: 'Your photo has been deleted successfully.',
-              type: 'success',
-              onClose: () => {
-                this.$router.push({ name: 'photolist' });
-              },
-            },
-          );
-        }
+        if (!resp.data.ok) throw new Error(resp);
+        console.log('Image deleted successfully ✨');
+        this.$swal(
+          {
+            title: 'Success!',
+            text: 'Your photo has been deleted successfully.',
+            type: 'success',
+          },
+        );
+        this.getPhotos();
       } catch (error) {
         console.error(error);
       }
@@ -165,12 +189,15 @@ export default {
     async originalSize(id) {
       console.log(id);
       const blobUrl = await this.buildImgSrc(id, 'original');
-
       this.$swal(
         {
           width: '95%',
           height: '95%',
-          html: `<div><a href='${blobUrl}' target=_blank><img src='${blobUrl}' width=90%></a></div>`,
+          html: `<div>
+                   <a href='${blobUrl}' target=_blank>
+                     <img src='${blobUrl}' width=90%>
+                   </a>
+                 </div>`,
         },
       );
     },
@@ -188,7 +215,6 @@ export default {
       );
     },
   },
-
   created() {
     this.getPhotos();
   },

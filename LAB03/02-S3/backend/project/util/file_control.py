@@ -1,6 +1,4 @@
 from io import BytesIO
-
-import boto3 as boto3
 from flask import current_app as app
 from PIL import Image
 from pathlib import Path
@@ -190,22 +188,21 @@ def create_photo_info(filename, filesize, form):
     return new_photo
 
 def presigned_url(filename, email, Thumbnail=True):
-    prefix = "photos/{0}/".format(email_normalize(email))
-    prefix_thumb = "photos/{0}/thumbnails/".format(email_normalize(email))
 
     try:
         s3_client = boto3.client('s3')
         key = None
-
         if Thumbnail:
-            key = "{0}{1}".format(prefix_thumb, filename)
+            key = "photos/{0}/thumbnails/{1}".format(email_normalize(email), filename)
         else:
-            key = "{0}{1}".format(prefix, filename)
+            key = "photos/{0}/{1}".format(email_normalize(email), filename)
 
         # TODO 6 : Implement following solution code to retrieve pre-signed URL from S3.
         url = solution_generate_s3_presigned_url(s3_client, key)
+        return url
+
 
     except Exception as e:
-        app.logger.error('Error occurred! Please try again : {0}'.format(e))
+        app.logger.error('ERROR:creating presigned url failed:{0}'.format(e))
+        raise e
 
-    return url

@@ -66,6 +66,9 @@ file_upload_parser.add_argument('height', type=str, location='form')
 file_upload_parser.add_argument('taken_date', type=str, location='form')
 file_upload_parser.add_argument('geotag_lat', type=str, location='form')
 file_upload_parser.add_argument('geotag_lng', type=str, location='form')
+file_upload_parser.add_argument('city', type=str, location='form')
+file_upload_parser.add_argument('nation', type=str, location='form')
+file_upload_parser.add_argument('address', type=str, location='form')
 
 
 @api.route('/ping')
@@ -162,7 +165,7 @@ class InfoUpload(Resource):
             return m_response(False, {'photo_id': photo_id, 'msg': e, 'body': body}, 500)
 
 
-@api.route('')
+@api.route('/')
 class List(Resource):
     @api.doc(
         responses=
@@ -175,7 +178,8 @@ class List(Resource):
     def get(self):
         """Get all photos as list"""
         try:
-            photos = [photo.to_json() for photo in Photo.query.all()]
+            current_user = get_jwt_identity()['user_id']
+            photos = [photo.to_json() for photo in Photo.query.filter_by(user_id=current_user)]
             data = {
                 'photos': photos
             }
