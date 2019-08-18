@@ -12,7 +12,7 @@ from pathlib import Path
 from project.util.config import conf
 from project.util.file_control import email_normalize, delete_s3, save_s3, create_photo_info
 from project.db.model_ddb import User, photo_deserialize
-from project.solution.solution import put_photo_info_ddb, delete_photo_from_ddb
+from project.solution.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
 import os, uuid
 
 authorizations = {
@@ -99,12 +99,13 @@ class FileUpload(Resource):
             current_user = get_jwt_identity()
             photo_id = str(uuid.uuid4())
             filename = secure_filename("{0}.{1}".format(photo_id, extension))
+
             filesize = save_s3(form['file'], filename, current_user['email'])
             user_id = current_user['user_id']
 
             new_photo = create_photo_info(filename, filesize, form)
-            ## TODO 3: Update photo information into User table
-            put_photo_info_ddb(user_id, new_photo)
+
+            solution_put_photo_info_ddb(user_id, new_photo)
 
             return make_response({'ok': True, "photo_id": photo_id}, 200)
         except Exception as e:
@@ -115,7 +116,7 @@ class FileUpload(Resource):
 
 
 
-@api.route('')
+@api.route('/')
 class List(Resource):
     @api.doc(
         responses=
@@ -172,7 +173,7 @@ class OnePhoto(Resource):
                 file_deleted = delete_s3(filename, user['email'])
 
 
-                delete_photo_from_ddb(user, photos, photo)
+                solution_delete_photo_from_ddb(user, photos, photo)
 
                 if file_deleted:
                     app.logger.debug("success:photo deleted: user_id:{}, photo_id:{}".format(user['user_id'], photo_id))

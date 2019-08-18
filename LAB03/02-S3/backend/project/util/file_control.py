@@ -5,6 +5,7 @@ from flask import current_app as app
 from PIL import Image
 from pathlib import Path
 
+from project.solution.solution import solution_put_object_to_s3, solution_generate_s3_presigned_url
 from project.util.config import conf
 from project.db.model_ddb import User, Photo, photo_deserialize
 
@@ -41,7 +42,7 @@ def make_thumbnail(path, filename):
         app.logger.error("ERROR:Thumbnails creation error:{}".format(str(thumb_file_location)))
         app.logger.error(e)
 
-def make_thumbnails_s3(file_p, app):
+def make_thumbnails_s3(file_p):
     result_bytes_stream = BytesIO()
 
     try:
@@ -149,37 +150,21 @@ def save_s3(upload_file_stream, filename, email):
     original_bytes = upload_file_stream.stream.read()
 
     try:
-        # Save original file
-        s3_client.put_object(
-            Bucket=conf['S3_PHOTO_BUCKET'],
-            Key=key,
-            Body=original_bytes,
-            ContentType='image/jpeg',
-            StorageClass='STANDARD'
-        )
+        # TODO 5 : Implement following solution code to save image object to S3
+        solution_put_object_to_s3(s3_client, key, original_bytes)
 
-        app.logger.debug('s3://{0}/{1} uploaded'.format(conf['S3_PHOTO_BUCKET'], key))
+        app.logger.debug('success: s3://{0}/{1} uploaded'.format(conf['S3_PHOTO_BUCKET'], key))
 
         # Save thumbnail file
-        ## TODO 5 : Review following code to save thumbnail image object to S3
-
         upload_file_stream.stream.seek(0)
-
-        s3_client.put_object(
-            Bucket=conf['S3_PHOTO_BUCKET'],
-            Key=key_thumb,
-            Body=make_thumbnails_s3(upload_file_stream, app),
-            ContentType='image/jpeg',
-            StorageClass='STANDARD'
-        )
+        solution_put_object_to_s3(s3_client, key_thumb, make_thumbnails_s3(upload_file_stream))
 
         app.logger.debug('s3://{0}/{1} uploaded'.format(conf['S3_PHOTO_BUCKET'], key_thumb))
 
+        return len(original_bytes)
     except Exception as e:
         app.logger.error('Error occurred while saving file to S3:%s', e)
         raise e
-
-    return len(original_bytes)
 
 
 def create_photo_info(filename, filesize, form):
@@ -210,22 +195,15 @@ def presigned_url(filename, email, Thumbnail=True):
 
     try:
         s3_client = boto3.client('s3')
+        key = None
 
-        ## TODO #6 : Review following code to retrieve pre-signed URL from S3.
-        ## -- begin --
         if Thumbnail:
-            key_thumb = "{0}{1}".format(prefix_thumb, filename)
-            url = s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': conf['S3_PHOTO_BUCKET'],
-                        'Key': key_thumb})
+            key = "{0}{1}".format(prefix_thumb, filename)
         else:
             key = "{0}{1}".format(prefix, filename)
-            url = s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': conf['S3_PHOTO_BUCKET'],
-                        'Key': key})
-        ## -- end --
+
+        # TODO 6 : Implement following solution code to retrieve pre-signed URL from S3.
+        url = solution_generate_s3_presigned_url(s3_client, key)
 
     except Exception as e:
         app.logger.error('Error occurred! Please try again : {0}'.format(e))

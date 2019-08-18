@@ -12,7 +12,7 @@ from pathlib import Path
 from project.util.config import conf
 from project.util.file_control import email_normalize, delete, save, create_photo_info
 from project.db.model_ddb import User, photo_deserialize
-from project.solution.solution import put_photo_info_ddb, delete_photo_from_ddb
+from project.solution.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
 import os, uuid
 
 authorizations = {
@@ -103,8 +103,8 @@ class FileUpload(Resource):
             user_id = current_user['user_id']
 
             new_photo = create_photo_info(filename, filesize, form)
-            ## TODO 3: Update photo information into User table
-            put_photo_info_ddb(user_id, new_photo)
+            # TODO 3: Implement following solution code to update photo information into User table
+            solution_put_photo_info_ddb(user_id, new_photo)
 
             return make_response({'ok': True, "photo_id": photo_id}, 200)
         except Exception as e:
@@ -171,8 +171,8 @@ class OnePhoto(Resource):
                 filename = photo.filename
                 file_deleted = delete(filename, user['email'])
 
-                ## TODO 4: Review how to delete a photo from Photos which is a list
-                delete_photo_from_ddb(user, photos, photo)
+                # TODO 4: Implement following solution code to delete a photo from Photos which is a list
+                solution_delete_photo_from_ddb(user, photos, photo)
 
                 if file_deleted:
                     app.logger.debug("success:photo deleted: photo_id:{}".format(photo_id))

@@ -11,7 +11,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from project.schemas import validate_user
 from project.db.model_ddb import User
-from project.solution.solution import put_new_user_solution, get_user_data_with_idx
+from project.solution.solution import solution_put_new_user, solution_get_user_data_with_idx
 from project.util.response import m_response
 from project.util.blacklist_helper import add_token_to_set
 
@@ -136,8 +136,7 @@ class Signup(Resource):
             if not exist_user:
                 new_user_id = uuid.uuid4().hex
 
-                # TODO 1 : Review following code to save user information into DynamoDB
-                put_new_user_solution(new_user_id, user_data)
+                solution_put_new_user(new_user_id, user_data)
 
                 user = {
                     "id": new_user_id,
@@ -174,8 +173,8 @@ class Signin(Resource):
         try:
             signin_data = validate_user(req_data)['data']
 
-            ## TODO 2: Review folloing code to get user profile with GSI
-            db_user = get_user_data_with_idx(signin_data)
+
+            db_user = solution_get_user_data_with_idx(signin_data)
 
             if db_user is None:
                 return m_response(False, {'msg':'not exist email', 'user':signin_data}, 400)
