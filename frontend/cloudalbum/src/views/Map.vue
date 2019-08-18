@@ -39,7 +39,8 @@
                   color="primary"
                   label
                   text-color="white"
-                >
+                >    if (this.photoList.length !== 0) return;
+
                   <v-icon left>mdi-tag-multiple</v-icon>
                   TAGS
                 </v-chip>
@@ -64,7 +65,7 @@
 </template>
 
 <script>
-import service from '@/service';
+import { mapActions, mapState } from 'vuex';
 
 export default {
   name: 'PhotoList',
@@ -74,28 +75,22 @@ export default {
       zoom: 14,
       center: [47.413220, -1.219482],
       markerLatLng: [47.313220, -1.319482],
-      photoList: [],
     };
   },
-  created() {
-    this.getPhotos();
+  computed: {
+    ...mapState('Photo', [
+      'photoList',
+    ]),
   },
   methods: {
-    async getPhotos() {
-      console.log('Get photo list..');
-      try {
-        const resp = await service.Photo.photoList();
-        if (resp.data.ok !== true) throw new Error(resp);
-        console.log('Photo list retrieved successfully ✨');
-        this.photoList = resp.data.photos;
-        console.log(this.photoList);
-      } catch (error) {
-        console.error(error);
-      }
-    },
+    ...mapActions('Photo', ['getAllPhotoList']),
     getCenterGps(lat, lng) {
       return [lat, lng];
     },
+  },
+  created() {
+    if (this.photoList.length !== 0) return;
+    this.getAllPhotoList();
   },
 };
 </script>
