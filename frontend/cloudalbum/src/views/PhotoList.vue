@@ -19,9 +19,9 @@
           >
             <v-card>
               <v-img
-                @click="originalSize(photo.id)"
+                @click="showOriginalPhoto(photo.originalSrc)"
                 ref="photos"
-                :src="photo.src"
+                :src="photo.thumbSrc"
                 class="white--text"
                 height="200px"
                 gradient="to bottom, rgba(0,0,0,.1), rgba(0,0,0,.5)"
@@ -105,7 +105,7 @@
 </template>
 
 <script>
-import service from '@/service';
+import { mapActions, mapState } from 'vuex';
 import MapDialog from '@/components/map/MapDialog';
 
 export default {
@@ -114,32 +114,19 @@ export default {
     MapDialog,
   },
   data: () => ({
-    photoList: [],
     showMapDialog: false,
     mapDialogLat: 0,
     mapDialogLng: 0,
     mapDialogDesc: '',
     mapDialogTags: '',
   }),
+  computed: {
+    ...mapState('Photo', [
+      'photoList',
+    ]),
+  },
   methods: {
-    async buildImgSrc(id) {
-      const res = await service.Photo.getPhotoBlob(id);
-      return URL.createObjectURL(res.data);
-    },
-    async getPhotos() {
-      console.log('Get photo list..');
-      try {
-        const resp = await service.Photo.photoList();
-        if (resp.data.ok !== true) return;
-        console.log('Photo list retrieved successfully ✨');
-        this.photoList = await Promise.all(resp.data.photos.map(async (obj) => {
-          const blobUrl = await this.buildImgSrc(obj.id, 'thmubnail');
-          return { ...obj, src: blobUrl };
-        }));
-      } catch (error) {
-        console.error(error);
-      }
-    },
+    ...mapActions('Photo', ['getAllPhotoList', 'deletePhoto']),
     showMap(latitude, longitude, description, tags) {
       this.mapDialogLat = latitude;
       this.mapDialogLng = longitude;
@@ -166,13 +153,13 @@ export default {
         confirmButtonText: 'Yes!',
       }).then((result) => {
         if (!result.value) return;
-        this.deletePhoto(id);
+        this.requestDeletePhoto(id);
       });
     },
-    async deletePhoto(id) {
+    async requestDeletePhoto(id) {
       try {
-        const resp = await service.Photo.deletePhoto(id);
-        if (!resp.data.ok) throw new Error(resp);
+        const isSuccess = await this.deletePhoto(id);
+        if (!isSuccess) throw new Error('Error on deletePhoto in PhotoList.vue');
         console.log('Image deleted successfully ✨');
         this.$swal(
           {
@@ -181,21 +168,18 @@ export default {
             type: 'success',
           },
         );
-        this.getPhotos();
       } catch (error) {
         console.error(error);
       }
     },
-    async originalSize(id) {
-      console.log(id);
-      const blobUrl = await this.buildImgSrc(id, 'original');
+    async showOriginalPhoto(originalSrc) {
       this.$swal(
         {
           width: '95%',
           height: '95%',
           html: `<div>
-                   <a href='${blobUrl}' target=_blank>
-                     <img src='${blobUrl}' width=90%>
+                   <a href='${originalSrc}' target=_blank>
+                     <img src='${originalSrc}' width=90%>
                    </a>
                  </div>`,
         },
@@ -216,7 +200,7 @@ export default {
     },
   },
   created() {
-    this.getPhotos();
+    this.getAllPhotoList();
   },
 };
 </script>

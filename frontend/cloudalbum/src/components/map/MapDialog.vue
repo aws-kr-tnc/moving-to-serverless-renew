@@ -43,6 +43,9 @@
             >
               {{tag}}
             </v-chip>
+            <v-row justify="end">
+              <v-btn @click="close" class="ma-4">Close</v-btn>
+            </v-row>
           </v-container>
         </v-card>
       </v-flex>
