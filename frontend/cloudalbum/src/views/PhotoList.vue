@@ -73,6 +73,19 @@
               </v-card-actions>
             </v-card>
           </v-flex>
+          <v-flex v-if="photoList.length === 0">
+            <v-alert
+              v-model="alert"
+              dismissible
+              color="primary"
+              border="left"
+              elevation="2"
+              colored-border
+              icon="mdi-information"
+            >
+              <strong>No data! Pleas upload your photos. (Click <v-icon>mdi-cloud-upload</v-icon> icon above)</strong>
+            </v-alert>
+          </v-flex>
         </v-layout>
       </v-container>
     </v-card>
