@@ -80,7 +80,6 @@
           </v-flex>
           <v-flex v-if="photoList.length === 0">
             <v-alert
-              v-model="alert"
               dismissible
               color="primary"
               border="left"
