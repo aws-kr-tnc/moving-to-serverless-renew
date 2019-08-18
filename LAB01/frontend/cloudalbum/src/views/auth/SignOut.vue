@@ -22,6 +22,7 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import service from '@/service';
 
 export default {
   name: 'SignOut',
@@ -37,7 +38,29 @@ export default {
   },
   methods: {
     ...mapActions('Auth', ['getTokens']),
+
+    async signOut() {
+      try {
+        const resp = await service.Auth.signOut();
+        if (resp.data.ok === true) {
+          console.log('Image deleted successfully ✨');
+          this.$swal(
+            {
+              title: 'Success!',
+              text: 'Your account has been signed out successfully.',
+              type: 'success',
+              onClose: () => {
+                this.$router.push({ name: 'signin' });
+              },
+            },
+          );
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    },
   },
+
   mounted() {
     console.log('signout loaded');
     this.$swal({

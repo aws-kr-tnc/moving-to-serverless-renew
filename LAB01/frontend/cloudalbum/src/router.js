@@ -1,12 +1,6 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-import Home from './views/Home.vue';
-import Map from './views/Map.vue';
-import SignIn from './views/SignIn.vue';
-import SignOut from './views/SignOut.vue';
-import SignUp from './views/SignUp.vue';
-import FileUpload from './views/FileUpload.vue';
-import PhotoList from './views/PhotoList.vue';
+import SignIn from './views/auth/SignIn.vue';
 import store from '@/vuex';
 
 Vue.use(Router);
@@ -23,7 +17,7 @@ export default new Router({
     {
       path: '/',
       name: 'home',
-      component: Home,
+      component: SignIn,
     },
     {
       path: '/users/signin',
@@ -33,30 +27,30 @@ export default new Router({
     {
       path: '/users/signout',
       name: 'signout',
-      component: SignOut,
+      component: () => import('@/views/auth/SignOut'),
       beforeEnter: requireAuth(),
     },
     {
       path: '/users/signup',
       name: 'signup',
-      component: SignUp,
+      component: () => import('@/views/auth/SignUp'),
     },
     {
       path: '/photos/upload',
       name: 'upload',
-      component: FileUpload,
+      component: () => import('@/views/FileUpload'),
       beforeEnter: requireAuth(),
     },
     {
       path: '/photos',
       name: 'photolist',
-      component: PhotoList,
+      component: () => import('@/views/PhotoList'),
       beforeEnter: requireAuth(),
     },
     {
       path: '/map',
       name: 'map',
-      component: Map,
+      component: () => import('@/views/Map'),
       beforeEnter: requireAuth(),
     },
   ],

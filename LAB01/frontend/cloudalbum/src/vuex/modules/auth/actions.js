@@ -4,6 +4,7 @@ import { SET_ACCESS_TOKEN, SET_REFRESH_TOKEN, SET_ERROR_MESSAGE } from '@/vuex/m
 
 const setAccessToken = ({ commit }, data) => {
   commit(SET_ACCESS_TOKEN, data);
+  axios.defaults.headers.common.Authorization = `Bearer ${data}`;
 };
 
 const setRefreshToken = ({ commit }, data) => {
@@ -28,7 +29,6 @@ const getTokens = async (store, { email, password }) => {
     const resp = await services.Auth.signIn(email, password);
     setAccessToken(store, resp.data.accessToken);
     setRefreshToken(store, resp.data.refreshToken);
-    axios.defaults.headers.common.Authorization = `Bearer ${resp.data.accessToken}`;
     return resp;
   } catch (error) {
     const msg = responseCheck(error);

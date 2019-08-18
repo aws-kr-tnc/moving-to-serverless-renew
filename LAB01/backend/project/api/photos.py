@@ -66,6 +66,9 @@ file_upload_parser.add_argument('height', type=str, location='form')
 file_upload_parser.add_argument('taken_date', type=str, location='form')
 file_upload_parser.add_argument('geotag_lat', type=str, location='form')
 file_upload_parser.add_argument('geotag_lng', type=str, location='form')
+file_upload_parser.add_argument('city', type=str, location='form')
+file_upload_parser.add_argument('nation', type=str, location='form')
+file_upload_parser.add_argument('address', type=str, location='form')
 
 
 @api.route('/ping')
@@ -175,7 +178,8 @@ class List(Resource):
     def get(self):
         """Get all photos as list"""
         try:
-            photos = [photo.to_json() for photo in Photo.query.all()]
+            current_user = get_jwt_identity()['user_id']
+            photos = [photo.to_json() for photo in Photo.query.filter_by(user_id=current_user)]
             data = {
                 'photos': photos
             }
@@ -217,7 +221,7 @@ class OnePhoto(Resource):
             file_deleted = delete(filename, user['email'])
 
             if file_deleted:
-                app.logger.error("success:photo deleted: photo_id:{}".format(photo_id))
+                app.logger.debug("success:photo deleted: photo_id:{}".format(photo_id))
                 return m_response(True, {'photo_id': photo_id}, 200)
             else:
                 raise FileNotFoundError
