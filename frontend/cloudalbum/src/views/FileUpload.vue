@@ -230,9 +230,6 @@ export default {
     removeImage() {
       this.$refs.pictureInput.removeImage();
     },
-    onRemoved() {
-      this.removeImage();
-    },
     async attemptUpload() {
       if (!this.isValide()) return false;
       console.log('Attempting uploading..');
