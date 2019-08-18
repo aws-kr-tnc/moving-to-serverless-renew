@@ -97,8 +97,8 @@ class FileUpload(Resource):
                                           'msg': 'not supported file format:{}'.format(extension)}, 400)
 
             current_user = get_jwt_identity()
-            photo_id = str(uuid.uuid4())
-            filename = secure_filename("{0}.{1}".format(photo_id, extension))
+
+            filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
 
             filesize = save_s3(form['file'], filename, current_user['email'])
             user_id = current_user['user_id']
@@ -107,7 +107,7 @@ class FileUpload(Resource):
 
             solution_put_photo_info_ddb(user_id, new_photo)
 
-            return make_response({'ok': True, "photo_id": photo_id}, 200)
+            return make_response({'ok': True, "photo_id": filename}, 200)
         except Exception as e:
             app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
