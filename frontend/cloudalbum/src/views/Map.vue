@@ -39,8 +39,7 @@
                   color="primary"
                   label
                   text-color="white"
-                >    if (this.photoList.length !== 0) return;
-
+                >
                   <v-icon left>mdi-tag-multiple</v-icon>
                   TAGS
                 </v-chip>
