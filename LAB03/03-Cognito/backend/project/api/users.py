@@ -1,4 +1,7 @@
+import hashlib
 import uuid
+
+import boto3, hmac, base64
 
 from flask import Blueprint, request
 from flask import current_app as app
@@ -7,14 +10,14 @@ from flask import jsonify, make_response
 from flask_restplus import Api, Resource, fields
 
 from jsonschema import ValidationError
-from werkzeug.security import check_password_hash
+
 
 from project.schemas import validate_user
 from project.db.model_ddb import User
 from project.solution.solution import solution_put_new_user, solution_get_user_data_with_idx
 from project.util.response import m_response
 from project.util.blacklist_helper import add_token_to_set
-
+from project.util.config import conf
 
 users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint, doc='/swagger/', title='Users',
@@ -111,6 +114,34 @@ class Users(Resource):
             app.logger.error(e)
             return m_response(False, {'user_id': user_id}, 500)
 
+def cognito_signup(signup_user):
+    user = signup_user;
+    msg = '{0}{1}'.format(user['email'], conf['COGNITO_CLIENT_ID'])
+    client = boto3.client('cognito-idp')
+    dig = hmac.new(conf['COGNITO_CLIENT_SECRET'].encode('utf-8'),
+                   msg=msg.encode('utf-8'),
+                   digestmod=hashlib.sha256).digest()
+
+    response = client.sign_up(
+        ClientId=conf['COGNITO_CLIENT_ID'],
+        SecretHash=base64.b64encode(dig).decode(),
+        Username=user['email'],
+        Password=user['password'],
+        UserAttributes=[
+            {
+                'Name': 'name',
+                'Value': user['username']
+            }
+        ],
+        ValidationData=[
+            {
+                'Name': 'name',
+                'Value': user['username']
+            }
+        ]
+
+    )
+    print(response)
 
 @api.route('/signup')
 class Signup(Resource):
@@ -126,7 +157,7 @@ class Signup(Resource):
         try:
             validated = validate_user(req_data)
             user_data = validated['data']
-
+            cognito_signup(user_data)
             exist_user = None
             email = user_data['email']
 
@@ -136,7 +167,7 @@ class Signup(Resource):
             if not exist_user:
                 new_user_id = uuid.uuid4().hex
 
-                solution_put_new_user(new_user_id, user_data)
+            #     solution_put_new_user(new_user_id, user_data)
 
                 user = {
                     "id": new_user_id,
@@ -159,6 +190,30 @@ class Signup(Resource):
             return m_response(False, req_data, 500)
 
 
+def cognito_signin(user):
+    client = boto3.client('cognito-idp')
+    try:
+        msg = '{0}{1}'.format(user['email'], conf['COGNITO_CLIENT_ID'])
+
+        dig = hmac.new(conf['COGNITO_CLIENT_SECRET'].encode('utf-8'),
+                       msg=msg.encode('utf-8'),
+                       digestmod=hashlib.sha256).digest()
+
+        resp = client.admin_initiate_auth(UserPoolId=conf['COGNITO_POOL_ID'],
+                                          ClientId=conf['COGNITO_CLIENT_ID'],
+                                          AuthFlow='ADMIN_NO_SRP_AUTH',
+                                          AuthParameters={'SECRET_HASH': base64.b64encode(dig).decode(),'USERNAME': user['email'], 'PASSWORD': user['password']})
+
+        access_token = resp['AuthenticationResult']['AccessToken']
+        refresh_token = resp['AuthenticationResult']['RefreshToken']
+
+        return access_token, refresh_token
+    except client.exceptions.NotAuthorizedException as e:
+        app.logger.error("password mismatched")
+        app.logger.error(e)
+        raise e
+
+
 @api.route('/signin')
 class Signin(Resource):
     @api.doc(responses={
@@ -170,28 +225,21 @@ class Signin(Resource):
     def post(self):
         """user signin"""
         req_data = request.get_json()
+        client = boto3.client('cognito-idp')
         try:
             signin_data = validate_user(req_data)['data']
 
+            access_token, refresh_token = cognito_signin(signin_data)
 
-            db_user = solution_get_user_data_with_idx(signin_data)
+            res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
+            app.logger.debug('success:user signin:access_token:{}, refresh_token:{}'.format(access_token, refresh_token))
+            return make_response(res, 200)
 
-            if db_user is None:
-                return m_response(False, {'msg':'not exist email', 'user':signin_data}, 400)
-
-            token_data = {'user_id': db_user.id, 'username':db_user.username, 'email':db_user.email}
-
-            if db_user is not None and check_password_hash(db_user.password, signin_data['password']):
-
-                access_token = create_access_token(identity=token_data)
-                refresh_token = create_refresh_token(identity=token_data)
-                res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
-                app.logger.debug('success:user signin:{}'.format(token_data))
-                return make_response(res, 200)
-            else:
-                app.logger.error('ERROR:user signin failed:password unmatched or invalid user: {0}'.format(signin_data))
-                return m_response(False, {'msg':'password unmatched or invalid user',
-                                          'user': signin_data}, 400)
+        except client.exceptions.NotAuthorizedException as e:
+            app.logger.error('ERROR:user signin failed:password unmatched or invalid user: {0}'.format(signin_data))
+            app.logger.error(e)
+            return m_response(False, {'msg':'password unmatched or invalid user',
+                                      'user': signin_data}, 400)
 
         except ValidationError as e:
             app.logger.error('ERROR:invalid data format:{0}'.format(req_data))
