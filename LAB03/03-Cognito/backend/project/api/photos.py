@@ -1,6 +1,7 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
 
+from project.util.blacklist_helper import token_decoder, jwt_test
 from project.util.response import m_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
@@ -69,12 +70,15 @@ file_upload_parser.add_argument('address', type=str, location='form')
 file_upload_parser.add_argument('nation', type=str, location='form')
 
 
+
 @api.route('/ping')
 @api.doc('photos ping!')
 class Ping(Resource):
     @api.doc(responses={200: 'pong success'})
-    @jwt_required
+    # @jwt_required
+    @jwt_test
     def get(self):
+
         app.logger.debug('success:pong!')
         return m_response(True, {'msg': 'pong!'}, 200)
 

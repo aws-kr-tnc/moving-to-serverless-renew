@@ -1,7 +1,18 @@
+import base64
+import hashlib
+import hmac
+import json
+import time
+import urllib
+from functools import wraps
 
-from datetime import datetime
-
+from flask import request, jsonify, make_response
 from sqlalchemy.orm.exc import NoResultFound
+# import jwt
+from jose import jwk, jwt
+from jose.utils import base64url_decode
+
+from project.util.config import conf
 
 blacklist_set = set()
 def add_token_to_set(decoded_token):
@@ -27,4 +38,72 @@ def is_blacklisted_token_set(decoded_token):
     except NoResultFound:
         return False
 
+
+
+def token_decoder(token):
+
+
+    keys_url = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(conf['AWS_REGION'], conf['COGNITO_POOL_ID'])
+    # instead of re-downloading the public keys every time
+    # we download them only on cold start
+    # https://aws.amazon.com/blogs/compute/container-reuse-in-lambda/
+    response = urllib.request.urlopen(keys_url)
+    keys = json.loads(response.read())['keys']
+    # get the kid from the headers prior to verification
+    headers = jwt.get_unverified_headers(token)
+    kid = headers['kid']
+    # search for the kid in the downloaded public keys
+    key_index = -1
+    for i in range(len(keys)):
+        if kid == keys[i]['kid']:
+            key_index = i
+            break
+    if key_index == -1:
+        print('Public key not found in jwks.json')
+        return False
+    # construct the public key
+    public_key = jwk.construct(keys[key_index])
+    # get the last two sections of the token,
+    # message and signature (encoded in base64)
+    message, encoded_signature = str(token).rsplit('.', 1)
+    # decode the signature
+    decoded_signature = base64url_decode(encoded_signature.encode('utf-8'))
+    # verify the signature
+    if not public_key.verify(message.encode("utf8"), decoded_signature):
+        print('Signature verification failed')
+        return False
+    print('Signature successfully verified')
+    # since we passed the verification, we can now safely
+    # use the unverified claims
+    claims = jwt.get_unverified_claims(token)
+    # additionally we can verify the token expiration
+    if time.time() > claims['exp']:
+        print('Token is expired')
+        return False
+    # and the Audience  (use claims['client_id'] if verifying an access token)
+    # if claims['aud'] != conf['COGNITO_CLIENT_ID']:
+    #     print('Token was not issued for this audience')
+    #     return False
+    # now we can use the claims
+    print(claims)
+    return claims
+
+
+def jwt_test(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not 'Authorization' in request.headers:
+            return make_response(jsonify({'msg':'no token'}), 400)
+
+        token = request.headers['Authorization']
+        result_token= None
+        try:
+            result_token = token_decoder(token.rsplit(' ', 1)[1])
+        except:
+            return make_response(jsonify({'msg':'invalid token'}), 400)
+
+        kwargs['decoded_token'] = result_token
+        return f(*args, **kwargs)
+
+    return decorated_function
 
