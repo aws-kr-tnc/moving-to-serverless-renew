@@ -10,17 +10,19 @@ In this hands-on lab, you'll configure the **AWS [Cloud9](https://aws.amazon.com
 
 
 **CloudAlbum** has a general three-tier architecture.
+> 이미지 수정필요
+
 <img src=./images/lab01-legacy-arc.png width=700>
 
 The application has following software stack.
 
+> 이미지 수정필요 
+
 <img src=./images/lab01-01.png>
 
-Legacy application is **not Restful** and application backend is **tightly coupled with Jinja2** Template Engine.
-
-<img src=./images/lab01-legacy-template-enging.png>
 
 It has following several features.
+> 화면 캡처 다시 해야 함 
 
 <img src=./images/lab01-02.png width=800>
 
@@ -46,7 +48,7 @@ In this section, you will create an AWS Cloud9 environment and explore the envir
 
 5. Click **Next step.**
 
-6. On the **Configure settings** page, leave the default selection in the Environment settings section.(If you want, you can choose a **high-performance instance**. **However, you should consider your credits.**)
+6. On the **Configure settings** page, leave the default selection in the Environment settings section. (Default instance type is t2.micro.)
 
 7. Click Next step.
 
@@ -54,18 +56,44 @@ In this section, you will create an AWS Cloud9 environment and explore the envir
 
 9. Upon environment creation, notice the **terminal window on the bottom pane**. The terminal provides a remote login to the instance on which the AWS Cloud9 environment is hosted, just as you used SSH for remote login. A **pre-authenticated AWS CLI** is installed in your terminal.
 
-10. Explore the terminal by typing this command: 
+10. Cloud9 instance already has basic development tools as well as AWS CLI. Explore the terminal by typing this command: 
 
 ```console
 aws ec2 describe-instances
 ``` 
 * Is it works well? Cool. Go to next step.
 
+* We can also use **virtualenv** for our project. (Please refer following links. In this LAB doesn't use **virtualenv** for the convinience.)
+
+
 ```console
-sudo pip-3.6 install boto3
+which python3
+```
+* You can check python3 version.
+```console
+python3 --version
+```
+* Then you can setup `virtualenv`
+```console
+python3 -m venv venv
+source env/bin/activate
+```
+* However, in the Cloud9 terminal environment, `python` command is aliased, so `python --version` or `which python` will show 'python27'. So, we need to run `unalias python`. Now you can see right version and right path like below.
+
+```console
+which python
+~/environment/venv/bin/python
+python --version
+Python 3.6.8
 ```
 
-11. At the terminal, type **python3** and press ENTER.
+Now, you can see `(venv) $ ` prompt then install `boto3` library.
+```console
+python --version
+pip install boto3
+```
+
+11. At the terminal, type **python** and press ENTER.
 
 12. For the confirmination, try the Python Boto 3 APIs by executing these commands:
 
@@ -77,9 +105,9 @@ client.describe_instances()
 ```
 
 
-13. Press **CTRL+D** to exit the Python interpreter.
+13. If it works well, we can start now. Press **CTRL+D** to exit the Python interpreter.
 
-**NOTE :** You can also use **virtualenv** for your project. Please refer following links. In this LAB doesn't use **virtualenv** for the convinience.
+**NOTE :** You can also refer following links. 
 
 * https://docs.aws.amazon.com/ko_kr/cloud9/latest/user-guide/sample-python.html#sample-python-install
 
