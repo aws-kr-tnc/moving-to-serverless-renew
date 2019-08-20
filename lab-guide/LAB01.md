@@ -80,6 +80,14 @@ source env/bin/activate
 ```
 * However, in the Cloud9 terminal environment, `python` command is aliased, so `python --version` or `which python` will show 'python27'. So, we need to run `unalias python`. Now you can see right version and right path like below.
 
+* For later use, run following command.
+```console
+unalias python
+echo "unalias python" >> ~/.bash_profile
+echo "source ~/environment/venv/bin/activate" >> ~/.bash_profile
+```
+
+
 ```console
 which python
 ~/environment/venv/bin/python
@@ -122,13 +130,13 @@ Check out the workshop repository from the Github.
 cd ~/environment
 ```
 ```console
-git clone https://github.com/aws-kr-tnc/moving-to-serverless-workshop-1d --depth 1
+git clone https://github.com/aws-kr-tnc/moving-to-serverless-renew --depth 1
 ```
 
 14. Install the requirements for the project by executing the command below in your AWS Cloud9 terminal.
 
 ```console
-sudo pip-3.6 install -r ~/environment/moving-to-serverless-workshop-1d/LAB01/CloudAlbum/requirements.txt
+pip install -r ~/environment/moving-to-serverless-renew/LAB01/backend/requirements.txt
 ```
 
 15. Check the **config.py** Open this file in **Cloud9 terminal window** or **Cloud9 IDE editor**.
@@ -136,6 +144,23 @@ sudo pip-3.6 install -r ~/environment/moving-to-serverless-workshop-1d/LAB01/Clo
 ```console
 vi ~/environment/moving-to-serverless-workshop-1d/LAB01/CloudAlbum/cloudalbum/config.py
 ```
+
+
+16. Backend 실행 
+- SG 변경 
+INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+
+SG_NAME=`curl -s http://169.254.169.254/latest/meta-data/security-groups`
+SG_ID=`aws ec2 describe-security-groups --group-names $SG_NAME --query 'SecurityGroups[*].[GroupId]' --output text`
+
+aws ec2 authorize-security-group-ingress \
+    --group-id $SG_ID \
+    --protocol tcp \
+    --port 5000 \
+    --cidr 0.0.0.0/0
+	
+
+17. Frontend 실행
 
 
 ```python
