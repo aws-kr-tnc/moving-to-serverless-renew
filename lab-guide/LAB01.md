@@ -18,7 +18,9 @@ The application has following software stack.
   * Vue.js : A progressive framework for building user interfaces. 
   * Vuetify : A Material Design component framework for Vue.js
   * Leaflet : A JavaScript library for interactive maps
+  * exif.js : A JavaScript library for reading EXIF meta data from image files.
   * SweetAlert2 : A beautiful, responsive, customizable and accessible (WAI-ARIA) replacement for JavaScript's popup boxes.
+
 * Back-end
   * Flask : A lightweight WSGI web application framework. 
   * Flask-RESTPlus : An extension for Flask that adds support for quickly building REST APIs.
@@ -68,6 +70,7 @@ aws ec2 describe-instances
 ``` 
 * Is it works well? Cool. Go to next step.
 
+11. Now setup python environment.
 * We can also use **virtualenv** for our project. (Please refer following links. In this LAB doesn't use **virtualenv** for the convinience.)
 
 
@@ -106,9 +109,9 @@ python --version
 pip install boto3
 ```
 
-11. At the terminal, type **python** and press ENTER.
+12. At the terminal, type **python** and press ENTER.
 
-12. For the confirmination, try the Python Boto 3 APIs by executing these commands:
+13. For the confirmination, try the Python Boto 3 APIs by executing these commands:
 
 
 ```python
@@ -118,7 +121,7 @@ client.describe_instances()
 ```
 
 
-13. If it works well, we can start now. Press **CTRL+D** to exit the Python interpreter.
+14. If it works well, we can start now. Press **CTRL+D** to exit the Python interpreter.
 
 **NOTE :** You can also refer following links. 
 
@@ -127,7 +130,7 @@ client.describe_instances()
 * https://docs.aws.amazon.com/ko_kr/cloud9/latest/user-guide/sample-python.html#sample-python-run
 
 
-## TASK 2. Look around legacy application and try run it.
+## TASK 2. Look around current application and try run it.
 
 Check out the workshop repository from the Github.
 
@@ -138,20 +141,63 @@ cd ~/environment
 git clone https://github.com/aws-kr-tnc/moving-to-serverless-renew --depth 1
 ```
 
-14. Install the requirements for the project by executing the command below in your AWS Cloud9 terminal.
+15. Install the requirements for the project by executing the command below in your AWS Cloud9 terminal.
 
 ```console
 pip install -r ~/environment/moving-to-serverless-renew/LAB01/backend/requirements.txt
 ```
 
-15. Check the **config.py** Open this file in **Cloud9 terminal window** or **Cloud9 IDE editor**.
+16. Check the **config.py** Open this file in **Cloud9 IDE editor**. (`~/environment/moving-to-serverless-renew/LAB01/backend/cloudalbum/config.py`)
 
-```console
-vi ~/environment/moving-to-serverless-workshop-1d/LAB01/CloudAlbum/cloudalbum/config.py
+* You can find the configuration information you need when this application is run.
+
+
+```python
+import os
+import datetime
+
+
+class BaseConfig:
+    """Base configuration"""
+    TESTING = False
+    APP_HOST = os.getenv('APP_HOST', '0.0.0.0')
+    APP_PORT = os.getenv('APP_PORT', 8080)
+
+    SECRET_KEY = os.getenv('FLASK_SECRET', os.urandom(24))
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'my_jwt')
+    JWT_ACCESS_TOKEN_EXPIRES = os.getenv('JWT_ACCESS_TOKEN_EXPIRES', datetime.timedelta(days=1))
+    JWT_BLACKLIST_ENABLED = os.getenv('JWT_BLACKLIST_ENABLED', True)
+    JWT_BLACKLIST_TOKEN_CHECKS = ['access']
+
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ECHO_FLAG = os.getenv('SQLALCHEMY_ECHO_FLAG', True)
+
+    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'upload'))
+    THUMBNAIL_WIDTH = os.getenv('THUMBNAIL_WIDTH', 300)
+    THUMBNAIL_HEIGHT = os.getenv('THUMBNAIL_HEIGHT', 200)
+
+
+class DevelopmentConfig(BaseConfig):
+    """Development configuration"""
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:////tmp/sqlite_dev.db')
+
+
+class TestingConfig(BaseConfig):
+    """Testing configuration"""
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_TEST_URL', 'sqlite:////tmp/sqlite_test.db')
+
+
+class ProductionConfig(BaseConfig):
+    """Production configuration"""
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+
 ```
 
+* The second parameter of **os.getenv** function is the default value to use when the **first parameter does not exist.**
 
-16. Backend 실행 
+
+17. Backend 실행 
 - SG 변경 
 INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
 
@@ -168,38 +214,7 @@ aws ec2 authorize-security-group-ingress \
 17. Frontend 실행
 
 
-```python
-import os
 
-conf = {
-    # Mandatory variable
-    'GMAPS_KEY': os.getenv('GMAPS_KEY', None),
-    'DB_URL': os.getenv('DB_URL', None),
-
-    # Default config values
-    'APP_HOST': os.getenv('APP_HOST', '0.0.0.0'),
-    'APP_PORT': os.getenv('APP_PORT', 8080),
-    'FLASK_SECRET': os.getenv('FLASK_SECRET', os.urandom(24)),
-    'SESSION_TIMEOUT': os.getenv('SESSION_TIMEOUT', 30),
-    'SQLALCHEMY_TRACK_MODIFICATIONS': os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', False),
-    'DB_ECHO_FLAG': os.getenv('DB_ECHO_FLAG', True),
-    'DB_POOL_SIZE': os.getenv('DB_POOL_SIZE', 10),
-    'DB_MAX_OVERFLOW': os.getenv('DB_MAX_OVERFLOW', 20),
-    'DB_SQLALCHEMY_POOL_TIMEOUT': os.getenv('DB_SQLALCHEMY_POOL_TIMEOUT', 15),
-    'DB_SQLALCHEMY_POOL_RECYCLE': os.getenv('DB_SQLALCHEMY_POOL_RECYCLE', 7200),
-    'LOG_FILE_PATH': os.getenv('LOG_FILE_PATH', os.path.join(os.getcwd(), 'logs')),
-    'LOG_FILE_NAME': os.getenv('LOG_FILE_NAME', 'cloudalbum.log'),
-    'ALLOWED_EXTENSIONS': ['jpg', 'jpeg'],
-    'UPLOAD_FOLDER': os.getenv('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'upload')),
-    'LOGGING_FORMAT': os.getenv('LOGGING_FORMAT', '%(asctime)s %(levelname)s: %(message)s in [%(filename)s:%(lineno)d]'),
-    'LOGGING_MAX_BYTES': os.getenv('LOGGING_MAX_BYTES', 100000),
-    'LOGGING_BACKUP_COUNT': os.getenv('LOGGING_BACKUP_COUNT', 1000),
-    'LOGGING_LEVEL': os.getenv('LOGGING_LEVEL', 'debug'),
-    'PER_PAGE': os.getenv('PER_PAGE', 6),
-    'THUMBNAIL_WIDTH': os.getenv('THUMBNAIL_WIDTH', 200),
-    'THUMBNAIL_HEIGHT': os.getenv('THUMBNAIL_HEIGHT', 300),
-}
-```
 * The second parameter of **os.getenv** function is the default value to use when the **first parameter does not exist.**
 
 16. Check the following variables in **config.py**.

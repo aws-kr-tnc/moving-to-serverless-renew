@@ -1,25 +1,14 @@
-
 import os
 import datetime
-
-# - FLASK_ENV=production
-# - APP_SETTINGS=cloudalbum.config.ProductionConfig
-# - DATABASE_URL=postgres://postgres:postgres@users-db:5432/users_prod
-# - DATABASE_TEST_URL=postgres://postgres:postgres@users-db:5432/users_test
-# app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'my_jwt')
-# app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
-# app.config['JWT_BLACKLIST_ENABLED'] = True
-# app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access']
 
 
 class BaseConfig:
     """Base configuration"""
     TESTING = False
-
-    SECRET_KEY = os.getenv('FLASK_SECRET', os.urandom(24))
     APP_HOST = os.getenv('APP_HOST', '0.0.0.0')
     APP_PORT = os.getenv('APP_PORT', 8080)
 
+    SECRET_KEY = os.getenv('FLASK_SECRET', os.urandom(24))
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'my_jwt')
     JWT_ACCESS_TOKEN_EXPIRES = os.getenv('JWT_ACCESS_TOKEN_EXPIRES', datetime.timedelta(days=1))
     JWT_BLACKLIST_ENABLED = os.getenv('JWT_BLACKLIST_ENABLED', True)
@@ -35,13 +24,13 @@ class BaseConfig:
 
 class DevelopmentConfig(BaseConfig):
     """Development configuration"""
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:////tmp/sqlite_dev.db')
 
 
 class TestingConfig(BaseConfig):
     """Testing configuration"""
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_TEST_URL')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_TEST_URL', 'sqlite:////tmp/sqlite_test.db')
 
 
 class ProductionConfig(BaseConfig):

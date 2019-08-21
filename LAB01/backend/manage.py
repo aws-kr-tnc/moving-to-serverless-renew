@@ -8,6 +8,8 @@ from cloudalbum.api.models import User
 app = create_app()
 cli = FlaskGroup(create_app=create_app)
 
+app.logger.info('SQLALCHEMY_DATABASE_URI: {0}'.format(app.config['SQLALCHEMY_DATABASE_URI']))
+app.logger.info('UPLOAD_FOLDER: {0}'.format(app.config['UPLOAD_FOLDER']))
 
 @cli.command('recreate_db')
 def recreate_db():

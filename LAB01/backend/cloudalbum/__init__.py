@@ -36,12 +36,6 @@ def create_app(script_info=None):
     app = Flask(__name__)
 
     # initiate some config value for JWT Authentication
-    # app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'my_jwt')
-    # app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
-    # app.config['JWT_BLACKLIST_ENABLED'] = True
-    # app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access']
-
-    # flask_bcrypt = Bcrypt(app)
     jwt = JWTManager(app)
     app.json_encoder = JSONEncoder
 
@@ -49,7 +43,7 @@ def create_app(script_info=None):
     CORS(app, resources={r'/*': {'origins': '*'}})
 
     # set config
-    app_settings = os.getenv('APP_SETTINGS')
+    app_settings = os.getenv('APP_SETTINGS', 'cloudalbum.config.DevelopmentConfig')
     app.config.from_object(app_settings)
 
     # set logger to STDOUT
