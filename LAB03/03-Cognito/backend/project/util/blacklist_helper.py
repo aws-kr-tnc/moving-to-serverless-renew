@@ -11,6 +11,7 @@ from sqlalchemy.orm.exc import NoResultFound
 # import jwt
 from jose import jwk, jwt
 from jose.utils import base64url_decode
+from flask import current_app as app
 
 from project.util.config import conf
 
@@ -54,12 +55,13 @@ def token_decoder(token):
     kid = headers['kid']
     # search for the kid in the downloaded public keys
     key_index = -1
+
     for i in range(len(keys)):
         if kid == keys[i]['kid']:
             key_index = i
             break
     if key_index == -1:
-        print('Public key not found in jwks.json')
+        app.logger.error('Public key not found in jwks.json')
         return False
     # construct the public key
     public_key = jwk.construct(keys[key_index])
@@ -70,23 +72,24 @@ def token_decoder(token):
     decoded_signature = base64url_decode(encoded_signature.encode('utf-8'))
     # verify the signature
     if not public_key.verify(message.encode("utf8"), decoded_signature):
-        print('Signature verification failed')
+        app.logger.error('Signature verification failed')
         return False
-    print('Signature successfully verified')
+    app.logger.debug('Signature successfully verified')
     # since we passed the verification, we can now safely
     # use the unverified claims
     claims = jwt.get_unverified_claims(token)
     # additionally we can verify the token expiration
     if time.time() > claims['exp']:
-        print('Token is expired')
+        app.logger.error('Token is expired')
         return False
     # and the Audience  (use claims['client_id'] if verifying an access token)
+    #
     # if claims['aud'] != conf['COGNITO_CLIENT_ID']:
-    #     print('Token was not issued for this audience')
+    #     app.logger.error('Token was not issued for this audience')
     #     return False
     # now we can use the claims
-    print(claims)
-    return claims
+    app.logger.debug(claims)
+    return True
 
 
 def jwt_test(f):
@@ -98,12 +101,12 @@ def jwt_test(f):
         token = request.headers['Authorization']
         result_token= None
         try:
-            result_token = token_decoder(token.rsplit(' ', 1)[1])
+            if token_decoder(token.rsplit(' ', 1)[1]):
+                return f(*args, **kwargs)
+            else:
+                return make_response(jsonify({'msg': 'invalid token'}), 400)
         except:
             return make_response(jsonify({'msg':'invalid token'}), 400)
-
-        kwargs['decoded_token'] = result_token
-        return f(*args, **kwargs)
 
     return decorated_function
 
