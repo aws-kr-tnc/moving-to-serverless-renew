@@ -1,7 +1,7 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
 
-from project.util.blacklist_helper import token_decoder, jwt_test
+from project.util.blacklist_helper import token_decoder, pyjwt_required
 from project.util.response import m_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
@@ -75,8 +75,8 @@ file_upload_parser.add_argument('nation', type=str, location='form')
 @api.doc('photos ping!')
 class Ping(Resource):
     @api.doc(responses={200: 'pong success'})
-    # @jwt_required
-    @jwt_test
+
+    @pyjwt_required
     def get(self):
 
         app.logger.debug('success:pong!')
