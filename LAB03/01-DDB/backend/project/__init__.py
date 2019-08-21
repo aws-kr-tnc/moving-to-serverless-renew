@@ -63,13 +63,13 @@ def create_app(script_info=None):
     # db.init_app(app)
 
     # register blueprints
-    from project.api.users import users_blueprint
+    from cloudalbum.api.users import users_blueprint
     app.register_blueprint(users_blueprint, url_prefix='/users')
 
-    from project.api.photos import photos_blueprint
+    from cloudalbum.api.photos import photos_blueprint
     app.register_blueprint(photos_blueprint, url_prefix='/photos')
 
-    from project.api.map import map_blueprint
+    from cloudalbum.api.map import map_blueprint
     app.register_blueprint(map_blueprint)
 
     # Setup models for DB operations
@@ -83,7 +83,7 @@ def create_app(script_info=None):
 
     @jwt.token_in_blacklist_loader
     def check_if_token_in_blacklist_DB(decrypted_token):
-        from project.util.blacklist_helper import is_blacklisted_token_set
+        from cloudalbum.util.blacklist_helper import is_blacklisted_token_set
         try:
             # return is_blacklisted_token_db(decrypted_token)
             return is_blacklisted_token_set(decrypted_token)

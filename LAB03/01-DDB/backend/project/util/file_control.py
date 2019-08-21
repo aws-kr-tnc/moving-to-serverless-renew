@@ -2,8 +2,8 @@ from flask import current_app as app
 from PIL import Image
 from pathlib import Path
 
-from project.util.config import conf
-from project.db.model_ddb import User, Photo, photo_deserialize
+from cloudalbum.util.config import conf
+from cloudalbum.db.model_ddb import User, Photo, photo_deserialize
 
 import os
 from datetime import datetime

@@ -1,18 +1,17 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
-from project import db
-from project.api.models import Photo
+from cloudalbum import db
+from cloudalbum.api.models import Photo
 from datetime import datetime
-from project.util.response import m_response
+from cloudalbum.util.response import m_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
-from project.schemas import validate_photo_info
+from cloudalbum.schemas import validate_photo_info
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from pathlib import Path
-from project.util.config import conf
-from project.util.file_control import email_normalize, delete, save, insert_basic_info
+from cloudalbum.util.file_control import email_normalize, delete, save, insert_basic_info
 from jsonschema.exceptions import ValidationError
 import os, uuid
 
@@ -249,7 +248,7 @@ class OnePhoto(Resource):
         try:
             mode = request.args.get('mode')
             email = get_jwt_identity()['email']
-            path = os.path.join(conf['UPLOAD_DIR'], email_normalize(email))
+            path = os.path.join(app.config['UPLOAD_FOLDER'], email_normalize(email))
             full_path = Path(path)
 
             photo = db.session.query(Photo).filter_by(id=photo_id).first()

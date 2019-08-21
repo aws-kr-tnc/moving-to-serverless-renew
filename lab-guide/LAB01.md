@@ -10,15 +10,20 @@ In this hands-on lab, you'll configure the **AWS [Cloud9](https://aws.amazon.com
 
 
 **CloudAlbum** has a general three-tier architecture.
-> 이미지 수정필요
-
 <img src=./images/lab01-legacy-arc.png width=700>
 
 The application has following software stack.
 
-> 이미지 수정필요 
-
-<img src=./images/lab01-01.png>
+* Front-end
+  * Vue.js : A progressive framework for building user interfaces. 
+  * Vuetify : A Material Design component framework for Vue.js
+  * Leaflet : A JavaScript library for interactive maps
+  * SweetAlert2 : A beautiful, responsive, customizable and accessible (WAI-ARIA) replacement for JavaScript's popup boxes.
+* Back-end
+  * Flask : A lightweight WSGI web application framework. 
+  * Flask-RESTPlus : An extension for Flask that adds support for quickly building REST APIs.
+  * SQLAlchemi : The Python SQL Toolkit and Object Relational Mapper.
+  * Pillow : Python Imaging Library (Fork)
 
 
 It has following several features.
@@ -76,7 +81,7 @@ python3 --version
 * Then you can setup `virtualenv`
 ```console
 python3 -m venv venv
-source env/bin/activate
+source venv/bin/activate
 ```
 * However, in the Cloud9 terminal environment, `python` command is aliased, so `python --version` or `which python` will show 'python27'. So, we need to run `unalias python`. Now you can see right version and right path like below.
 
@@ -118,7 +123,7 @@ client.describe_instances()
 **NOTE :** You can also refer following links. 
 
 * https://docs.aws.amazon.com/ko_kr/cloud9/latest/user-guide/sample-python.html#sample-python-install
-
+ 
 * https://docs.aws.amazon.com/ko_kr/cloud9/latest/user-guide/sample-python.html#sample-python-run
 
 
@@ -156,7 +161,7 @@ SG_ID=`aws ec2 describe-security-groups --group-names $SG_NAME --query 'Security
 aws ec2 authorize-security-group-ingress \
     --group-id $SG_ID \
     --protocol tcp \
-    --port 5000 \
+    --port 8081 \
     --cidr 0.0.0.0/0
 	
 

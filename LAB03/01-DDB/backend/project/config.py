@@ -2,7 +2,7 @@
 import os
 
 # - FLASK_ENV=production
-# - APP_SETTINGS=project.config.ProductionConfig
+# - APP_SETTINGS=cloudalbum.config.ProductionConfig
 # - DATABASE_URL=postgres://postgres:postgres@users-db:5432/users_prod
 # - DATABASE_TEST_URL=postgres://postgres:postgres@users-db:5432/users_test
 

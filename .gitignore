@@ -89,11 +89,11 @@ ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
+# Spyder cloudalbum settings
 .spyderproject
 .spyproject
 
-# Rope project settings
+# Rope cloudalbum settings
 .ropeproject
 
 # mkdocs documentation

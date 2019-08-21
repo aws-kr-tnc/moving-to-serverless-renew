@@ -1,7 +1,7 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
 
-from project.util.response import m_response
+from cloudalbum.util.response import m_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
@@ -9,9 +9,9 @@ from werkzeug.utils import secure_filename
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 
-from project.util.file_control import delete_s3, save_s3, create_photo_info, presigned_url
-from project.db.model_ddb import User
-from project.solution.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
+from cloudalbum.util.file_control import delete_s3, save_s3, create_photo_info, presigned_url
+from cloudalbum.db.model_ddb import User
+from cloudalbum.solution.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
 import uuid
 
 authorizations = {

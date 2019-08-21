@@ -2,8 +2,8 @@
 from flask import Blueprint, request
 from flask_restful import Resource, Api
 from sqlalchemy import exc
-from project import db
-from project.api.models import User
+from cloudalbum import db
+from cloudalbum.api.models import User
 
 map_blueprint = Blueprint('map', __name__)
 api = Api(map_blueprint)

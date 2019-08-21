@@ -6,7 +6,7 @@ from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
 
 from tzlocal import get_localzone
 
-from project.util.config import conf
+from cloudalbum.util.config import conf
 
 def local_time_now():
     local_tz = get_localzone()

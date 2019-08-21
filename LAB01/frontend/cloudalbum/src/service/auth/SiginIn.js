@@ -1,9 +1,9 @@
-import axios from '@/plugins/axios';
+import axiosInstance from '@/plugins/axios';
 
 const signIn = (email, password) => {
   const apiUri = '/users/signin';
 
-  return axios.post(apiUri, {
+  return axiosInstance.post(apiUri, {
     email,
     password,
   }, {

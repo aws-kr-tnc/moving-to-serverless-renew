@@ -10,7 +10,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
-from flask_bcrypt import Bcrypt
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -37,15 +36,13 @@ def create_app(script_info=None):
     app = Flask(__name__)
 
     # initiate some config value for JWT Authentication
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'my_jwt')
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
-    app.config['JWT_BLACKLIST_ENABLED'] = True
-    app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access']
+    # app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'my_jwt')
+    # app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
+    # app.config['JWT_BLACKLIST_ENABLED'] = True
+    # app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access']
 
-    flask_bcrypt = Bcrypt(app)
+    # flask_bcrypt = Bcrypt(app)
     jwt = JWTManager(app)
-
-
     app.json_encoder = JSONEncoder
 
     # enable CORS
@@ -63,13 +60,13 @@ def create_app(script_info=None):
     db.init_app(app)
 
     # register blueprints
-    from project.api.users import users_blueprint
+    from cloudalbum.api.users import users_blueprint
     app.register_blueprint(users_blueprint, url_prefix='/users')
 
-    from project.api.photos import photos_blueprint
+    from cloudalbum.api.photos import photos_blueprint
     app.register_blueprint(photos_blueprint, url_prefix='/photos')
 
-    from project.api.map import map_blueprint
+    from cloudalbum.api.map import map_blueprint
     app.register_blueprint(map_blueprint)
 
     # Setup models for DB operations
@@ -82,7 +79,7 @@ def create_app(script_info=None):
 
     @jwt.token_in_blacklist_loader
     def check_if_token_in_blacklist_DB(decrypted_token):
-        from project.util.blacklist_helper import is_blacklisted_token_db, is_blacklisted_token_set
+        from cloudalbum.util.blacklist_helper import is_blacklisted_token_db, is_blacklisted_token_set
         try:
             return is_blacklisted_token_db(decrypted_token)
             # return is_blacklist_token_set(decrypted_token)

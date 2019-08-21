@@ -1,4 +1,4 @@
-from project import db
+from cloudalbum import db
 from sqlalchemy import Float, DateTime, ForeignKey, Integer, String
 from flask_login import UserMixin
 from datetime import datetime

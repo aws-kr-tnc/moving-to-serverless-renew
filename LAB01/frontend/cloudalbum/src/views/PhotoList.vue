@@ -60,6 +60,17 @@
                   <template v-slot:activator="{ on }">
                     <v-btn
                       icon v-on="on"
+                      @click="showOriginalPhoto(photo.originalSrc)"
+                    >
+                      <v-icon>mdi-image-area</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Show large image</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-btn
+                      icon v-on="on"
                       @click="showMap(photo.geotag_lat, photo.geotag_lng, photo.desc, photo.tags)"
                     >
                       <v-icon>mdi-map-marker-check</v-icon>

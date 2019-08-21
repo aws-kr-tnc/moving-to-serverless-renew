@@ -1,8 +1,8 @@
 from flask import current_app as app
 from werkzeug.security import generate_password_hash
 
-from project.db.model_ddb import User
-from project.util.config import conf
+from cloudalbum.db.model_ddb import User
+from cloudalbum.util.config import conf
 
 
 def solution_put_new_user(new_user_id, user_data):

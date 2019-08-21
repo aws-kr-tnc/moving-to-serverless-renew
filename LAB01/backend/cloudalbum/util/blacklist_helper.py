@@ -5,8 +5,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from flask_jwt_extended import decode_token
 
 # from exceptions import TokenNotFound
-from project.api.models import BlacklistToken
-from project import db
+from cloudalbum.api.models import BlacklistToken
+from cloudalbum import db
 
 def add_token_to_database(decoded_token):
     """

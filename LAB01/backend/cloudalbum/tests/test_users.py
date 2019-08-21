@@ -3,7 +3,7 @@ import json
 import unittest
 import random
 
-from project.tests.base import BaseTestCase
+from cloudalbum.tests.base import BaseTestCase
 
 def auto_signup(self):
     """Signup tool for test user """

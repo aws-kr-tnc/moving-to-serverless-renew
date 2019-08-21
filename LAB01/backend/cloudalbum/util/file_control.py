@@ -2,9 +2,8 @@ from flask import current_app as app
 from PIL import Image
 from pathlib import Path
 
-from project.util.config import conf
-from project.api.models import Photo
-from project import db
+from cloudalbum.api.models import Photo
+from cloudalbum import db
 
 from datetime import datetime
 import os, uuid
@@ -48,7 +47,7 @@ def delete(filename, email):
     :return: Boolean
     """
     try:
-        base_path = Path(conf['UPLOAD_DIR']) / email_normalize(email)
+        base_path = Path(app.config['UPLOAD_FOLDER']) / email_normalize(email)
         thumbnail_file_location = base_path / 'thumbnails' / filename
         original_file_location = base_path / filename
 
@@ -82,7 +81,7 @@ def save(upload_file, filename, email):
     :param app: Flask.application
     :return: file size (byte)
     """
-    path = Path(conf['UPLOAD_DIR']) / email_normalize(email)
+    path = Path(app.config['UPLOAD_FOLDER']) / email_normalize(email)
 
     try:
         if not path.exists():

@@ -3,9 +3,9 @@ from flask import current_app as app
 from PIL import Image
 from pathlib import Path
 
-from project.solution.solution import solution_put_object_to_s3, solution_generate_s3_presigned_url
-from project.util.config import conf
-from project.db.model_ddb import User, Photo, photo_deserialize
+from cloudalbum.solution.solution import solution_put_object_to_s3, solution_generate_s3_presigned_url
+from cloudalbum.util.config import conf
+from cloudalbum.db.model_ddb import User, Photo, photo_deserialize
 
 import os
 from datetime import datetime
