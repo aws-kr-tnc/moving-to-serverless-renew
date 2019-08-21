@@ -206,9 +206,8 @@ def cognito_signin(user):
         print("secret key:{}".format(auth))
         access_token = resp['AuthenticationResult']['AccessToken']
         refresh_token = resp['AuthenticationResult']['RefreshToken']
-        id_token = resp['AuthenticationResult']['IdToken']
 
-        return access_token, refresh_token, id_token
+        return access_token, refresh_token
     except client.exceptions.NotAuthorizedException as e:
         app.logger.error("password mismatched")
         app.logger.error(e)
@@ -230,8 +229,8 @@ class Signin(Resource):
         try:
             signin_data = validate_user(req_data)['data']
 
-            access_token, refresh_token, id_token = cognito_signin(signin_data)
-            # print("idtoken:{}".format(id_token))
+            access_token, refresh_token = cognito_signin(signin_data)
+
             res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
             app.logger.debug('success:user signin:access_token:{}, refresh_token:{}'.format(access_token, refresh_token))
             return make_response(res, 200)

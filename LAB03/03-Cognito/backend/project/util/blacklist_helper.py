@@ -1,5 +1,7 @@
 import json
 import time
+
+import boto3
 import requests
 from functools import wraps
 from flask import request, jsonify, make_response
@@ -87,10 +89,21 @@ def pyjwt_required(f):
         try:
             if token_decoder(token.rsplit(' ', 1)[1], None) is not None:
                 return f(*args, **kwargs)
-            else:
-                return make_response(jsonify({'msg': 'invalid token'}), 400)
-        except:
+        except Exception as e:
+            print(e)
             return make_response(jsonify({'msg':'invalid token'}), 400)
 
     return decorated_function
 
+def get_cognito_user(access_token):
+    client = boto3.client('cognito-idp')
+    cognito_user = client.get_user(AccessToken=access_token)
+
+    user_data = {}
+    for attr in cognito_user['UserAttributes']:
+        key = attr['Name']
+        if key == 'sub':
+            key = 'user_id'
+        val = attr['Value']
+        user_data[key] = val
+    return user_data

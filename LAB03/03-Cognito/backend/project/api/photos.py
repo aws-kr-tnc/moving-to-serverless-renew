@@ -1,14 +1,11 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
 
-from project.util.blacklist_helper import token_decoder, pyjwt_required
+from project.util.blacklist_helper import token_decoder, pyjwt_required, get_cognito_user
 from project.util.response import m_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
-
-from flask_jwt_extended import jwt_required, get_jwt_identity
-
 
 from project.util.file_control import delete_s3, save_s3, create_photo_info, presigned_url
 from project.db.model_ddb import User
@@ -69,13 +66,14 @@ file_upload_parser.add_argument('city', type=str, location='form')
 file_upload_parser.add_argument('address', type=str, location='form')
 file_upload_parser.add_argument('nation', type=str, location='form')
 
+def get_token_from_header(request):
+    return request.headers['Authorization'].rsplit(' ', 1)[1]
 
 
 @api.route('/ping')
 @api.doc('photos ping!')
 class Ping(Resource):
     @api.doc(responses={200: 'pong success'})
-
     @pyjwt_required
     def get(self):
 
@@ -86,8 +84,9 @@ class Ping(Resource):
 @api.route('/file')
 @api.expect(file_upload_parser)
 class FileUpload(Resource):
-    @jwt_required
+    @pyjwt_required
     def post(self):
+        token = get_token_from_header(request)
         try:
             app.logger.debug(dir(file_upload_parser))
             form = file_upload_parser.parse_args()
@@ -99,7 +98,7 @@ class FileUpload(Resource):
                 return m_response(False, {'filename': filename_orig,
                                           'msg': 'not supported file format:{}'.format(extension)}, 400)
 
-            current_user = get_jwt_identity()
+            current_user = get_cognito_user(token)
 
             filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
 
@@ -112,9 +111,9 @@ class FileUpload(Resource):
 
             return make_response({'ok': True, "photo_id": filename}, 200)
         except Exception as e:
-            app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
+            app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_cognito_user(token)['user_id']))
             app.logger.error(e)
-            return make_response({'ok': False, 'data': {'user_id': get_jwt_identity()['user_id']}}, 500)
+            return make_response({'ok': False, 'data': {'user_id': get_cognito_user(token)['user_id']}}, 500)
 
 
 
@@ -128,11 +127,12 @@ class List(Resource):
             500: "Internal server error"
         }
     )
-    @jwt_required
+    @pyjwt_required
     def get(self):
         """Get all photos as list"""
+        token = get_token_from_header(request)
         try:
-            user = get_jwt_identity()
+            user = get_cognito_user(token)
             photos = User.get(user['user_id']).photos
 
             data = {
@@ -162,11 +162,12 @@ class OnePhoto(Resource):
             500: "Internal server error"
         }
     )
-    @jwt_required
+    @pyjwt_required
     def delete(self, photo_id):
         """one photo delete"""
+        token = get_token_from_header(request)
         try:
-            user = get_jwt_identity()
+            user = get_cognito_user(token)
             photos = User.get(user['user_id']).photos
 
             for photo in photos:
@@ -200,13 +201,13 @@ class OnePhoto(Resource):
             500: "Internal server error"
         }
     )
-    @jwt_required
+    @pyjwt_required
     @api.expect(photo_get_parser)
     def get(self, photo_id):
-
+        token = get_token_from_header(request)
         try:
             mode = request.args.get('mode')
-            user = get_jwt_identity()
+            user = get_cognito_user(token)
             email = user['email']
 
             return presigned_url(photo_id, email, True if mode else False)
@@ -214,4 +215,3 @@ class OnePhoto(Resource):
             app.logger.error('ERROR:get photo failed:photo_id:{}'.format(photo_id))
             app.logger.error(e)
             return 'http://placehold.it/400x300'
-
