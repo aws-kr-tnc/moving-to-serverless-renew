@@ -47,7 +47,7 @@ def set_cognito_data_global():
         POOL_KEYS = json.loads(aws_data.text)['keys']
         app.logger.debug("COGNITO POOL_KEYS SET DONE!")
 
-def token_decoder(token, audience=None):
+def token_decoder(token):
     set_cognito_data_global()
 
     headers = jwt.get_unverified_headers(token)
@@ -58,10 +58,6 @@ def token_decoder(token, audience=None):
         result[item['kid']] = item
 
     public_key = jwk.construct(result.get(kid))
-
-    kargs = {"issuer": ""}
-    if audience is not None:
-        kargs["audience"] = audience
 
     message, encoded_signature = str(token).rsplit('.', 1)
     decoded_signature = base64url_decode(encoded_signature.encode('utf-8'))
@@ -89,7 +85,7 @@ def cog_jwt_required(f):
         token = request.headers['Authorization']
 
         try:
-            if token_decoder(token.rsplit(' ', 1)[1], None) is not None:
+            if token_decoder(token.rsplit(' ', 1)[1]) is not None:
                 return f(*args, **kwargs)
         except Exception as e:
             print(e)
