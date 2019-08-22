@@ -72,7 +72,7 @@
               <v-spacer></v-spacer>
               Have already registered?
               <v-btn text small
-                     href="/users/signin"
+                     @click="moveToSignin"
                      color="primary">
                 <v-icon>mdi-login</v-icon>Sign in
               </v-btn>
@@ -120,6 +120,9 @@ export default {
           },
         );
       }
+    },
+    moveToSignin() {
+      this.$router.push({ name: 'signin' });
     },
   },
 };

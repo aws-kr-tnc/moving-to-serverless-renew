@@ -10,7 +10,6 @@ So, we'll deploy the CloudAlbum application with HA(high availability) architect
 
 * Configure [VPC](https://aws.amazon.com/vpc/) for the HA environment. (CloudFormation template will be provided.)
 * Configure [EFS](https://aws.amazon.com/efs/) for the scalable **shared storage**.
-* Configure [Elasticache](https://aws.amazon.com/elasticache/) - Redis for the **session store.**
 * Configure [ElasticBeanstalk](https://aws.amazon.com/elasticbeanstalk/).
   * with [RDS](https://aws.amazon.com/rds/), [ALB](https://aws.amazon.com/elasticloadbalancing/) and [AutoScaling](https://aws.amazon.com/autoscaling/). 
 
@@ -171,7 +170,9 @@ With Elastic Beanstalk, you can quickly deploy and manage applications in the AW
  
 36. Click **Select** button.
 
-37. In the **Create a web server environemnt** section, for **Description** type `Moving to AWS Serverless Workshop`
+37. Type domain nmae in **Domain** field. For example `myapp-<initial>` then click **Check Availability**.
+
+37. In the **Create a web server environemnt** section, for **Description** type `HA-CloudAlbum`
 
 38. In the **Base configuration** section, configure the following:
 
@@ -200,8 +201,8 @@ With Elastic Beanstalk, you can quickly deploy and manage applications in the AW
 
 42. In the **Database settings** section, configure following parameters.
 
- * **Username** : `serverless`
- * **Password** : `workshop`
+ * **Username** : `movingto`
+ * **Password** : `serverless`
  * **Retention** : `Delete`
  * **Availability** : `High (Multi-AZ)`
 
