@@ -5,16 +5,12 @@ import boto3, hmac, base64
 
 from flask import Blueprint, request
 from flask import current_app as app
-from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt)
 from flask import jsonify, make_response
 from flask_restplus import Api, Resource, fields
-
 from jsonschema import ValidationError
-
 
 from project.schemas import validate_user
 from project.database.model_ddb import User
-from project.solution.solution import solution_put_new_user, solution_get_user_data_with_idx
 from project.util.response import m_response
 from project.util.jwt_helper import add_token_to_set, get_token_from_header, get_cognito_user, cog_jwt_required
 from project.util.config import conf
@@ -273,5 +269,5 @@ class Signout(Resource):
         except Exception as e:
             app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_cognito_user(token)))
             app.logger.error(e)
-            return m_response(False, get_jwt_identity(), 500)
+            return m_response(False, get_cognito_user(token), 500)
 

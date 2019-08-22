@@ -1,7 +1,7 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
 
-from project.util.jwt_helper import token_decoder, cog_jwt_required, get_cognito_user, get_token_from_header
+from project.util.jwt_helper import cog_jwt_required, get_cognito_user, get_token_from_header
 from project.util.response import m_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 
 from project.util.file_control import delete_s3, save_s3, create_photo_info, presigned_url
 from project.database.model_ddb import User
-from project.solution.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
+from project.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
 import uuid
 
 authorizations = {

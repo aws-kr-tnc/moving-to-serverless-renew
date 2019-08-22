@@ -11,7 +11,7 @@ from werkzeug.security import check_password_hash
 
 from project.schemas import validate_user
 from project.db.model_ddb import User
-from project.solution.solution import solution_put_new_user, solution_get_user_data_with_idx
+from project.solution import solution_put_new_user, solution_get_user_data_with_idx
 from project.util.response import m_response
 from project.util.jwt_helper import add_token_to_set
 

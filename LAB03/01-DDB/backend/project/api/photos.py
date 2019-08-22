@@ -12,7 +12,7 @@ from pathlib import Path
 from project.util.config import conf
 from project.util.file_control import email_normalize, delete, save, create_photo_info
 from project.db.model_ddb import User, photo_deserialize
-from project.solution.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
+from project.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
 import os, uuid
 
 authorizations = {
