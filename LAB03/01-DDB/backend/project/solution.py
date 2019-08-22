@@ -1,12 +1,11 @@
 from flask import app
 from werkzeug.security import generate_password_hash
-from datetime import datetime
 
-from project.db.model_ddb import User, Photo, photo_deserialize
+from project.database.model_ddb import User
 
 
 def solution_put_new_user(new_user_id, user_data):
-    print(
+    app.logger.info(
         "\nRUNNING TODO#1 SOLUTION CODE:",
         "Put new signup user information!",
         "Follow the steps in the lab guide to replace this method with your own implementation.")
@@ -20,7 +19,7 @@ def solution_put_new_user(new_user_id, user_data):
 
 
 def solution_get_user_data_with_idx(signin_data):
-    print(
+    app.logger.info(
         "\nRUNNING TODO#2 SOLUTION CODE:",
         "Get user data with email which is Global Secondary Index",
         "Follow the steps in the lab guide to replace this method with your own implementation.")
@@ -32,7 +31,7 @@ def solution_get_user_data_with_idx(signin_data):
     return db_user
 
 def solution_put_photo_info_ddb(user_id, new_photo):
-    print(
+    app.logger.info(
         "\nRUNNING TODO#3 SOLUTION CODE:",
         "Update Photo informtation into User table!",
         "Follow the steps in the lab guide to replace this method with your own implementation.")
@@ -50,7 +49,7 @@ def solution_put_photo_info_ddb(user_id, new_photo):
 
 
 def solution_delete_photo_from_ddb(user, photos, photo):
-    print(
+    app.logger.info(
         "\nRUNNING TODO#4 SOLUTION CODE:",
         "Delete a photo from photos list, and update!",
         "Follow the steps in the lab guide to replace this method with your own implementation.")

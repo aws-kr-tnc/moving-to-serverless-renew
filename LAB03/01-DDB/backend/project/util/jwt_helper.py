@@ -1,7 +1,4 @@
 
-from datetime import datetime
-
-from sqlalchemy.orm.exc import NoResultFound
 
 blacklist_set = set()
 def add_token_to_set(decoded_token):
@@ -21,10 +18,9 @@ def is_blacklisted_token_set(decoded_token):
     it was created.
     """
     jti = decoded_token['jti']
-    try:
-        if jti in blacklist_set:
-            return True
-    except NoResultFound:
-        return False
+
+    if jti in blacklist_set:
+        return True
+
 
 

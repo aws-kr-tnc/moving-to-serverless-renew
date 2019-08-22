@@ -3,7 +3,7 @@ from PIL import Image
 from pathlib import Path
 
 from project.util.config import conf
-from project.db.model_ddb import User, Photo, photo_deserialize
+from project.database.model_ddb import Photo, photo_deserialize
 
 import os
 from datetime import datetime
