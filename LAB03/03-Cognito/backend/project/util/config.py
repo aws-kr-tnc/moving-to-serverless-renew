@@ -12,7 +12,7 @@ conf = {
 
     #S3
     'S3_PHOTO_BUCKET': os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-123k'),
-    'S3_PRESIGNED_URL_EXPIRE_TIME': os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', 30),
+    'S3_PRESIGNED_URL_EXPIRE_TIME': os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', 300),
 
     # COGNITO
     'COGNITO_POOL_ID': os.getenv('COGNITO_POOL_ID', 'ap-northeast-2_1ZYNsRQKc'),
