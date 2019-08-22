@@ -10,7 +10,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 
 from cloudalbum.util.file_control import delete_s3, save_s3, create_photo_info, presigned_url
-from cloudalbum.db.model_ddb import User
+from cloudalbum.database.model_ddb import User
 from cloudalbum.solution.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
 import uuid
 

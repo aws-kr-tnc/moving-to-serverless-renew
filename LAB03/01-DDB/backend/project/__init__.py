@@ -25,7 +25,7 @@ class JSONEncoder(json.JSONEncoder):
             return str(o)
         return json.JSONEncoder.default(self, o)
 
-# instantiate the db
+# instantiate the database
 db = SQLAlchemy()
 login = LoginManager()
 jwt = JWTManager()
@@ -33,7 +33,7 @@ jwt = JWTManager()
 
 def create_app(script_info=None):
 
-    # instantiate the app
+    # instantiate the application
     app = Flask(__name__)
 
     # initiate some config value for JWT Authentication
@@ -60,7 +60,7 @@ def create_app(script_info=None):
     app.logger.setLevel(logging.DEBUG)
 
     # set up extensions
-    # db.init_app(app)
+    # database.init_app(application)
 
     # register blueprints
     from cloudalbum.api.users import users_blueprint
@@ -75,7 +75,7 @@ def create_app(script_info=None):
     # Setup models for DB operations
     with app.app_context():
         try:
-            # db.create_all()
+            # database.create_all()
             pass
         except Exception as e:
             app.logger.error(e)
@@ -95,5 +95,5 @@ def create_app(script_info=None):
     # shell context for flask cli
     @app.shell_context_processor
     def ctx():
-        return {'app': app}
+        return {'application': app}
     return app

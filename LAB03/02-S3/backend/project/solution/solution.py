@@ -1,7 +1,7 @@
 from flask import current_app as app
 from werkzeug.security import generate_password_hash
 
-from cloudalbum.db.model_ddb import User
+from cloudalbum.database.model_ddb import User
 from cloudalbum.util.config import conf
 
 

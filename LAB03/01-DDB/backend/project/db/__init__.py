@@ -1,5 +1,5 @@
 from cloudalbum.util.config import conf
-from cloudalbum.db.model_ddb import User
+from cloudalbum.database.model_ddb import User
 
 
 if not User.exists():

@@ -424,7 +424,7 @@ files:
 
 container_commands:
   efs_setup:
-    command: /app/cloudalbum/efs_setup.sh
+    command: application
 
 option_settings:
   aws:elasticbeanstalk:application:environment:

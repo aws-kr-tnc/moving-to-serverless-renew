@@ -2,7 +2,7 @@ from flask import current_app as app
 from PIL import Image
 from pathlib import Path
 
-from cloudalbum.api.models import Photo
+from cloudalbum.database.models import Photo
 from cloudalbum import db
 
 from datetime import datetime
@@ -78,7 +78,7 @@ def save(upload_file, filename, email):
     :param upload_file: file object
     :param filename: secure filename for upload
     :param email: user email address
-    :param app: Flask.application
+    :param application: Flask.application
     :return: file size (byte)
     """
     path = Path(app.config['UPLOAD_FOLDER']) / email_normalize(email)

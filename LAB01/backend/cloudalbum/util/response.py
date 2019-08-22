@@ -40,7 +40,7 @@ def response_with_msg(code, msg):
         else:
             raise ValueError
     except:
-        # app.logger.debug("Undefined error: %s" % code)
+        # application.logger.debug("Undefined error: %s" % code)
         raise ValueError
 
 def response_with_data(code, data):
@@ -53,7 +53,7 @@ def response_with_data(code, data):
         else:
             raise ValueError
     except:
-        # app.logger.debug("Undefined error: %s" % code)
+        # application.logger.debug("Undefined error: %s" % code)
         raise ValueError
 
 def response_with_msg_data(code, msg, data):
@@ -66,5 +66,5 @@ def response_with_msg_data(code, msg, data):
         else:
             raise ValueError
     except:
-        # app.logger.debug("Undefined error: %s" % code)
+        # application.logger.debug("Undefined error: %s" % code)
         raise ValueError

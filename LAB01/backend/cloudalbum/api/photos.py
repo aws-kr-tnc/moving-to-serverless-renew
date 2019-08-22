@@ -1,7 +1,7 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
 from cloudalbum import db
-from cloudalbum.api.models import Photo
+from cloudalbum.database.models import Photo
 from datetime import datetime
 from cloudalbum.util.response import m_response
 from werkzeug.datastructures import FileStorage

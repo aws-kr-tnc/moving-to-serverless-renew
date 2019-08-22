@@ -5,7 +5,7 @@ from pathlib import Path
 
 from cloudalbum.solution.solution import solution_put_object_to_s3, solution_generate_s3_presigned_url
 from cloudalbum.util.config import conf
-from cloudalbum.db.model_ddb import User, Photo, photo_deserialize
+from cloudalbum.database.model_ddb import User, Photo, photo_deserialize
 
 import os
 from datetime import datetime
@@ -113,7 +113,7 @@ def save(upload_file, filename, email):
     :param upload_file: file object
     :param filename: secure filename for upload
     :param email: user email address
-    :param app: Flask.application
+    :param application: Flask.application
     :return: file size (byte)
     """
     path = Path(conf['UPLOAD_DIR']) / email_normalize(email)

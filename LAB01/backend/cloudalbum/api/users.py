@@ -4,7 +4,7 @@ from flask import current_app as app
 from jsonschema import ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
 from cloudalbum import db, jwt
-from cloudalbum.api.models import User
+from cloudalbum.database.models import User
 from flask_restplus import Api, Resource, fields
 
 from cloudalbum.schemas import validate_user

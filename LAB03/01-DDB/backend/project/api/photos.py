@@ -11,7 +11,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from pathlib import Path
 from cloudalbum.util.config import conf
 from cloudalbum.util.file_control import email_normalize, delete, save, create_photo_info
-from cloudalbum.db.model_ddb import User, photo_deserialize
+from cloudalbum.database.model_ddb import User, photo_deserialize
 from cloudalbum.solution.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
 import os, uuid
 

@@ -24,7 +24,7 @@ class JSONEncoder(json.JSONEncoder):
             return str(o)
         return json.JSONEncoder.default(self, o)
 
-# instantiate the db
+# instantiate the database
 db = SQLAlchemy()
 login = LoginManager()
 jwt = JWTManager()
@@ -32,7 +32,7 @@ jwt = JWTManager()
 
 def create_app(script_info=None):
 
-    # instantiate the app
+    # instantiate the application
     app = Flask(__name__)
 
     # initiate some config value for JWT Authentication
@@ -60,9 +60,6 @@ def create_app(script_info=None):
     from cloudalbum.api.photos import photos_blueprint
     app.register_blueprint(photos_blueprint, url_prefix='/photos')
 
-    from cloudalbum.api.map import map_blueprint
-    app.register_blueprint(map_blueprint)
-
     # Setup models for DB operations
     with app.app_context():
         try:
@@ -85,6 +82,6 @@ def create_app(script_info=None):
     # shell context for flask cli
     @app.shell_context_processor
     def ctx():
-        return {'app': app, 'db': db}
+        return {'application': app, 'database': db}
 
     return app

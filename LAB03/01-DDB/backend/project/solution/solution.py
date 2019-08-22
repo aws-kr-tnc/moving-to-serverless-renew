@@ -2,7 +2,7 @@ from flask import app
 from werkzeug.security import generate_password_hash
 from datetime import datetime
 
-from cloudalbum.db.model_ddb import User, Photo, photo_deserialize
+from cloudalbum.database.model_ddb import User, Photo, photo_deserialize
 
 
 def solution_put_new_user(new_user_id, user_data):
