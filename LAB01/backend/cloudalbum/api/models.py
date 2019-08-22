@@ -3,6 +3,7 @@ from sqlalchemy import Float, DateTime, ForeignKey, Integer, String
 from flask_login import UserMixin
 from datetime import datetime
 
+
 class User(UserMixin, db.Model):
     """
     Database Model class for User table
@@ -110,6 +111,7 @@ class Photo(db.Model):
 
     def insert_column(self, col, data):
         self[col] = data
+
 
 class BlacklistToken(db.Model):
     """

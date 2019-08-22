@@ -17,6 +17,7 @@ The application has following software stack.
 * Front-end
   * Vue.js : A progressive framework for building user interfaces. 
   * Vuetify : A Material Design component framework for Vue.js
+  * Axios : Promise based HTTP client for the browser and node.js 
   * Leaflet : A JavaScript library for interactive maps
   * exif.js : A JavaScript library for reading EXIF meta data from image files.
   * SweetAlert2 : A beautiful, responsive, customizable and accessible (WAI-ARIA) replacement for JavaScript's popup boxes.
@@ -29,7 +30,6 @@ The application has following software stack.
 
 
 It has following several features.
-> 화면 캡처 다시 해야 함 
 
 <img src=./images/lab01-02.png width=800>
 
@@ -132,7 +132,7 @@ client.describe_instances()
 
 ## TASK 2. Look around current application and try run it.
 
-Check out the workshop repository from the Github.
+15. Check out the workshop repository from the Github.
 
 ```console
 cd ~/environment
@@ -141,13 +141,40 @@ cd ~/environment
 git clone https://github.com/aws-kr-tnc/moving-to-serverless-renew --depth 1
 ```
 
-15. Install the requirements for the project by executing the command below in your AWS Cloud9 terminal.
+
+16. Now take a look at the frontend application. (~environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/src)
+  <img src=./images/lab01-frontend-project-structure.png width=650>
+
+
+17. Install the requirements for the project by executing the command below in your AWS Cloud9 terminal.
+
+```console
+cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum
+npm install -g vue-cli
+npm install
+```
+
+18. Frontend application do api call, so we have to define destination backend address. You can check this `.env` file below.
+```console
+~environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env
+```
+* It contains below default properties.
+```console
+VUE_APP_API=http://127.0.0.1:5000
+```
+
+19. Let's take a look around backend application. (~environment/moving-to-serverless-renew/LAB01/backend)
+
+  <img src=./images/lab01-backend-project-structure.png width=500>
+
+
+20. Install the requirements for the project by executing the command below in your AWS Cloud9 terminal.
 
 ```console
 pip install -r ~/environment/moving-to-serverless-renew/LAB01/backend/requirements.txt
 ```
 
-16. Check the **config.py** Open this file in **Cloud9 IDE editor**. (`~/environment/moving-to-serverless-renew/LAB01/backend/cloudalbum/config.py`)
+21. Check the **config.py** Open this file in **Cloud9 IDE editor**. (`~/environment/moving-to-serverless-renew/LAB01/backend/cloudalbum/config.py`)
 
 * You can find the configuration information you need when this application is run.
 
@@ -197,118 +224,225 @@ class ProductionConfig(BaseConfig):
 * The second parameter of **os.getenv** function is the default value to use when the **first parameter does not exist.**
 
 
-17. Backend 실행 
-- SG 변경 
-INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+22. Now, let's run back-end application server. To run the back-end application server we will use a Cloud9 terminal. 
 
-SG_NAME=`curl -s http://169.254.169.254/latest/meta-data/security-groups`
-SG_ID=`aws ec2 describe-security-groups --group-names $SG_NAME --query 'SecurityGroups[*].[GroupId]' --output text`
+* For reference, you can also use Cloud9 Custom Runner. To use Custom Runner provided by Cloud9, you can refer to the following document.  
+  * https://docs.aws.amazon.com/cloud9/latest/user-guide/build-run-debug.html#build-run-debug-change-runner 
 
-aws ec2 authorize-security-group-ingress \
-    --group-id $SG_ID \
-    --protocol tcp \
-    --port 8081 \
-    --cidr 0.0.0.0/0
-	
-
-17. Frontend 실행
-
-
-
-* The second parameter of **os.getenv** function is the default value to use when the **first parameter does not exist.**
-
-16. Check the following variables in **config.py**.
-    * **GMAPS_KEY** and **DB_URL**  variables are mandatory for this application.
-    * **You will set up these values in step 23**
-
-```python
-    # Mandatory variable
-    'GMAPS_KEY': os.getenv('GMAPS_KEY', None),
-    'DB_URL': os.getenv('DB_URL', None),
+* First, set up environment variables.
+```console
+export FLASK_ENV=development
+export APP_SETTINGS=cloudalbum.config.DevelopmentConfig
+export UPLOAD_FOLDER=/tmp
 ```
 
+* Then, run following command.
+```
+cd ~/environment/moving-to-serverless-renew/LAB01/backend
+python manage.py run -h 0.0.0.0 -p 5000
+```
 
+* And now, you can see the following messages on your terminal.
+	
+```console
+[2019-08-21 06:30:13,866] INFO in manage: SQLALCHEMY_DATABASE_URI: sqlite:////tmp/sqlite_dev.db
+SQLALCHEMY_DATABASE_URI: sqlite:////tmp/sqlite_dev.db
+[2019-08-21 06:30:13,866] INFO in manage: UPLOAD_FOLDER: /tmp
+UPLOAD_FOLDER: /tmp
+ * Environment: development
+ * Debug mode: on
+ * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
+ * Restarting with stat
+[2019-08-21 06:30:14,383] INFO in manage: SQLALCHEMY_DATABASE_URI: sqlite:////tmp/sqlite_dev.db
+SQLALCHEMY_DATABASE_URI: sqlite:////tmp/sqlite_dev.db
+[2019-08-21 06:30:14,384] INFO in manage: UPLOAD_FOLDER: /tmp
+UPLOAD_FOLDER: /tmp
+ * Debugger is active!
+ * Debugger PIN: 171-963-592
+```
 
-17. Check the **ALLOWED_EXTENSIONS** : **Only JPG** files are allowed. (in **config.py**)
-
-18. Setup these variables **before run** this application.
-
-19. Select **moving-to-serverless-workshop-1d/LAB01/CloudAlbum/run.py** in the tree view.
-
-20. First, **open the run.py**(double click), and on the top menu bar, click **Run → Run With → Python 3**. Ensure that you are using the **Python 3 runner**, as shown in the screenshot below.
-<img src=images/lab01-03.png width=800>
-
-21. You may fail due to following reason.
+23. Let's call a simple api to check if the back-end application ran successfully. We'll use httpie to test it.
 
 ```console
-DB_URL or GMAPS_KEY are not configured!
-Check your environment variables!
+http localhost:5000/users/ping
 ```
+* Now you can see similar messages below.
 
-22. To successfully run the code, you will need to **set environment variables.** To do so, follow the instructions below.
+```console
+(venv) lachesis:~/environment $ http localhost:5000/users/ping
+HTTP/1.0 200 OK
+Access-Control-Allow-Origin: *
+Content-Length: 56
+Content-Type: application/json
+Date: Wed, 21 Aug 2019 06:37:20 GMT
+Server: Werkzeug/0.15.5 Python/3.6.8
 
+{
+    "ok": true,
+    "users": {
+        "msg": "pong!"
+    }
+}
 
-23. On the right side of the Run Configuration pane at the bottom, click **ENV**, as in the screenshot below.
-<img src=./images/lab01-04.png width=700>
-
-24. First, In the **Name column**, type **DB_URL**. In the Value column, type the **SQLITE** file DB URL (*for the test purpose only*) like this. **DB table will be created automatically** via [SQLAlchemy](https://www.sqlalchemy.org/).
-
-```
-sqlite:////home/ec2-user/environment/moving-to-serverless-workshop-1d/LAB01/sqlite.db
-```
-
-* **ALTERNATIVE WAY:** You can set the **DB_URL** value directly in `config.py`.
-```python
-'DB_URL': os.getenv('DB_URL', 'sqlite:////home/ec2-user/environment/moving-to-serverless-workshop-1d/LAB01/sqlite.db'),
-```
-
-25. Second, in the **Name column**, type **GMAPS_KEY**. In the Value column, type the **Google MAP API KEY** (**Temporary API Key** will be provided to the workshop attendees by presenter).
-
-* **ALTERNATIVE WAY:** You can set the **GMAPS_KEY** value directly in `config.py`.
-```python
-'GMAPS_KEY': os.getenv('GMAPS_KEY', '<REAL_GMAPS_KEY_PROVIDED_BY_INSTRUCTOR>'),
 ```
 
 
-**NOTE:** You can issue **your own Google Maps API Key**, refer to following links (Credit card is required): https://console.developers.google.com/apis/dashboard
- * Google Maps API **changes billing rules from July 16**. Users must have their own API KEY for the Google Map access. 
-   * https://developers.google.com/maps/documentation/javascript/usage-and-billing#previous-payg
+24. Now, let's run front-end application server. To run the front-end application we need to run front-end application server.
 
-   * https://www.i-programmer.info/news/145-mapping-a-gis/11978-google-maps-api-changes-billing-rules.html
+```console
+npm run serve
+```
 
-26. Run application again. You may succeed.
-<img src=./images/lab01-task2-run-console.png width=900>
+* And then you can see similar messages below.
 
- 
-## TASK 3: Connect to your application (Cloud9)
+```console
+...
+Use Ctrl+C to close it
 
-To test the application, you can configure your envirionment. There are **two way to configure your environment**. **Choose your option.**
+  App running at:
+  - Local:   http://localhost:8080/ 
+  - Network: http://172.31.4.231:8080/
 
- * You can use **Cloud9 preview** feature.
-    *  Previewing Running Applications in the AWS Cloud9 Integrated Development Environment (IDE) 
-       * For this, we should run application with **8080, 8081, 8082** port for **127.0.0.1**.
-       * https://docs.aws.amazon.com/cloud9/latest/user-guide/app-preview.html 
+  Note that the development build is not optimized.
+  To create a production build, run npm run build.
 
-
-27. **For Cloud9 preview**
-* Cloud9 preview feature is easy to use.
-* Click the `Preview` menu and choose `Preview Runnig Application`.
-* That's all!
-<img src=./images/lab01-task2-cloud9-preview-1.png width=900>
+```
 
 
-* For the convenience, you can run pop-up browser window.
-<img src=./images/lab01-task2-cloud9-preview-2.png width=900>
+## TASK 3 Connect to your application (Via SSH Tunneling)
 
-28. Connect your legacy application
+Cloud9 has preview feature to support yout application development.
+ * You can refer following document : https://docs.aws.amazon.com/cloud9/latest/user-guide/app-preview.html
+
+for convenience, we will use **SSH tunnel** to access our application in Cloud9 instance.
+
+25. Add your public key to `.ssh/authorized_keys`.
+
+<img src=./images/lab01-task3-ssh-tunnel.png width=1000>
+
+* In your MAC/Linux terminal, type the command below to get the public portion from **your existing any key pair .pem** file. Make sure to replace YOUR_KEY with the name of the key pair .pem file
+
+```console
+ssh-keygen -f <YOUR_KEY.pem> -y
+```
+
+* The output looks like the example below. Copy the output of your command.
+```console
+ssh-rsa
+ASDASDASDASDAyc2EAAAADAQABAAABAQDWGRZsPraV6v4UqfZTFKAXK9bhjWVkONEKyAA1CeOkxSN+9WdY7gKgjbPOeUx3LFqRudBvSrP+eKTtthPrl Nx9UBvXniVK252i4h0xnIcrRO1PUpq0EzyqX+n3u2YwytT+on6x98PRjtD4oCKyfFviWBqnRHtWvRre8CWhULuJrmUeo2aPrVTPXo/TwJpZupXv63YyUMPC 2wyDMDsKNZhsqUedkJ8575PGXCg9gEkPg2ulR8NUrzDSfbXIrZLgCcIziwDQ0dA9B28OAQ9saPyXYzrZF1ZmCxKgzSHHiKdBAJ0E/X/s53N5Hg04SIWy4D4lMT 9g+AZG38YPNq68mo4b
+```
+
+* In your AWS Cloud9 instance, on the left pane, click the **Settings** icon. Click **Show Home in Favorites** and **Show Hidden Files** as shown in the screenshot below.
+<img src=./images/lab01-05.png width=500>
+
+* This should display the `.ssh` folder in the tree view.
+
+* Expand the .ssh folder and open the **authorized_keys** file.
+
+* Paste the public key you copied earlier in the authorized_keys file. **Important:** Make sure to paste the public key below the message in the authorized_keys file as shown below. **Do not delete or overwrite** the public key already present in the file. Deleting or overwriting the existing public key will make your Cloud9 instance unusable.
+
+```console
+...
+...
+ #
+ # Add any additional keys below this line
+ #
+```
+* Save the **authorized_keys** file. By updating this file, you are telling your AWS Cloud9 instance to allow connections that authenticate with the matching private key.
+
+**NOTE:** You also can paste it using cli command like below. (Paste public key then press CTRL+D for EOF)
+
+```console
+cat >> ~/.ssh/authorized_keys
+ssh-rsa CXCAAB3Nzaxxyc2EAAAADAQABAAABAQDThHERqJJMcZqitA5DZ35j41UFE0zIO5XxVqElCHNHUXYnmffqFNyTFkfpkHAWsR5zGMnR5I46eZazu4sWNcg3LZx937/STOfN4TCzps/uuooHx/p3whGXIFqsz25Xq1RzI/LsFiSRm3+/I1E482pss3OgCXALR/rF9g7Mud1frt9POq82Zg0R1YHB5hCK6Ldx3U3AnFxdViKHVnDgVijAYO+ua1MFtaSn+FqYoXbMniFiQpOJz2ZTvM/ZhwvfAYJkJPYwQ+7T99pIEb0L/pLecaFkxUcbAiwzW6L79bKAQYwA7vEzI4ndqhyLKwIzadVJnog1hRs0ItiUqDOSLYLN sungshik@8c85904c36cf.ant.amazon.com
+
+```
+
+26. Open TCP port 22 of Cloud9 instance to your current public IP.
+
+* Check the public IP address you are using now. You can access following site to get current public IP.
+  * https://checkip.amazonaws.com/ 
+
+  <img src=./images/lab01-check-myip.png width=500>
+
+* Keep your IP address for later use. Now, open your new terminal in the Cloud9.
+
+  <img src=./images/lab01-open-terminal.png width=500>
+
+* Run, below command. To add new ingress Security Group rule for SSH connection.
+```console
+SG_NAME=`curl -s http://169.254.169.254/latest/meta-data/security-groups`
+SG_ID=`aws ec2 describe-security-groups --group-names $SG_NAME --query 'SecurityGroups[*].[GroupId]' --output text`
+```
+
+* Before run below command, you should replace  `<YOUR_IP>` like `61.79.225.xxx`.
+```console
+aws ec2 authorize-security-group-ingress \
+--group-id $SG_ID \
+--protocol tcp \
+--port 22 \
+--cidr <YOUR_IP>/32
+
+```
+
+* You can check the result via below command. (61.79.xxx.xxx/32)
+```console
+aws ec2 describe-security-groups --group-ids $SG_ID --query "SecurityGroups[].IpPermissions[].IpRanges"
+[
+    [
+        {
+            "CidrIp": "13.250.xxx.xxx/27"
+        }, 
+        {
+            "CidrIp": "13.250.xxx.xxx/27"
+        }, 
+        {
+            "CidrIp": "61.79.xxx.xxx/32"
+        }
+    ]
+]
+```
+
+
+27. Make a SSH connection with tunneling.
+
+* Let's get public IP of Cloud9. Try below command 
+in your Cloud9 terminal and keep the IP. 
+```console
+ec2-metadata -v
+public-ipv4: 54.169.xxx.xxx
+```
+
+* Try to SSH tunneling like this
+
+* **NOTE:** Make sure **your Cloud9 instance Security group port 22** is opened for SSH tunneling.
+
+```console
+ssh -i <YOUR_KEY.pem> -L 8080:localhost:8080 -L 5000:localhost:5000 ec2-user@<CLOUD9 PUBLIC-IP>
+```
+
+
+28. Connect your application
+
 
 ## TASK 4. Take a look around
-Check the application.
+Now everything is ready. Let's access the application.
 
-29. Connect to your application using **Cloud9 preview**.
+29. Connect to your front-end application using your browser.
+ * http://localhost:8080/
 <img src="./images/lab01-08.png" width=500>
 
-30. Take a look around and perform test.
+
+30. Our backend application support SWAGGER. Now you can see SWAGGER interface of backend application.
+
+* User API : http://localhost:5000/users/swagger/
+<img src="./images/lab01-swagger-user.png" width=500>
+
+* Photo API : http://localhost:5000/photos/swagger/
+<img src="./images/lab01-swagger-photo.png" width=500>
+
+
+31. Take a look around and perform test.
 <img src="./images/lab01-02.png" width=800>
 
 * Sign in / up
@@ -321,10 +455,7 @@ Check the application.
 
 
 ## TASK 5. Stop your application 
-* Click the `stop icon` to stop your application.
-* **Close your terminal** after application stop.
-* **Close all your opened file tab.**
-<img src=./images/stop-app.png width=700>
+* You can stop both frontend and backend application by press `ctrl+c` in your Cloud9 Terminal.
 
 # Congratulation! You completed LAB01.
 
