@@ -1,7 +1,7 @@
 from flask import current_app as app
 from werkzeug.security import generate_password_hash
 
-from project.db.model_ddb import User
+from project.database.model_ddb import User
 from project.util.config import conf
 
 

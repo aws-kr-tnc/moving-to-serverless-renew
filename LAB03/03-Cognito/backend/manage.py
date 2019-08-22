@@ -3,7 +3,7 @@ import unittest
 
 from flask.cli import FlaskGroup
 from project import create_app
-from project.db import create_table
+from project.database import create_table
 
 app = create_app()
 cli = FlaskGroup(create_app=create_app)
