@@ -60,7 +60,7 @@
                   <template v-slot:activator="{ on }">
                     <v-btn
                       icon v-on="on"
-                      @click="showOriginalPhoto(photo.originalSrc)"
+                      @click="showOriginalPhoto(photo.id)"
                     >
                       <v-icon>mdi-image-area</v-icon>
                     </v-btn>
@@ -151,7 +151,7 @@ export default {
     ]),
   },
   methods: {
-    ...mapActions('Photo', ['getAllPhotoList', 'deletePhoto']),
+    ...mapActions('Photo', ['getAllPhotoList', 'deletePhoto', 'buildImgSrc']),
     showMap(latitude, longitude, description, tags) {
       this.mapDialogLat = latitude;
       this.mapDialogLng = longitude;
@@ -197,7 +197,8 @@ export default {
         console.error(error);
       }
     },
-    async showOriginalPhoto(originalSrc) {
+    async showOriginalPhoto(id) {
+      const originalSrc = this.buildImgSrc(id, 'original');
       this.$swal(
         {
           width: '95%',

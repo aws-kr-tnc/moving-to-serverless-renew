@@ -14,6 +14,10 @@ const deleteOnePhoto = ({ commit }, id) => {
 };
 
 const buildImgSrc = async (id, mode) => {
+
+  console.log(`id: ${id}`);
+  console.log(`mode: ${mode}`);
+
   const res = await service.Photo.getPhotoBlob(id, mode);
   return URL.createObjectURL(res.data);
 };
@@ -24,11 +28,13 @@ const getAllPhotoList = async (store) => {
     const resp = await service.Photo.photoList();
     if (resp.data.ok !== true) return;
     console.log('Photo list retrieved successfully ✨');
+
     const photoList = await Promise.all(resp.data.photos.map(async (obj) => {
-      const thumbnailBlobUrl = await buildImgSrc(obj.id, 'thmubnail');
-      const originalBlobUrl = await buildImgSrc(obj.id, 'original');
-      return { ...obj, thumbSrc: thumbnailBlobUrl, originalSrc: originalBlobUrl };
+      const thumbnailBlobUrl = await buildImgSrc(obj.id, 'thumbnail');
+      // const originalBlobUrl = await buildImgSrc(obj.id, 'original');
+      return { ...obj, thumbSrc: thumbnailBlobUrl };
     }));
+
     setAllPhotoList(store, photoList);
     setIsLoading(store, false);
   } catch (error) {
@@ -51,4 +57,5 @@ const deletePhoto = async (store, id) => {
 export default {
   getAllPhotoList,
   deletePhoto,
+  buildImgSrc,
 };
