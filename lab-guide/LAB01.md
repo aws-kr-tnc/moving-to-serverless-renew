@@ -435,10 +435,12 @@ Now everything is ready. Let's access the application.
 
 30. Our backend application support SWAGGER. Now you can see SWAGGER interface of backend application.
 
-* User API : http://localhost:5000/users/swagger/
+* Swagger is an open-source software framework backed by a large ecosystem of tools that helps developers design, build, document, and consume RESTful Web services. Swagger also allows you to understand and test your backend api specifically.
+
+  * User API : http://localhost:5000/users/swagger/
 <img src="./images/lab01-swagger-user.png" width=500>
 
-* Photo API : http://localhost:5000/photos/swagger/
+  * Photo API : http://localhost:5000/photos/swagger/
 <img src="./images/lab01-swagger-photo.png" width=500>
 
 
