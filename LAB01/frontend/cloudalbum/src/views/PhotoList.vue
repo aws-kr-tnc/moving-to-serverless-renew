@@ -128,6 +128,7 @@
 <script>
 import { mapActions, mapState, mapGetters } from 'vuex';
 import MapDialog from '@/components/map/MapDialog';
+import service from '@/service';
 
 export default {
   name: 'PhotoList',
@@ -198,13 +199,15 @@ export default {
       }
     },
     async showOriginalPhoto(id) {
-      console.log(`showOriginalPhoto: ${id}`);
+
       const mode = 'original';
-      const originalSrc = this.buildImgSrc(id, mode);
+      const res = await service.Photo.getPhotoBlob(id, mode);
+      const originalSrc = URL.createObjectURL(res.data);
+      console.log(`showOriginalPhoto: ${id}`);
+
       this.$swal(
         {
           width: '95%',
-          height: '95%',
           html: `<div>
                    <a href='${originalSrc}' target=_blank>
                      <img src='${originalSrc}' width=90%>

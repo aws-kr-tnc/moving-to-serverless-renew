@@ -14,10 +14,7 @@ const deleteOnePhoto = ({ commit }, id) => {
 };
 
 const buildImgSrc = async (id, mode) => {
-
-  console.log(`id: ${id}`);
-  console.log(`mode: ${mode}`);
-
+  console.log(`id: ${id}, mode: ${mode}`);
   const res = await service.Photo.getPhotoBlob(id, mode);
   return URL.createObjectURL(res.data);
 };
