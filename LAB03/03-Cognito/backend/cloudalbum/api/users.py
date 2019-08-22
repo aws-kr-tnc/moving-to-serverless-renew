@@ -100,21 +100,22 @@ class Users(Resource):
         client = boto3.client('cognito-idp')
         try:
 
+            response = client.admin_get_user(
+                UserPoolId=conf['COGNITO_POOL_ID'],
+                Username=user_id
+            )
 
-            for user in User.query(hash_key=user_id):
-                if user is None:
-                    app.logger.error('ERROR:user_id not exist:{}'.format(user_id))
-                    return m_response(False, {'user_id': user_id}, 404)
+            user_data ={}
+            for attr in response['UserAttributes']:
+                key = attr['Name']
+                if key == 'sub':
+                    key = 'user_id'
+                val = attr['Value']
+                user_data[key] = val
+            app.logger.debug('success: get Cognito user data: {}'.format(user_data))
 
-            data = {
-                'user': {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email
-                }
-            }
-            app.logger.debug("success:user_get_by_id:%s" % data['user'])
-            return m_response(True, data, 200)
+
+            return m_response(True, user_data, 200)
         except ValueError as e:
             app.logger.error("ERROR:user_get_by_id:{}".format(user_id))
             app.logger.error(e)
