@@ -11,6 +11,7 @@ from jsonschema import ValidationError
 
 from cloudalbum.schemas import validate_user
 from cloudalbum.database.model_ddb import User
+from cloudalbum.solution import solution_signup_cognito, solution_put_new_user
 from cloudalbum.util.response import m_response
 from cloudalbum.util.jwt_helper import add_token_to_set, get_token_from_header, get_cognito_user, cog_jwt_required
 from cloudalbum.util.config import conf
@@ -113,31 +114,17 @@ class Users(Resource):
 def cognito_signup(signup_user):
     user = signup_user;
     msg = '{0}{1}'.format(user['email'], conf['COGNITO_CLIENT_ID'])
-    client = boto3.client('cognito-idp')
+
     dig = hmac.new(conf['COGNITO_CLIENT_SECRET'].encode('utf-8'),
                    msg=msg.encode('utf-8'),
                    digestmod=hashlib.sha256).digest()
+    try:
+        # TODO 7: Implement following solution code to sign up user into cognito user pool
+        return solution_signup_cognito(user, dig)
 
-    response = client.sign_up(
-        ClientId=conf['COGNITO_CLIENT_ID'],
-        SecretHash=base64.b64encode(dig).decode(),
-        Username=user['email'],
-        Password=user['password'],
-        UserAttributes=[
-            {
-                'Name': 'name',
-                'Value': user['username']
-            }
-        ],
-        ValidationData=[
-            {
-                'Name': 'name',
-                'Value': user['username']
-            }
-        ]
-
-    )
-    print(response)
+    except Exception as e:
+        app.logger.error("ERROR: failed to enroll user into Cognito user pool")
+        app.logger.error(e)
 
 @api.route('/signup')
 class Signup(Resource):
@@ -153,29 +140,13 @@ class Signup(Resource):
         try:
             validated = validate_user(req_data)
             user_data = validated['data']
-            cognito_signup(user_data)
-            exist_user = None
-            email = user_data['email']
+            user = cognito_signup(user_data)
+            app.logger.debug("success: enroll user into Cognito user pool:{}".format(user))
 
-            for item in User.email_index.query(email):
-                exist_user = item
-
-            if not exist_user:
-                new_user_id = uuid.uuid4().hex
-
-            #     solution_put_new_user(new_user_id, user_data)
-
-                user = {
-                    "id": new_user_id,
-                    'username': user_data['username'],
-                    'email': email
-                }
-
-                app.logger.debug('success:user_signup: {0}'.format(user))
-                return m_response(True, user, 201)
-            else:
-                app.logger.error('ERROR:exist user: {0}'.format(user_data))
-                return m_response(False, user_data, 409)
+            return m_response(True, user, 201)
+            # else:
+            #     app.logger.error('ERROR:exist user: {0}'.format(user_data))
+            #     return m_response(False, user_data, 409)
         except ValidationError as e:
             app.logger.error('ERROR:invalid signup data format:{0}'.format(req_data))
             app.logger.error(e)

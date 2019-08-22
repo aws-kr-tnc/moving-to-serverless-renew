@@ -148,7 +148,6 @@ def save_s3(upload_file_stream, filename, email):
     original_bytes = upload_file_stream.stream.read()
 
     try:
-        # TODO 5 : Implement following solution code to save image object to S3
         solution_put_object_to_s3(s3_client, key, original_bytes)
 
         app.logger.debug('success: s3://{0}/{1} uploaded'.format(conf['S3_PHOTO_BUCKET'], key))
@@ -197,7 +196,6 @@ def presigned_url(filename, email, Thumbnail=True):
         else:
             key = "photos/{0}/{1}".format(email_normalize(email), filename)
 
-        # TODO 6 : Implement following solution code to retrieve pre-signed URL from S3.
         url = solution_generate_s3_presigned_url(s3_client, key)
         return url
 

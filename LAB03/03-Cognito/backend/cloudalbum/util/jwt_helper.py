@@ -10,6 +10,7 @@ from jose import jwk, jwt
 from jose.utils import base64url_decode
 from flask import current_app as app
 
+from cloudalbum.solution import solution_get_cognito_user_data
 from cloudalbum.util.config import conf
 
 POOL_URL = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(conf['AWS_REGION'],
@@ -94,17 +95,9 @@ def cog_jwt_required(f):
     return decorated_function
 
 def get_cognito_user(access_token):
-    client = boto3.client('cognito-idp')
-    cognito_user = client.get_user(AccessToken=access_token)
+    # TODO 8: Implement follwing solution code to get user data from Cognito user pool
+    return solution_get_cognito_user_data(access_token)
 
-    user_data = {}
-    for attr in cognito_user['UserAttributes']:
-        key = attr['Name']
-        if key == 'sub':
-            key = 'user_id'
-        val = attr['Value']
-        user_data[key] = val
-    return user_data
 
 def get_token_from_header(request):
     return request.headers['Authorization'].rsplit(' ', 1)[1]

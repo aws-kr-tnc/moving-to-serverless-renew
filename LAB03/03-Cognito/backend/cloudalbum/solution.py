@@ -1,3 +1,6 @@
+import base64
+
+import boto3
 from flask import current_app as app
 from werkzeug.security import generate_password_hash
 
@@ -74,3 +77,48 @@ def solution_generate_s3_presigned_url(s3_client, key):
                 'Key': key})
     return url
 
+def solution_signup_cognito(user, dig):
+    app.logger.debug(
+        "\nRUNNING TODO#7 SOLUTION CODE:\nEnroll user into Cognito!\nFollow the steps in the lab guide to replace this method with your own implementation.",)
+
+
+    client = boto3.client('cognito-idp')
+
+    response = client.sign_up(
+        ClientId=conf['COGNITO_CLIENT_ID'],
+        SecretHash=base64.b64encode(dig).decode(),
+        Username=user['email'],
+        Password=user['password'],
+        UserAttributes=[
+            {
+                'Name': 'name',
+                'Value': user['username']
+            }
+        ],
+        ValidationData=[
+            {
+                'Name': 'name',
+                'Value': user['username']
+            }
+        ]
+
+    )
+    email = response['CodeDeliveryDetails']['Destination']
+    id = response['UserSub']
+
+
+    return {'email': email, 'id': id}
+
+
+def solution_get_cognito_user_data(access_token):
+    client = boto3.client('cognito-idp')
+    cognito_user = client.get_user(AccessToken=access_token)
+
+    user_data = {}
+    for attr in cognito_user['UserAttributes']:
+        key = attr['Name']
+        if key == 'sub':
+            key = 'user_id'
+        val = attr['Value']
+        user_data[key] = val
+    return user_data
