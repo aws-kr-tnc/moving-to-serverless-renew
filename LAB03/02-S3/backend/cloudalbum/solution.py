@@ -52,10 +52,9 @@ def solution_delete_photo_from_ddb(user, photos, photo):
         raise e
 
 def solution_put_object_to_s3(s3_client, key, upload_file_stream):
-    app.logger.info(
-        "\nRUNNING TODO#5 SOLUTION CODE:",
-        "Put object into S3 bucket!",
-        "Follow the steps in the lab guide to replace this method with your own implementation.")
+    app.logger.info("RUNNING TODO#5 SOLUTION CODE:")
+    app.logger.info("Put object into S3 bucket!")
+    app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
     try:
         s3_client.put_object(
             Bucket=conf['S3_PHOTO_BUCKET'],
@@ -73,10 +72,9 @@ def solution_put_object_to_s3(s3_client, key, upload_file_stream):
 
 
 def solution_generate_s3_presigned_url(s3_client, key):
-    app.logger.info(
-        "\nRUNNING TODO#6 SOLUTION CODE:",
-        "Create S3 object presigned url!",
-        "Follow the steps in the lab guide to replace this method with your own implementation.")
+    app.logger.info("RUNNING TODO#6 SOLUTION CODE:")
+    app.logger.info("Create S3 object presigned url!")
+    app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
     url = s3_client.generate_presigned_url(
         'get_object',
         Params={'Bucket': conf['S3_PHOTO_BUCKET'],
