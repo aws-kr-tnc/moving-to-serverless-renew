@@ -19,7 +19,7 @@
           >
             <v-card>
               <v-img
-                @click="showOriginalPhoto(photo.originalSrc)"
+                @click="showOriginalPhoto(photo.id)"
                 ref="photos"
                 :src="photo.thumbSrc"
                 class="white--text"
@@ -198,7 +198,9 @@ export default {
       }
     },
     async showOriginalPhoto(id) {
-      const originalSrc = this.buildImgSrc(id, 'original');
+      console.log(`showOriginalPhoto: ${id}`);
+      const mode = 'original';
+      const originalSrc = this.buildImgSrc(id, mode);
       this.$swal(
         {
           width: '95%',
