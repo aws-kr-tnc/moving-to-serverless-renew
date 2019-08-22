@@ -10,6 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
+from flask_bcrypt import Bcrypt
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -36,14 +37,22 @@ def create_app(script_info=None):
     app = Flask(__name__)
 
     # initiate some config value for JWT Authentication
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'my_jwt')
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
+    app.config['JWT_BLACKLIST_ENABLED'] = True
+    app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access']
+
+    flask_bcrypt = Bcrypt(app)
     jwt = JWTManager(app)
+
+
     app.json_encoder = JSONEncoder
 
     # enable CORS
     CORS(app, resources={r'/*': {'origins': '*'}})
 
     # set config
-    app_settings = os.getenv('APP_SETTINGS', 'cloudalbum.config.DevelopmentConfig')
+    app_settings = os.getenv('APP_SETTINGS')
     app.config.from_object(app_settings)
 
     # set logger to STDOUT
@@ -51,7 +60,7 @@ def create_app(script_info=None):
     app.logger.setLevel(logging.DEBUG)
 
     # set up extensions
-    db.init_app(app)
+    # db.init_app(app)
 
     # register blueprints
     from cloudalbum.api.users import users_blueprint
@@ -60,30 +69,18 @@ def create_app(script_info=None):
     from cloudalbum.api.photos import photos_blueprint
     app.register_blueprint(photos_blueprint, url_prefix='/photos')
 
-    from cloudalbum.api.map import map_blueprint
-    app.register_blueprint(map_blueprint)
-
-    # Setup models for DB operations
-    with app.app_context():
-        try:
-            db.create_all()
-        except Exception as e:
-            app.logger.error(e)
-
 
     @jwt.token_in_blacklist_loader
-    def check_if_token_in_blacklist_set(decrypted_token):
-        from project.util.jwt_helper import is_blacklisted_token_set
+    def check_if_token_in_blacklist_DB(decrypted_token):
+        from cloudalbum.util.jwt_helper import is_blacklisted_token_set
         try:
             return is_blacklisted_token_set(decrypted_token)
         except Exception as e:
             app.logger.error(e)
             return make_response(jsonify({'msg': 'session already expired'}, 409))
 
-
     # shell context for flask cli
     @app.shell_context_processor
     def ctx():
-        return {'app': app, 'db': db}
-
+        return {'app': app}
     return app

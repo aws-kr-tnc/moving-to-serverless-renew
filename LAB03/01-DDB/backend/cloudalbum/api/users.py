@@ -1,18 +1,21 @@
+import uuid
 
 from flask import Blueprint, request
 from flask import current_app as app
-from jsonschema import ValidationError
-from werkzeug.security import generate_password_hash, check_password_hash
-from cloudalbum import db, jwt
-from cloudalbum.api.models import User
-from flask_restplus import Api, Resource, fields
-
-from cloudalbum.schemas import validate_user
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt)
 from flask import jsonify, make_response
+from flask_restplus import Api, Resource, fields
 
+from jsonschema import ValidationError
+from werkzeug.security import check_password_hash
+
+
+from cloudalbum.schemas import validate_user
+from cloudalbum.database.model_ddb import User
+from cloudalbum.solution import solution_put_new_user, solution_get_user_data_with_idx
 from cloudalbum.util.response import m_response
-from cloudalbum.util.jwt_helper import add_token_to_database
+from cloudalbum.util.jwt_helper import add_token_to_set
+
 
 users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint, doc='/swagger/', title='Users',
@@ -45,6 +48,7 @@ class Ping(Resource):
         app.logger.debug("success:ping pong!")
         return m_response(True, {'msg':'pong!'}, 200)
 
+
 @api.route('/')
 class UsersList(Resource):
     @api.doc(
@@ -57,18 +61,23 @@ class UsersList(Resource):
     def get(self):
         """Get all users as list"""
         try:
-            users = [user.to_json() for user in User.query.all()]
-            data = {
-                'users': users
-            }
+            data = []
 
-            app.logger.debug("success:users_list:%s" % users)
+            for user in User.scan():
+                one_user = {
+                    'id': user.id,
+                    'email': user.email,
+                    'username': user.username
+                }
+                data.append(one_user)
+
+            app.logger.debug("success:users_list:%s" % data)
             return m_response(True, data, 200)
 
         except Exception as e:
-            app.logger.error("users list failed:users list:%s" % data)
+            app.logger.error("users list failed")
             app.logger.error(e)
-            return make_response(False, data, 500)
+            return m_response(False, None, 500)
 
 
 @api.route('/<user_id>')
@@ -80,10 +89,10 @@ class Users(Resource):
     def get(self, user_id):
         """Get a single user details"""
         try:
-            user = User.query.filter_by(id=int(user_id)).first()
-            if user is None:
-                app.logger.error('ERROR:user_id not exist:{}'.format(user_id))
-                return m_response(False, {'user_id': user_id}, 404)
+            for user in User.query(hash_key=user_id):
+                if user is None:
+                    app.logger.error('ERROR:user_id not exist:{}'.format(user_id))
+                    return m_response(False, {'user_id': user_id}, 404)
 
             data = {
                 'user': {
@@ -118,22 +127,25 @@ class Signup(Resource):
         try:
             validated = validate_user(req_data)
             user_data = validated['data']
-            db_user = User.query.filter_by(email=user_data['email']).first()
-            email = user_data['email']
-            if not db_user:
-                db.session.add(User(username=user_data['username'],
-                                    email=email,
-                                    password=generate_password_hash(user_data['password'])))
-                db.session.commit()
 
-                committed_user = User.query.filter_by(email=email).first()
+            exist_user = None
+            email = user_data['email']
+
+            for item in User.email_index.query(email):
+                exist_user = item
+
+            if not exist_user:
+                new_user_id = uuid.uuid4().hex
+
+                # TODO 1 : Implement following solution code to save user information into DynamoDB
+                solution_put_new_user(new_user_id, user_data)
 
                 user = {
-                    "id": committed_user.id,
-                    'username': committed_user.username,
-                    'email': committed_user.email
-
+                    "id": new_user_id,
+                    'username': user_data['username'],
+                    'email': email
                 }
+
                 app.logger.debug('success:user_signup: {0}'.format(user))
                 return m_response(True, user, 201)
             else:
@@ -163,7 +175,9 @@ class Signin(Resource):
         try:
             signin_data = validate_user(req_data)['data']
 
-            db_user = db.session.query(User).filter_by(email=signin_data['email']).first()
+            # TODO 2: Implement following solution code to get user profile with GSI
+            db_user = solution_get_user_data_with_idx(signin_data)
+
             if db_user is None:
                 return m_response(False, {'msg':'not exist email', 'user':signin_data}, 400)
 
@@ -191,7 +205,7 @@ class Signin(Resource):
             return m_response(False, req_data, 500)
 
 
-@api.route('/signout', doc=False)
+@api.route('/signout')
 class Signout(Resource):
     @jwt_required
     @api.doc(responses={
@@ -203,6 +217,8 @@ class Signout(Resource):
         try:
             user = get_jwt_identity()
             add_token_to_set(get_raw_jwt())
+
+            app.logger.debug("user token signout: {}".format(user))
             return m_response(True, {'user':user, 'msg':'logged out'}, 200)
 
         except Exception as e:
