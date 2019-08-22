@@ -1,5 +1,9 @@
 import service from '@/service';
-import { SET_ALL_PHOTO_LIST, DELETE_ONE_PHOTO } from '@/vuex/mutation-types';
+import { SET_ALL_PHOTO_LIST, DELETE_ONE_PHOTO, SET_IS_LOADING } from '@/vuex/mutation-types';
+
+const setIsLoading = ({ commit }, data) => {
+  commit(SET_IS_LOADING, data);
+};
 
 const setAllPhotoList = ({ commit }, data) => {
   commit(SET_ALL_PHOTO_LIST, data);
@@ -16,6 +20,7 @@ const buildImgSrc = async (id, mode) => {
 
 const getAllPhotoList = async (store) => {
   try {
+    setIsLoading(store, true);
     const resp = await service.Photo.photoList();
     if (resp.data.ok !== true) return;
     console.log('Photo list retrieved successfully ✨');
@@ -25,6 +30,7 @@ const getAllPhotoList = async (store) => {
       return { ...obj, thumbSrc: thumbnailBlobUrl, originalSrc: originalBlobUrl };
     }));
     setAllPhotoList(store, photoList);
+    setIsLoading(store, false);
   } catch (error) {
     console.error(error);
   }
