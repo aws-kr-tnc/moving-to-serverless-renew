@@ -89,7 +89,17 @@
               </v-card-actions>
             </v-card>
           </v-flex>
-          <v-flex v-if="photoList.length === 0">
+          <v-flex v-if="isLoading">
+            <div class="text-center">
+              <v-progress-circular
+                :size="70"
+                :width="7"
+                color="purple"
+                indeterminate
+              ></v-progress-circular>
+            </div>
+          </v-flex>
+          <v-flex v-if="isNoData && !isLoading">
             <v-alert
               dismissible
               color="primary"
@@ -116,7 +126,7 @@
 </template>
 
 <script>
-import { mapActions, mapState } from 'vuex';
+import { mapActions, mapState, mapGetters } from 'vuex';
 import MapDialog from '@/components/map/MapDialog';
 
 export default {
@@ -134,6 +144,10 @@ export default {
   computed: {
     ...mapState('Photo', [
       'photoList',
+      'isLoading',
+    ]),
+    ...mapGetters('Photo', [
+      'isNoData',
     ]),
   },
   methods: {
