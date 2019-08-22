@@ -11,7 +11,7 @@ app = create_app()
 
 class TestDevelopmentConfig(TestCase):
     def create_app(self):
-        app.config.from_object('project.config.DevelopmentConfig')
+        app.config.from_object('cloudalbum.config.DevelopmentConfig')
         return app
 
     def test_app_is_development(self):
@@ -25,7 +25,7 @@ class TestDevelopmentConfig(TestCase):
 
 class TestTestingConfig(TestCase):
     def create_app(self):
-        app.config.from_object('project.config.TestingConfig')
+        app.config.from_object('cloudalbum.config.TestingConfig')
         return app
 
     def test_app_is_testing(self):
@@ -40,7 +40,7 @@ class TestTestingConfig(TestCase):
 
 class TestProductionConfig(TestCase):
     def create_app(self):
-        app.config.from_object('project.config.ProductionConfig')
+        app.config.from_object('cloudalbum.config.ProductionConfig')
         return app
 
     def test_app_is_production(self):

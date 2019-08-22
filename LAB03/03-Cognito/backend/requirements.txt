@@ -16,4 +16,6 @@ pynamodb==4.0.0
 tzlocal==2.0.0
 boto3==1.9.210
 botocore==1.12.210
-python-jose
+python-jose==3.0.1
+Flask-CLI==0.4.0
+requests==2.22.0
