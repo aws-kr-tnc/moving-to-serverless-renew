@@ -11,7 +11,7 @@ from project.schemas import validate_user
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt)
 from flask import jsonify, make_response
 from project.util.response import m_response
-from project.util.blacklist_helper import add_token_to_database
+from project.util.jwt_helper import add_token_to_set
 
 users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint, doc='/swagger/', title='Users',
@@ -202,7 +202,7 @@ class Signout(Resource):
         try:
             # TODO: jwt token stored in DB version
             user = get_jwt_identity()
-            add_token_to_database(get_raw_jwt())
+            add_token_to_set(get_raw_jwt())
             return m_response(True, {'user':user, 'msg':'logged out'}, 200)
 
             # TODO: jwt token stored in memory version

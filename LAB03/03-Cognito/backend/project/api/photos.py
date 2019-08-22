@@ -1,7 +1,7 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
 
-from project.util.blacklist_helper import token_decoder, pyjwt_required, get_cognito_user
+from project.util.jwt_helper import token_decoder, cog_jwt_required, get_cognito_user, get_token_from_header
 from project.util.response import m_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
@@ -66,15 +66,12 @@ file_upload_parser.add_argument('city', type=str, location='form')
 file_upload_parser.add_argument('address', type=str, location='form')
 file_upload_parser.add_argument('nation', type=str, location='form')
 
-def get_token_from_header(request):
-    return request.headers['Authorization'].rsplit(' ', 1)[1]
-
 
 @api.route('/ping')
 @api.doc('photos ping!')
 class Ping(Resource):
     @api.doc(responses={200: 'pong success'})
-    @pyjwt_required
+    @cog_jwt_required
     def get(self):
 
         app.logger.debug('success:pong!')
@@ -84,7 +81,7 @@ class Ping(Resource):
 @api.route('/file')
 @api.expect(file_upload_parser)
 class FileUpload(Resource):
-    @pyjwt_required
+    @cog_jwt_required
     def post(self):
         token = get_token_from_header(request)
         try:
@@ -127,7 +124,7 @@ class List(Resource):
             500: "Internal server error"
         }
     )
-    @pyjwt_required
+    @cog_jwt_required
     def get(self):
         """Get all photos as list"""
         token = get_token_from_header(request)
@@ -162,7 +159,7 @@ class OnePhoto(Resource):
             500: "Internal server error"
         }
     )
-    @pyjwt_required
+    @cog_jwt_required
     def delete(self, photo_id):
         """one photo delete"""
         token = get_token_from_header(request)
@@ -201,7 +198,7 @@ class OnePhoto(Resource):
             500: "Internal server error"
         }
     )
-    @pyjwt_required
+    @cog_jwt_required
     @api.expect(photo_get_parser)
     def get(self, photo_id):
         token = get_token_from_header(request)

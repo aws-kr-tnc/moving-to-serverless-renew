@@ -83,14 +83,12 @@ def create_app(script_info=None):
 
     @jwt.token_in_blacklist_loader
     def check_if_token_in_blacklist_DB(decrypted_token):
-        from project.util.blacklist_helper import is_blacklisted_token_set
+        from project.util.jwt_helper import is_blacklisted_token_set
         try:
-            # return is_blacklisted_token_db(decrypted_token)
             return is_blacklisted_token_set(decrypted_token)
         except Exception as e:
             app.logger.error(e)
             return make_response(jsonify({'msg': 'session already expired'}, 409))
-
 
     # shell context for flask cli
     @app.shell_context_processor

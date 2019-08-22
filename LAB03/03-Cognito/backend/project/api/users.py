@@ -16,7 +16,7 @@ from project.schemas import validate_user
 from project.db.model_ddb import User
 from project.solution.solution import solution_put_new_user, solution_get_user_data_with_idx
 from project.util.response import m_response
-from project.util.blacklist_helper import add_token_to_set
+from project.util.jwt_helper import add_token_to_set, get_token_from_header, get_cognito_user, cog_jwt_required
 from project.util.config import conf
 
 users_blueprint = Blueprint('users', __name__)
@@ -253,22 +253,25 @@ class Signin(Resource):
 
 @api.route('/signout')
 class Signout(Resource):
-    @jwt_required
+    @cog_jwt_required
     @api.doc(responses={
         200:'signout success',
         500:'login required'
     })
-    def post(self):
+    def delete(self):
         """user signout"""
+        token = get_token_from_header(request)
         try:
-            user = get_jwt_identity()
-            add_token_to_set(get_raw_jwt())
+            user = get_cognito_user(token)
+            del user['email_verified']
+            del user['user_id']
+            add_token_to_set(token)
 
             app.logger.debug("user token signout: {}".format(user))
             return m_response(True, {'user':user, 'msg':'logged out'}, 200)
 
         except Exception as e:
-            app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_jwt_identity()))
+            app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_cognito_user(token)))
             app.logger.error(e)
             return m_response(False, get_jwt_identity(), 500)
 

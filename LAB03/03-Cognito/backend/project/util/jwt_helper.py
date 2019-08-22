@@ -12,15 +12,18 @@ from flask import current_app as app
 
 from project.util.config import conf
 
+POOL_URL = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(conf['AWS_REGION'],
+                                                                                      conf['COGNITO_POOL_ID'])
 POOL_KEYS = None
 blacklist_set = set()
-def add_token_to_set(decoded_token):
+
+def add_token_to_set(token):
     """
     Adds a new token to the set. It is not revoked when it is added.
     :param identity_claim:
     """
-
-    jti = decoded_token['jti']
+    claims= token_decoder(token)
+    jti = claims['jti']
     blacklist_set.add(jti)
 
 def is_blacklisted_token_set(decoded_token):
@@ -40,10 +43,9 @@ def is_blacklisted_token_set(decoded_token):
 def set_cognito_data_global():
     global POOL_KEYS
     if POOL_KEYS is None:
-        aws_data = requests.get('https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(conf['AWS_REGION'],
-                                                                                      conf['COGNITO_POOL_ID']))
+        aws_data = requests.get(POOL_URL)
         POOL_KEYS = json.loads(aws_data.text)['keys']
-        print("POOL_KEYS SET ")
+        app.logger.debug("COGNITO POOL_KEYS SET DONE!")
 
 def token_decoder(token, audience=None):
     set_cognito_data_global()
@@ -78,7 +80,7 @@ def token_decoder(token, audience=None):
     return claims
 
 
-def pyjwt_required(f):
+def cog_jwt_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not 'Authorization' in request.headers:
@@ -107,3 +109,6 @@ def get_cognito_user(access_token):
         val = attr['Value']
         user_data[key] = val
     return user_data
+
+def get_token_from_header(request):
+    return request.headers['Authorization'].rsplit(' ', 1)[1]
