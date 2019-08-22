@@ -42,7 +42,7 @@ class Photo(db.Model):
     __tablename__ = 'Photo'
 
     id = db.Column(Integer, primary_key=True)
-    user_id = db.Column(String(100), ForeignKey(User.id))
+    user_id = db.Column(Integer, ForeignKey(User.id))
     tags = db.Column(String(400), unique=False)
     desc = db.Column(String(400), unique=False)
     filename_orig = db.Column(String(400), unique=False)

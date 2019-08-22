@@ -15,7 +15,7 @@ class BaseConfig:
     JWT_BLACKLIST_TOKEN_CHECKS = ['access']
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ECHO_FLAG = os.getenv('SQLALCHEMY_ECHO_FLAG', True)
+    SQLALCHEMY_ECHO = os.getenv('SQLALCHEMY_ECHO', True)
 
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'upload'))
     THUMBNAIL_WIDTH = os.getenv('THUMBNAIL_WIDTH', 300)

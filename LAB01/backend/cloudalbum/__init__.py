@@ -64,6 +64,7 @@ def create_app(script_info=None):
     with app.app_context():
         try:
             db.create_all()
+            app.logger.info('Create database tables')
         except Exception as e:
             app.logger.error(e)
 
