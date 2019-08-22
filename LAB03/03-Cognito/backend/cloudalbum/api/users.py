@@ -60,14 +60,24 @@ class UsersList(Resource):
     def get(self):
         """Get all users as list"""
         try:
+
+            client = boto3.client('cognito-idp')
+
+            response = client.list_users(
+                UserPoolId=conf['COGNITO_POOL_ID'],
+                AttributesToGet=['sub', 'email', 'name']
+            )
+
             data = []
 
-            for user in User.scan():
-                one_user = {
-                    'id': user.id,
-                    'email': user.email,
-                    'username': user.username
-                }
+            for user in response['Users']:
+                one_user = {}
+                for attr in user['Attributes']:
+                    key = attr['Name']
+
+                    if key == 'sub':
+                        key = 'user_id'
+                    one_user[key] = attr['Value']
                 data.append(one_user)
 
             app.logger.debug("success:users_list:%s" % data)
@@ -87,7 +97,10 @@ class Users(Resource):
             })
     def get(self, user_id):
         """Get a single user details"""
+        client = boto3.client('cognito-idp')
         try:
+
+
             for user in User.query(hash_key=user_id):
                 if user is None:
                     app.logger.error('ERROR:user_id not exist:{}'.format(user_id))
