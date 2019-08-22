@@ -77,37 +77,56 @@ def solution_generate_s3_presigned_url(s3_client, key):
                 'Key': key})
     return url
 
+
+def user_signup_confirm(id):
+    client = boto3.client('cognito-idp')
+    try:
+        client.admin_confirm_sign_up(
+            UserPoolId=conf['COGNITO_POOL_ID'],
+            Username=id
+        )
+        app.logger.debug('success: user confirm automatically:user id:{}'.format(id))
+    except Exception as e:
+        app.logger.error('ERROR: user confirm failed:user id:{}'.format(id))
+        app.logger.error(e)
+
+
 def solution_signup_cognito(user, dig):
     app.logger.debug(
         "\nRUNNING TODO#7 SOLUTION CODE:\nEnroll user into Cognito!\nFollow the steps in the lab guide to replace this method with your own implementation.",)
 
 
     client = boto3.client('cognito-idp')
+    try:
+        response = client.sign_up(
+            ClientId=conf['COGNITO_CLIENT_ID'],
+            SecretHash=base64.b64encode(dig).decode(),
+            Username=user['email'],
+            Password=user['password'],
+            UserAttributes=[
+                {
+                    'Name': 'name',
+                    'Value': user['username']
+                }
+            ],
+            ValidationData=[
+                {
+                    'Name': 'name',
+                    'Value': user['username']
+                }
+            ]
 
-    response = client.sign_up(
-        ClientId=conf['COGNITO_CLIENT_ID'],
-        SecretHash=base64.b64encode(dig).decode(),
-        Username=user['email'],
-        Password=user['password'],
-        UserAttributes=[
-            {
-                'Name': 'name',
-                'Value': user['username']
-            }
-        ],
-        ValidationData=[
-            {
-                'Name': 'name',
-                'Value': user['username']
-            }
-        ]
+        )
 
-    )
-    email = response['CodeDeliveryDetails']['Destination']
-    id = response['UserSub']
+        email = response['CodeDeliveryDetails']['Destination']
+        id = response['UserSub']
 
-
-    return {'email': email, 'id': id}
+        # automatically confirm user for lab
+        user_signup_confirm(id)
+        return {'email': email, 'id': id}
+    except Exception as e:
+        app.logger.error('ERROR:failed to enroll user into cognito')
+        app.logger.error(e)
 
 
 def solution_get_cognito_user_data(access_token):
