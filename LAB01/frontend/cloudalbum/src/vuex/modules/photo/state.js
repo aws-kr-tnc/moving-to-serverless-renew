@@ -1,6 +1,6 @@
 const state = {
   photoList: [],
-  isLoading: true,
+  isLoading: false,
 };
 
 export default state;
