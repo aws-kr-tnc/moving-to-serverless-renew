@@ -129,12 +129,13 @@ export default {
           },
         );
       } catch (err) {
+        console.log(err.response)
+        console.log(err.response.data.Message);
         this.$swal(
           {
             type: 'error',
-            title: 'Oops...',
-            text: 'Already registerd? or something went wrong!',
-            footer: '<a href="/users/signup">Retry</a>',
+            title: 'Something went wrong!',
+            text: err.response.data.Message,
           },
         );
       }
