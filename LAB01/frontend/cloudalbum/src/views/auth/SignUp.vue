@@ -31,8 +31,8 @@
                   name="username"
                   prepend-icon="mdi-account"
                   type="text"
+                  @keyup.enter="userSignUp()"
                 ></v-text-field>
-
                 <v-text-field
                   v-model="inputEmail"
                   id="email"
@@ -40,8 +40,8 @@
                   name="email"
                   prepend-icon="mdi-email"
                   type="text"
+                  @keyup.enter="userSignUp()"
                 ></v-text-field>
-
                 <v-text-field
                   v-model="inputPassword"
                   id="password"
@@ -49,17 +49,16 @@
                   name="password"
                   prepend-icon="mdi-lock"
                   type="password"
+                  @keyup.enter="userSignUp()"
                 ></v-text-field>
-
                 <v-text-field
                   id="password-confirm"
                   label="Password Confirm"
                   name="password-confirm"
                   prepend-icon="mdi-check-bold"
                   type="password"
+                  @keyup.enter="userSignUp()"
                 ></v-text-field>
-
-
               </v-form>
             </v-card-text>
             <v-card-actions>
