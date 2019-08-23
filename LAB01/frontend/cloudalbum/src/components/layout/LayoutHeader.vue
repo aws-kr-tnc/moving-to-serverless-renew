@@ -52,16 +52,52 @@ export default {
   name: 'LayoutHeader',
   methods: {
     moveToUpload() {
-      this.$router.push({ name: 'upload' });
+      this.$router.push({ name: 'upload' })
+        .catch((err) => {
+          if (err.name === 'NavigationDuplicated') {
+            // eslint-disable-next-line no-console
+            console.info(err);
+            return;
+          }
+          // eslint-disable-next-line no-console
+          console.error(err);
+        });
     },
     moveToList() {
-      this.$router.push({ name: 'photolist' });
+      this.$router.push({ name: 'photolist' })
+        .catch((err) => {
+          if (err.name === 'NavigationDuplicated') {
+            // eslint-disable-next-line no-console
+            console.info(err);
+            return;
+          }
+          // eslint-disable-next-line no-console
+          console.error(err);
+        });
     },
     moveToMap() {
-      this.$router.push({ name: 'map' });
+      this.$router.push({ name: 'map' })
+        .catch((err) => {
+          if (err.name === 'NavigationDuplicated') {
+            // eslint-disable-next-line no-console
+            console.info(err);
+            return;
+          }
+          // eslint-disable-next-line no-console
+          console.error(err);
+        });
     },
     signOut() {
-      this.$router.push({ name: 'signout' });
+      this.$router.push({ name: 'signout' })
+        .catch((err) => {
+          if (err.name === 'NavigationDuplicated') {
+            // eslint-disable-next-line no-console
+            console.info(err);
+            return;
+          }
+          // eslint-disable-next-line no-console
+          console.error(err);
+        });
     },
   },
 };
