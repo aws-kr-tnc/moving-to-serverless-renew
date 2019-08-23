@@ -139,10 +139,6 @@ class List(Resource):
 
             app.logger.debug("success:photos_list:{}".format(data))
             return m_response(True, data, 200)
-        except GetError as e:
-            app.logger.debug("success:user have no photos:{}".format(data))
-            app.logger.debug(e)
-            return m_response(True, data, 200)
 
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
