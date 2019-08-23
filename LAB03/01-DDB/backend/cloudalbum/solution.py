@@ -1,4 +1,4 @@
-from flask import app
+from flask import current_app as app
 from werkzeug.security import generate_password_hash
 from cloudalbum.database.model_ddb import User
 
