@@ -1,26 +1,35 @@
+"""
+    cloudalbum/util/response.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Handling responses about user request.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 import copy
-from flask import jsonify, make_response
+from flask import make_response
+
 
 def m_response(bool, data, code):
     return make_response({'ok': bool, 'photos': data}, code)
 
 
-
-
 dic_default_response = {
-    200: { 'code': 200,
-            'message': 'Ok'},
-    201 : { 'code': 201,
-            'message': 'Created'},
-    400 : { 'code': 400,
-            'message': 'Bad request'},
-    404 : { 'code': 404,
-            'message':'Not found'},
-    405 : { 'code': 405,
-            'message':'Method not allowed'},
-    500 : { 'code': 500,
-            'message': 'Internal server error'}
-                 }
+    200: {'code': 200,
+          'message': 'Ok'},
+    201: {'code': 201,
+          'message': 'Created'},
+    400: {'code': 400,
+          'message': 'Bad request'},
+    404: {'code': 404,
+          'message': 'Not found'},
+    405: {'code': 405,
+          'message': 'Method not allowed'},
+    500: {'code': 500,
+          'message': 'Internal server error'}
+}
+
 
 def default_response(code):
     try:
@@ -30,6 +39,7 @@ def default_response(code):
             raise ValueError
     except:
         raise ValueError
+
 
 def response_with_msg(code, msg):
     try:
@@ -43,6 +53,7 @@ def response_with_msg(code, msg):
         # application.logger.debug("Undefined error: %s" % code)
         raise ValueError
 
+
 def response_with_data(code, data):
     try:
         if code in dic_default_response:
@@ -55,6 +66,7 @@ def response_with_data(code, data):
     except:
         # application.logger.debug("Undefined error: %s" % code)
         raise ValueError
+
 
 def response_with_msg_data(code, msg, data):
     try:

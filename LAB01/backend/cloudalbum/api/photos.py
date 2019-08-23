@@ -1,19 +1,27 @@
+"""
+    cloudalbum/api/photos.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    REST API for photos
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+import os, uuid
+from flask import current_app as app
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from datetime import datetime
+from werkzeug.datastructures import FileStorage
+from werkzeug.utils import secure_filename
+from pathlib import Path
+from jsonschema.exceptions import ValidationError
+from cloudalbum.util.response import m_response
 from cloudalbum import db
 from cloudalbum.database.models import Photo
-from datetime import datetime
-from cloudalbum.util.response import m_response
-from werkzeug.datastructures import FileStorage
-from flask import current_app as app
-from werkzeug.utils import secure_filename
 from cloudalbum.schemas import validate_photo_info
-from flask_jwt_extended import jwt_required, get_jwt_identity
-
-from pathlib import Path
 from cloudalbum.util.file_control import email_normalize, delete, save, insert_basic_info
-from jsonschema.exceptions import ValidationError
-import os, uuid
 
 authorizations = {
     'Bearer Auth': {
@@ -270,4 +278,3 @@ class OnePhoto(Resource):
             app.logger.error(e)
             return 'http://placehold.it/400x300'
 
-# photo edit

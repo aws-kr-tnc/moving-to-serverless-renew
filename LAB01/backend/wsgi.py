@@ -1,3 +1,13 @@
+"""
+    wsgi.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    WSGI(Web Server Gateway Interface) script to deploy AWS ElasticBeanstalk.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+
 import os
 from cloudalbum import create_app, db
 

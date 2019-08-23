@@ -10,7 +10,6 @@ cli = FlaskGroup(create_app=create_app)
 
 @cli.command('recreate_db')
 def recreate_db():
-    # delete_table()
     create_table()
 
 

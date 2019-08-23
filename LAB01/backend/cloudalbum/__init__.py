@@ -1,11 +1,20 @@
+"""
+    cloudalbum/__init__.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Environment configuration how to run application.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+
 import os
 import logging
 import sys
 import json
 import datetime
-
 from bson.objectid import ObjectId
-from flask import Flask, jsonify, make_response  # new
+from flask import Flask, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_login import LoginManager
@@ -70,11 +79,10 @@ def create_app(script_info=None):
 
 
     @jwt.token_in_blacklist_loader
-    def check_if_token_in_blacklist_DB(decrypted_token):
-        from cloudalbum.util.blacklist_helper import is_blacklisted_token_db, is_blacklisted_token_set
+    def check_if_token_in_blacklist_set(decrypted_token):
+        from project.util.jwt_helper import is_blacklisted_token_set
         try:
-            return is_blacklisted_token_db(decrypted_token)
-            # return is_blacklist_token_set(decrypted_token)
+            return is_blacklisted_token_set(decrypted_token)
         except Exception as e:
             app.logger.error(e)
             return make_response(jsonify({'msg': 'session already expired'}, 409))
