@@ -1,10 +1,11 @@
 """
-    cloudalbum.util.py
+    cloudalbum/chalicelib/util.py
     ~~~~~~~~~~~~~~~~~~~~~~~
-    CloudAlbum is a sample application for TechSummit 2018 workshop.
+    Utility functions
 
-    :copyright: © 2018 by Sungshik Jou.
-    :license: BSD, see LICENSE for more details.
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
 """
 
 from datetime import datetime
@@ -12,15 +13,14 @@ from tzlocal import get_localzone
 from chalicelib.config import conf
 from PIL import Image
 from io import BytesIO
-from jose import jwt
-from http.cookies import SimpleCookie
-import requests
+# from jose import jwt
+# from http.cookies import SimpleCookie
+# import requests
+import sys
 import time
 import os
-import sys
 import boto3
 import cgi
-
 
 current_milli_time = lambda: int(round(time.time() * 1000))
 
@@ -34,65 +34,35 @@ def get_parts(app):
     return parsed
 
 
-def get_user(app, user):
-
-    cookie = SimpleCookie()
-    cookie.load(app.current_request.headers.get('cookie'))
-    cog_username = cookie.get('sid').value
-
-    client = boto3.client('cognito-idp')
-
-    response = client.admin_get_user(
-        UserPoolId=conf['COGNITO_POOL_ID'],
-        Username=cog_username
-    )
-
-    user.id = cog_username
-    user.username = response.get('UserAttributes')[2].get('Value')
-    user.email = response.get('UserAttributes')[3].get('Value')
-
-    return user
-
-
 def get_password_reset_url():
     password_reset = "https://" \
                      "{0}/forgotPassword?response_type=code&client_id=" \
                      "{1}&redirect_uri=" \
-                     "{2}"\
+                     "{2}" \
         .format(conf['COGNITO_DOMAIN'],
                 conf['COGNITO_CLIENT_ID'],
-                conf['BASE_URL']+'/callback')
+                conf['BASE_URL'] + '/callback')
 
     return password_reset
 
 
-def verify(token, access_token=None):
-    """Verify a cognito JWT"""
-
-    ### load and cache cognito JSON Web Key (JWK)
-    # https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-with-identity-providers.html
-    JWKS_URL = "https://cognito-idp.{0}.amazonaws.com/{1}/.well-known/jwks.json". \
-        format(conf['AWS_REGION'], conf['COGNITO_POOL_ID'])
-
-    JWKS = requests.get(JWKS_URL).json()["keys"]
-
-    # get the key id from the header, locate it in the cognito keys
-    # and verify the key
-    header = jwt.get_unverified_header(token)
-    key = [k for k in JWKS if k["kid"] == header['kid']][0]
-    id_token = jwt.decode(token, key, audience=conf['COGNITO_CLIENT_ID'], access_token=access_token)
-
-    return id_token
-
-
-def allowed_file_ext(filename):
-    """
-    Check the file extensions whether allowed file or not
-    :param filename: file input (photo file)
-    :return: True or False
-    """
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in conf['ALLOWED_EXTENSIONS']
+# def verify(token, access_token=None):
+#     """Verify a cognito JWT"""
+#
+#     ### load and cache cognito JSON Web Key (JWK)
+#     # https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-with-identity-providers.html
+#     JWKS_URL = "https://cognito-idp.{0}.amazonaws.com/{1}/.well-known/jwks.json". \
+#         format(conf['AWS_REGION'], conf['COGNITO_POOL_ID'])
+#
+#     JWKS = requests.get(JWKS_URL).json()["keys"]
+#
+#     # get the key id from the header, locate it in the cognito keys
+#     # and verify the key
+#     header = jwt.get_unverified_header(token)
+#     key = [k for k in JWKS if k["kid"] == header['kid']][0]
+#     id_token = jwt.decode(token, key, audience=conf['COGNITO_CLIENT_ID'], access_token=access_token)
+#
+#     return id_token
 
 
 def email_normalize(email):
@@ -104,37 +74,7 @@ def email_normalize(email):
     return email.replace('@', '_at_').replace('.', '_dot_')
 
 
-def save(upload_file, filename, email, app):
-    """
-    Upload input file (photo) to specific path for individual user.
-    Save original file and thumbnail file.
-    :param upload_file: file object
-    :param filename: secure filename for upload
-    :param email: user email address
-    :param app: Flask.application
-    :return: file size (byte)
-    """
-    path = os.path.join(conf['UPLOAD_FOLDER'], email_normalize(email))
-
-    try:
-        if not os.path.exists(path):
-            os.makedirs(path)
-            app.logger.info("Create folder: %s", path)
-
-        original_full_path = os.path.join(path, filename)
-        upload_file.save(original_full_path)
-        file_size = os.stat(original_full_path).st_size
-        make_thumbnails(path, filename, app)
-
-    except Exception as e:
-        app.logger.error('Error occurred while saving file:%s', e)
-        raise e
-
-    return file_size
-
-
 def save_s3(upload_file_stream, filename, email, app):
-
     prefix = "photos/{0}/".format(email_normalize(email))
     prefix_thumb = "photos/{0}/thumbnails/".format(email_normalize(email))
 
@@ -147,11 +87,11 @@ def save_s3(upload_file_stream, filename, email, app):
     try:
         # Save original file
         s3_client.put_object(
-                Bucket=conf['S3_PHOTO_BUCKET'],
-                Key=key,
-                Body=original_bytes,
-                ContentType='image/jpeg',
-                StorageClass='STANDARD'
+            Bucket=conf['S3_PHOTO_BUCKET'],
+            Key=key,
+            Body=original_bytes,
+            ContentType='image/jpeg',
+            StorageClass='STANDARD'
         )
 
         app.logger.debug('s3://{0}/{1} uploaded'.format(conf['S3_PHOTO_BUCKET'], key))
@@ -159,12 +99,12 @@ def save_s3(upload_file_stream, filename, email, app):
         # Save thumbnail file
         upload_file_stream.stream.seek(0)
         s3_client.put_object(
-                Bucket=conf['S3_PHOTO_BUCKET'],
-                Key=key_thumb,
-                # Body=resize_image(upload_file_stream, (conf['THUMBNAIL_WIDTH'], conf['THUMBNAIL_HEIGHT'])),
-                Body=make_thumbnails_s3(upload_file_stream, app),
-                ContentType='image/jpeg',
-                StorageClass='STANDARD'
+            Bucket=conf['S3_PHOTO_BUCKET'],
+            Key=key_thumb,
+            # Body=resize_image(upload_file_stream, (conf['THUMBNAIL_WIDTH'], conf['THUMBNAIL_HEIGHT'])),
+            Body=make_thumbnails_s3(upload_file_stream, app),
+            ContentType='image/jpeg',
+            StorageClass='STANDARD'
         )
 
         app.logger.debug('s3://{0}/{1} uploaded'.format(conf['S3_PHOTO_BUCKET'], key_thumb))
@@ -178,7 +118,6 @@ def save_s3(upload_file_stream, filename, email, app):
 
 
 def save_s3_chalice(bytes, filename, email, app):
-
     prefix = "photos/{0}/".format(email_normalize(email))
     prefix_thumb = "photos/{0}/thumbnails/".format(email_normalize(email))
 
@@ -187,7 +126,6 @@ def save_s3_chalice(bytes, filename, email, app):
 
     s3_client = boto3.client('s3')
     # original_bytes = upload_file_stream.read()
-
 
     try:
         temp_file = '/tmp/' + filename
@@ -211,28 +149,6 @@ def save_s3_chalice(bytes, filename, email, app):
         raise e
 
     return len(bytes)
-
-
-def delete(app, filename, current_user):
-    """
-    Delete specific file (with thumbnail)
-    :param app: Flask.application
-    :param photo: specific photo ORM object
-    :param current_user: Flask_login.current_user
-    :return: None
-    """
-    try:
-        path = os.path.join(conf['UPLOAD_FOLDER'], email_normalize(current_user.email))
-        thumbnail = os.path.join(os.path.join(path, "thumbnail"), filename)
-        original = os.path.join(path, filename)
-        if os.path.exists(thumbnail):
-            os.remove(thumbnail)
-        if os.path.exists(original):
-            os.remove(original)
-
-    except Exception as e:
-        app.logger.error('Error occurred while deleting file:%s', e)
-        raise e
 
 
 def delete_s3(app, filename, current_user):
@@ -288,53 +204,6 @@ def make_thumbnails_s3(file_p, app):
     return result_bytes_stream.getvalue()
 
 
-def sizeof_fmt(num):
-    """
-    Return human readable file size
-    :param num: file size (byte)
-    :return: human readable file size string.
-    """
-    for x in ['bytes', 'KB', 'MB', 'GB']:
-        if num < 1024.0:
-            return "%3.1f%s" % (num, x)
-        num /= 1024.0
-    return "%3.1f%s" % (num, 'TB')
-
-
-def check_variables():
-    """
-    Check the key variables for application running
-    :return: if verification failed, exit with -1
-    """
-    if (conf['DB_URL'] is None) or (conf['GMAPS_KEY'] is None):
-        print('DB_URL or GMAPS_KEY are not configured!', file=sys.stderr)
-        print('Check your environment variables!', file=sys.stderr)
-        exit(-1)
-
-
-def check_variables_gmaps():
-    """
-    Check the key variables for application running
-    :return: if verification failed, exit with -1
-    """
-    if conf['GMAPS_KEY'] is None:
-        print('GMAPS_KEY are not configured!', file=sys.stderr)
-        print('Check your environment variables!', file=sys.stderr)
-        exit(-1)
-
-
-def log_path_check(log_path):
-    """
-    :param log_path:
-    :return: None
-    """
-    try:
-        if not os.path.exists(log_path):
-            os.makedirs(log_path)
-    except Exception as e:
-        raise e
-
-
 def the_time_now():
     # utc_tz = pytz.timezone('UTC')
     local_tz = get_localzone()
@@ -357,16 +226,16 @@ def resize_image(file_p, size):
     if image.size < size:
         new_width, new_height = image.size
     elif dest_ratio > source_ratio:
-        new_width = int(image.size[0] * size[1]/float(image.size[1]))
+        new_width = int(image.size[0] * size[1] / float(image.size[1]))
         new_height = size[1]
     else:
         new_width = size[0]
-        new_height = int(image.size[1] * size[0]/float(image.size[0]))
+        new_height = int(image.size[1] * size[0] / float(image.size[0]))
     image = image.resize((new_width, new_height), resample=Image.LANCZOS)
 
     final_image = Image.new("RGB", size)
-    topleft = (int((size[0]-new_width) / float(2)),
-               int((size[1]-new_height) / float(2)))
+    topleft = (int((size[0] - new_width) / float(2)),
+               int((size[1] - new_height) / float(2)))
     final_image.paste(image, topleft)
     bytes_stream = BytesIO()
     # final_image = final_image.convert('RGB')
@@ -399,7 +268,3 @@ def presigned_url(filename, email, Thumbnail=True):
         raise e
 
     return url
-
-
-
-

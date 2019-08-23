@@ -7,31 +7,15 @@ import boto3
 app = Chalice(app_name='cloudalbum')
 
 
-
-@app.route('/', methods=['GET'])
+@app.route('/users/signin', methods=['POST'])
 def signin():
-    """Login route"""
-    # http://docs.aws.amazon.com/cognito/latest/developerguide/login-endpoint.html
-
-    cognito_login = "https://{0}/"\
-                    "login?response_type=code&client_id={1}"\
-                    "&state={2}"\
-                    "&redirect_uri={3}/callback".format(
-                        conf['COGNITO_DOMAIN'],
-                        conf['COGNITO_CLIENT_ID'],
-                        uuid.uuid4().hex,
-                        conf['BASE_URL'])
-
-    app.log.debug(cognito_login)
-
-    return Response(
-        status_code=301,
-        headers={'Location': cognito_login},
-        body=''
-    )
+    return {'name': 'hong gil dong'}
 
 
-
+@app.route('/users/signup', methods=['POST'], content_types=['application/json'])
+def signup():
+    app.log.debug(app.current_request.json_body)
+    return {'name': 'hong gil dong'}
 
 # The view function above will return {"hello": "world"}
 # whenever you make an HTTP GET request to '/'.

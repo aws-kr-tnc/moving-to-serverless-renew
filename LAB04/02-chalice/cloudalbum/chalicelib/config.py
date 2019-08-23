@@ -24,9 +24,6 @@ def get_param(param_name):
 
 
 conf = {
-    # Mandatory variable
-    'GMAPS_KEY': get_param('/cloudalbum/GMAPS_KEY'),
-
     # Default config values
     'THUMBNAIL_WIDTH': get_param('/cloudalbum/THUMBNAIL_WIDTH'),
     'THUMBNAIL_HEIGHT': get_param('/cloudalbum/THUMBNAIL_HEIGHT'),
