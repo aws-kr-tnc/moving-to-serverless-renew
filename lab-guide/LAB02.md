@@ -270,6 +270,12 @@ If the previous TASK was successfully completed, you will see the following scre
 
 Now, let's deploy our application.
 
+54. Run following command to build front-end application.
+```console
+
+```
+
+
 
 54. Click the **Configuration** button in the left navigation menu.
 

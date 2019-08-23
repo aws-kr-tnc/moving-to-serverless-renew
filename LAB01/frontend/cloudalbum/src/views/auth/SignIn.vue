@@ -34,6 +34,7 @@
                   prepend-icon="mdi-account"
                   type="text"
                   :rules="requiredRule"
+                  @keyup.enter="userSignIn()"
                 ></v-text-field>
                 <v-text-field
                   id="password"
@@ -43,6 +44,7 @@
                   prepend-icon="mdi-lock"
                   type="password"
                   :rules="requiredRule"
+                  @keyup.enter="userSignIn()"
                 ></v-text-field>
               </v-form>
             </v-card-text>
