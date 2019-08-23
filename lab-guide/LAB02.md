@@ -6,6 +6,8 @@ So, we'll deploy the CloudAlbum application with HA(high availability) architect
 
 ## In this lab cover.. 
 
+> 그림 추가 필요 (s3 frontend)
+
 <img src=./images/lab02-eb-diagram.png width=700>
 
 * Configure [VPC](https://aws.amazon.com/vpc/) for the HA environment. (CloudFormation template will be provided.)
@@ -480,134 +482,36 @@ aws s3 website s3://frontend-<your-initial>/ --index-document index.html
 75. If it works fine, let's change your mimimum capacity configuration. In the Configuration menu, click **Modify** button of **Capacity** section.
 
 
-71. In the **Modify capacity** page, change the atttribute of AutoScalingGroup ***Min*** value from 1 to 2. (or what you want..)
+76. In the **Modify capacity** page, change the atttribute of AutoScalingGroup ***Min*** value from 1 to 2. (or what you want..)
 
     <img src=./images/lab02-task5-asg.png width=500>
 
 
-72. Click the **Apply** button. let's wait until the configuration is applied.
+77. Click the **Apply** button. let's wait until the configuration is applied.
  * We have modified our application to use Elasticache as a session store. So CloudAlbum works well in AutoScaling environment. **To confirm this, log in and press Ctrl + R or F5 to confirm that the service instance changes via page refresh.**
 
-    <img src=./images/lab02-task5-reload.png width=500>
+> 그림 교채 필요
 
-73. Test the deployed application and explore the ElasticBeastalk console. Let's go to TASK 6.
+<img src=./images/lab02-task5-reload.png width=500>
 
-
-## TASK 6. Perform application test
-
-74. Perform application test.
-
-
-## Options : Investigate the application changes
-As you may have recognized, we have added a couple of things to the previous application for this hands-on lab. Here's what we've added:
-
- * We needed a separate **session-store** for **scale-out** of the application. So, we add a [flask-session](https://github.com/fengsp/flask-session) package. Now, the session data is stored in **Elasticache**'s [Redis](https://redis.io/).
-
- * We added a **.ebextentions/cloudalbum.config** file for the application deployment.
-
- * We added **wsgi.py** file for ElasticBeanstalk python preconfigured environment. This file contains the code to store the session-data to Redis.
-
-Let's look a little closer now.
-
-75. Open the `LAB02/CloudAlbum/.ebextensions/cloudalbum.config` file. Take a look at the cloudalbum.config file. We use this file to configure the application. Install the necessary packages, mount EFS, and specify the required environment variables.
-
-```yaml
-packages:
-  yum:
-    amazon-efs-utils : []
-
-files:
-  "/app/cloudalbum/efs_setup.sh":
-    mode: "000755"
-    owner: root
-    group: root
-    content: |
-      #!/bin/bash
-
-      # Commands that will be run on containter_commmands
-      # Here the container variables will be visible as environment variables.
-      . /opt/elasticbeanstalk/support/envvars
-
-      ## EFS mount
-      mkdir -p /mnt/efs
-      
-      mountpoint /mnt/efs
-      
-      if [ $? -eq 0 ] ; then
-        echo "Already mounted"
-      
-      else
-        mount -t efs $EFS_ID:/ /mnt/efs
-      fi
-
-      chown -R wsgi:wsgi /mnt/efs
-      chown -R wsgi:wsgi /app/cloudalbum
-
-container_commands:
-  efs_setup:
-    command: application
-
-option_settings:
-  aws:elasticbeanstalk:application:environment:
-    LANG: ko_KR.UTF-8
-    LC_ALL: ko_KR.UTF-8
-
-  aws:elasticbeanstalk:container:python:
-    WSGIPath: wsgi.py
-
-```
-
-
-76. We've changed the application source code to ensure that the CloudAlbum application has **High Availability** in the scale-out environment. For this we introduced a **session-store** and decided to use **Elasticache**'s Redis as the session-store. To do this, we added some codes at **wsgi.py** file.
-
-* **wsgi.py** is used to invoke a [WSGI](https://www.python.org/dev/peps/pep-3333/) application in an ElasticBeanstalk python configured environment. 
-
-* Review following code.
-
-
-```python
-
-from flask_session import Session
-
-```
-
-* [Flask_Session](https://github.com/fengsp/flask-session) package is imported for using of Redis as an session-store.
-
-
-```python
-
-# Flask Session for Redis
-application.config['SESSION_TYPE'] = 'redis'
-application.config['SESSION_REDIS'] = StrictRedis(host=conf['ELCACHE_EP'], port=6379)
-Session(application)
-
-```
-* Variables set-up to use Elasticache(Redis) as an session-store. 
-
-
-
+78. Test the deployed application and explore the ElasticBeastalk console. 
 
 
 ## TASK 7. Remove your AWS resources
 **CAUTION**: If you have completed this hands-on lab so far, **please delete the AWS resources** which used in this lab. You may incur an unwanted fee.
 
-77. Remove your EB environment (RDS, ALB, ASG included). Click the **Actions** button in your ElasticBeanstalk application dashboard and then choose **Terminate Environment**. Confirm that resources created by ElasticBeanstalk are deleted.
+79. Remove your EB environment (RDS, ALB, ASG included). Click the **Actions** button in your ElasticBeanstalk application dashboard and then choose **Terminate Environment**. Confirm that resources created by ElasticBeanstalk are deleted.
 
     <img src=./images/lab02-task7-eb-delete.png width=600 >
 
 
-78. Remove your EFS. Choose your file-system(**shared-storage**) and click the **Actions** button then choose **Delete file system**. Confirm that the EFS resource has been deleted. 
+80. Remove your EFS. Choose your file-system(**shared-storage**) and click the **Actions** button then choose **Delete file system**. Confirm that the EFS resource has been deleted. 
 
     <img src=./images/lab02-task7-efs-delete.png width=500>
 
-79. Remove your Elasticache cluster. Choose your Redis cluster(**session-store**) and click the **Delete** button. Confirm **Create dinal backup?** : **NO** , then click **Delete** button. Confirm that the Elasticache resource has been deleted. 
-   
-    <img src=./images/lab02-task7-ec-delete.png width=500>
-
-* In the same way, **delete the subnet group** that was created together from the **Subnet Groups** menu.
 
 
-80. Remove your VPC from CloudFormation console. Choose your CloudFormation stack(**workshop-vpc**) and click the **Actions** button then choose **Delete Stack**. Confirm that the Stack resources has been deleted.
+81. Remove your VPC from CloudFormation console. Choose your CloudFormation stack(**workshop-vpc**) and click the **Actions** button then choose **Delete Stack**. Confirm that the Stack resources has been deleted.
 
     <img src=./images/lab02-task7-cf-delete.png width=500>
 
