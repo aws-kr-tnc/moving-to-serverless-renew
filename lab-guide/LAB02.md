@@ -270,14 +270,8 @@ If the previous TASK was successfully completed, you will see the following scre
 
 Now, let's deploy our application.
 
-54. Run following command to build front-end application.
-```console
 
-```
-
-
-
-54. Click the **Configuration** button in the left navigation menu.
+54. Setup ElasticBeanstalk configuration to deploy back-end application.  Click the **Configuration** button in the left navigation menu.
 
     <img src=./images/lab02-task5-eb-configuration.png width=300>
 
@@ -294,28 +288,23 @@ Now, let's deploy our application.
 * ***Name*** : ***Value***
 * `APP_HOST` : `0.0.0.0`
 * `APP_PORT` : `5000`
-* `DB_URL` : `mysql+pymysql://serverless:workshop@<YOUR DATABASE ENDPOINT>/ebdb?charset=utf8`
+* `DATABASE_URL` : `mysql+pymysql://movingto:serverless@<YOUR DATABASE ENDPOINT>/ebdb?charset=utf8`
   * **NOTE**: Replace ***`<YOUR DATABASE ENDPOINT>`*** to **your own EndPoint** value which copied previous step. 
-  * For example : `mysql+pymysql://serverless:workshop@`aa1is6q2iidf84x.cjukz33spdko.ap-southeast-1.rds.amazonaws.com:3306`/ebdb?charset=utf8`
+  * For example : `mysql+pymysql://movingto:serverlessp@`aa1is6q2iidf84x.cjukz33spdko.ap-southeast-1.rds.amazonaws.com:3306`/ebdb?charset=utf8`
 * `EFS_ID` : `<YOUR FILE SYSTEM ID>`
   * We already copied it to notepad in **TASK 2**.
   * For example : fs-5d3e921c
-* `ELCACHE_EP` : `<YOUR ELASTICACHE_ENDPOINT>`
-  * We already copied it to notepad in **TASK 3**.
-  * For example (Exclude the port number): `session-store.ttvhbi.ng.0001.apse1.cache.amazonaws.com`
 * `FLASK_SECRET` : `serverless`
   * This value will be used for Flask app's SECRET_KEY.
-* `GMAPS_KEY` : `<GMAPS_KEY>`
-  * You already get this key from **instructor**.
 * `UPLOAD_FOLDER` : `/mnt/efs`
-* `LOG_FILE_PATH` : `/opt/python/log`
 
     <img src=./images/lab02-task5-eb-sw-env-var-1.png width=500>
 
-* You can check the `LAB02/CloudAlbum/cloudalbum/config.py` file about above variables.
+* You can check the `LAB02/backend/cloudalbum/config.py` file about above variables.
 
 
 58. Click **Apply** button.
+
 
 59. Click the **Configuration** button in the left navigation menu.
 
@@ -327,7 +316,7 @@ Now, let's deploy our application.
 
 62. Configure **Health check** variables.
 * **HTTP code** : `200`
-* **Path** : `/users/new`
+* **Path** : `/users/ping`
 
      <img src=./images/lab02-task5-eb-alb-health-2.png width=500>
 
@@ -336,8 +325,73 @@ Now, let's deploy our application.
 
 64. Next, click **Apply** button.
 
-65. You can download the application to your laptop as a ZIP file, from the below URL:
- <https://github.com/aws-kr-tnc/moving-to-serverless-workshop-1d/raw/master/resources/cloudalbum_v1.0.zip>
+
+65. Let's examine `.ebextensions/cloudalbum.config` in the backend application root directory.
+```yaml
+packages:
+  yum:
+    amazon-efs-utils : []
+
+files:
+  "/app/cloudalbum/efs_setup.sh":
+    mode: "000755"
+    owner: root
+    group: root
+    content: |
+      #!/bin/bash
+
+      # Commands that will be run on containter_commmands
+      # Here the container variables will be visible as environment variables.
+      . /opt/elasticbeanstalk/support/envvars
+
+      ## EFS mount
+      mkdir -p /mnt/efs
+      
+      mountpoint /mnt/efs
+      
+      if [ $? -eq 0 ] ; then
+        echo "Already mounted"
+      
+      else
+        mount -t efs $EFS_ID:/ /mnt/efs
+      fi
+
+      chown -R wsgi:wsgi /mnt/efs
+      chown -R wsgi:wsgi /app/cloudalbum
+
+container_commands:
+  efs_setup:
+    command: /app/cloudalbum/efs_setup.sh
+  01_wsgipass:
+    command: 'echo "WSGIPassAuthorization On" >> ../wsgi.conf'
+
+option_settings:
+  aws:elasticbeanstalk:application:environment:
+    LANG: ko_KR.UTF-8
+    LC_ALL: ko_KR.UTF-8
+
+  aws:elasticbeanstalk:container:python:
+    WSGIPath: wsgi.py
+
+```
+* You can configure ElasticBeanstalk environment through `.ebextensions`.
+  * Install EFS utility package.
+  * Generate `efs_setup.sh` to mount EFS as a shared storage.
+  * Configure `WSGIPassAuthorization On`.
+    * The WSGIPassAuthorization directive can be used to control whether HTTP authorisation headers are passed through to a WSGI application in the HTTP_AUTHORIZATION variable of the WSGI application environment when the equivalent HTTP request headers are present.
+  * Specifies the WSGI executable script.
+
+
+66. You can use `cloudalbum-v1.0.zip` file to deploy ElasticBeanstalk. Refer to below link.
+ * https://github.com/aws-kr-tnc/moving-to-serverless-renew/raw/master/resources/cloudalbum_v1.0.zip
+
+* However, you can make a zip file using following command.
+  
+```console
+mkidr ~/environment/deploy
+cd ~environment/moving-to-serverless-renew/LAB02/backend/
+zip -r ~/environment/deploy/cloudalbum-v1.0.zip .
+```
 
 66. In the **Dashboard**, click **Upload and Deploy** button.
 
@@ -345,14 +399,85 @@ Now, let's deploy our application.
 
     <img src=./images/lab02-task5-deploy.png width=500>
 
-68. Click **Deploy** button.
+68. Click **Deploy** button. When the deployment completes successfully, you will see the 'Health OK' message in your browser.
 
-69. After deploy operation, visit the our application URL. you can see our application in your browser like below.
+69. You can test the Application by calling the following URL.
+ * `http://<ElasticBeanstalk URL>/users/ping`
 
-    <img src=./images/lab02-task5-cloudalbum.png width=500>
+
+70. Now, let's run following command to build front-end application.
+
+* Before, build we need to modify `.env` file to change backend server end point. We will use ElasticBeastalk URL as a backend server end point.
+
+* open `~environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env` and modify it like below.
+```console
+// AXIOS api request time-out
+VUE_APP_TIMEOUT=15000
+
+//For test/development 
+//VUE_APP_API=http://127.0.0.1:5000
+
+//For deployment 
+VUE_APP_API=http://<Your Elastic Beanstalk URL>
+```
+
+* Replace `<Your Elastic Beanstalk URL>` to your own.
+
+71. Let's build front-end application.
+
+```console
+cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/
+npm run build
+```
+* You can see similar messages below, if you complete the build.
+```console
+...
+...
+...
+ DONE  Build complete. The dist directory is ready to be deployed.
+ INFO  Check out deployment instructions at https://cli.vuejs.org/guide/deployment.html
+```
+
+72. Now, move front-end application to Amazon S3.
+```console
+aws s3 mb s3://frontend-<your-initial>
+```
+
+* You can see the message like below
+```console
+make_bucket: frontend-<your-initial>
+```
+
+* Copy front-end to S3 bucket and enable `Static website hosting`.
+```console
+cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/dist
+aws s3 sync . s3://frontend-<your-initial>/ --acl public-read
+aws s3 website s3://frontend-<your-initial>/ --index-document index.html
+``` 
+
+73. Connect to front-end via your browser. Here is S3 URL rule pattern.
+ * http://<BUCKER NAME>.s3-website-<REGION CODE>.amazonaws.com
+
+ * For example, if your frontend bucket name is 'frontend-1234' and the region you use is Singapore (ap-southeast-1):
+   * http://frontend-1234.s3-website-ap-southeast-1.amazonaws.com
+
+ * If everything are fine, you can see the frontend like below.
+
+ <img src="./images/lab01-08.png" width=500>
 
 
-70. If the deployment is successful, Let's change your mimimum capacity configuration. In the Configuration menu, click **Modify** button of **Capacity** section.
+74. Test the following features to make sure your application is working well.
+
+<img src=./images/lab01-02.png width=800>
+
+* Sign in / up
+* Upload Sample Photos
+* Check the Photo Map
+* Delete photo
+* Sign out
+
+
+75. If it works fine, let's change your mimimum capacity configuration. In the Configuration menu, click **Modify** button of **Capacity** section.
 
 
 71. In the **Modify capacity** page, change the atttribute of AutoScalingGroup ***Min*** value from 1 to 2. (or what you want..)
@@ -371,16 +496,6 @@ Now, let's deploy our application.
 ## TASK 6. Perform application test
 
 74. Perform application test.
-<img src=./images/lab01-02.png width=800>
-
-* Sign in / up
-* Upload Sample Photos
-* Sample images download here
-  *  https://d2r3btx883i63b.cloudfront.net/temp/sample-photo.zip
-* Look your Album
-* Change Profile
-* Find photos with Search tool
-* Check the Photo Map
 
 
 ## Options : Investigate the application changes
