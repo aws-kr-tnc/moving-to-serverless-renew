@@ -80,7 +80,7 @@ def create_app(script_info=None):
 
     @jwt.token_in_blacklist_loader
     def check_if_token_in_blacklist_set(decrypted_token):
-        from project.util.jwt_helper import is_blacklisted_token_set
+        from cloudalbum.util.jwt_helper import is_blacklisted_token_set
         try:
             return is_blacklisted_token_set(decrypted_token)
         except Exception as e:
