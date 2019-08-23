@@ -25,13 +25,10 @@ const getAllPhotoList = async (store) => {
     const resp = await service.Photo.photoList();
     if (resp.data.ok !== true) return;
     console.log('Photo list retrieved successfully ✨');
-
     const photoList = await Promise.all(resp.data.photos.map(async (obj) => {
       const thumbnailBlobUrl = await buildImgSrc(obj.id, 'thumbnail');
-      // const originalBlobUrl = await buildImgSrc(obj.id, 'original');
       return { ...obj, thumbSrc: thumbnailBlobUrl };
     }));
-
     setAllPhotoList(store, photoList);
     setIsLoading(store, false);
   } catch (error) {
