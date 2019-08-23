@@ -10,8 +10,7 @@ from flask_restplus import Api, Resource, fields
 from jsonschema import ValidationError
 
 from cloudalbum.schemas import validate_user
-from cloudalbum.database.model_ddb import User
-from cloudalbum.solution import solution_signup_cognito, solution_put_new_user
+from cloudalbum.solution import solution_signup_cognito
 from cloudalbum.util.response import m_response
 from cloudalbum.util.jwt_helper import add_token_to_set, get_token_from_header, get_cognito_user, cog_jwt_required
 from cloudalbum.util.config import conf

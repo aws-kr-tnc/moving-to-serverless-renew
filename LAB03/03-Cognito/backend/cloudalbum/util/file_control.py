@@ -164,8 +164,9 @@ def save_s3(upload_file_stream, filename, email):
         raise e
 
 
-def create_photo_info(filename, filesize, form):
-    new_photo = Photo(id=filename,
+def create_photo_info(user_id, filename, filesize, form):
+    new_photo = Photo(user_id=user_id,
+                      id=filename,
                       filename=filename,
                       filename_orig=form['file'].filename,
                       filesize=filesize,

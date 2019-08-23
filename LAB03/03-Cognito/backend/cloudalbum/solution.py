@@ -4,52 +4,19 @@ import boto3
 from flask import current_app as app
 from werkzeug.security import generate_password_hash
 
-from cloudalbum.database.model_ddb import User
+from cloudalbum.database.model_ddb import Photo
 from cloudalbum.util.config import conf
 
 
-def solution_put_new_user(new_user_id, user_data):
-    user = User(new_user_id)
-    user.email = user_data['email']
-    user.password = generate_password_hash(user_data['password'])
-    user.username = user_data['username']
-    user.photos = []
-    user.save()
 
 
-
-def solution_get_user_data_with_idx(signin_data):
-    db_user = None
-    for item in User.email_index.query(signin_data['email']):
-        if item is not None:
-            db_user = item
-    return db_user
 
 def solution_put_photo_info_ddb(user_id, new_photo):
     try:
-        User(id=user_id).update(
-            actions=[
-                User.photos.set((User.photos | []).append([new_photo]))
-            ]
-        )
+        new_photo.save()
         app.logger.debug('success:create photo into ddb: user_id:{}, photo_id:{}'.format(user_id, new_photo.id))
     except Exception as e:
 
-        app.logger.error(e)
-        raise e
-
-
-def solution_delete_photo_from_ddb(user, photos, photo):
-    try:
-        photos.remove(photo)
-        User(id=user['user_id']).update(
-            actions=[
-                User.photos.set(photos)
-            ]
-        )
-        app.logger.debug("success:delete photo from ddb: userid:{}, photo_id:{}".format(user['user_id'], photo.id))
-    except Exception as e:
-        app.logger.error("ERROR:delete photo from ddb failed: userid:{}, photo_id:{}".format(user['user_id'], photo.id))
         app.logger.error(e)
         raise e
 
