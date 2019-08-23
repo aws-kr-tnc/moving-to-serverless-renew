@@ -1,10 +1,15 @@
 from chalice import Response
 from chalice import Chalice
 from chalicelib import util
-import logging
-import boto3
+from chalicelib.config import conf
+from chalicelib.cognito import signup_cognito
+import boto3, logging, hmac, base64, hashlib, uuid
+
 
 app = Chalice(app_name='cloudalbum')
+
+app.debug = True
+app.log.setLevel(logging.DEBUG)
 
 
 @app.route('/users/signin', methods=['POST'])
@@ -14,7 +19,16 @@ def signin():
 
 @app.route('/users/signup', methods=['POST'], content_types=['application/json'])
 def signup():
-    app.log.debug(app.current_request.json_body)
+    user_data = app.current_request.json_body
+    msg = '{0}{1}'.format(user_data['email'], conf['COGNITO_CLIENT_ID'])
+    dig = hmac.new(conf['COGNITO_CLIENT_SECRET'].encode('utf-8'),
+                   msg=msg.encode('utf-8'),
+                   digestmod=hashlib.sha256).digest()
+    try:
+        signup_cognito(app, user_data, dig)
+    except Exception as e:
+        app.log.error(e)
+
     return {'name': 'hong gil dong'}
 
 # The view function above will return {"hello": "world"}

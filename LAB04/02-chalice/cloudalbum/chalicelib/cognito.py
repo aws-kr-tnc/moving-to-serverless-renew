@@ -1,14 +1,49 @@
-# def cognito_signup(signup_user):
-#     user = signup_user;
-#     msg = '{0}{1}'.format(user['email'], conf['COGNITO_CLIENT_ID'])
-#
-#     dig = hmac.new(conf['COGNITO_CLIENT_SECRET'].encode('utf-8'),
-#                    msg=msg.encode('utf-8'),
-#                    digestmod=hashlib.sha256).digest()
-#     try:
-#         # TODO 7: Implement following solution code to sign up user into cognito user pool
-#         return solution_signup_cognito(user, dig)
-#
-#     except Exception as e:
-#         app.logger.error("ERROR: failed to enroll user into Cognito user pool")
-#         app.logger.error(e)
+import boto3
+import base64
+from chalicelib.config import conf
+
+
+def signup_confirm(id):
+    client = boto3.client('cognito-idp')
+    client.admin_confirm_sign_up(
+        UserPoolId=conf['COGNITO_POOL_ID'],
+        Username=id
+    )
+
+
+def signup_cognito(app, user, dig):
+    client = boto3.client('cognito-idp')
+    try:
+        response = client.sign_up(
+            ClientId=conf['COGNITO_CLIENT_ID'],
+            SecretHash=base64.b64encode(dig).decode(),
+            Username=user['email'],
+            Password=user['password'],
+            UserAttributes=[
+                {
+                    'Name': 'name',
+                    'Value': user['username']
+                }
+            ],
+            ValidationData=[
+                {
+                    'Name': 'name',
+                    'Value': user['username']
+                }
+            ]
+
+        )
+
+        email = response['CodeDeliveryDetails']['Destination']
+        id = response['UserSub']
+
+        # automatically confirm user for lab
+        signup_confirm(id)
+        return {'email': email, 'id': id}
+    except Exception as e:
+        app.log.error('ERROR:failed to enroll user into cognito')
+        app.log.error(e)
+
+
+
+
