@@ -1,5 +1,6 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
+from pynamodb.exceptions import GetError
 
 from cloudalbum.util.response import m_response
 from werkzeug.datastructures import FileStorage
@@ -9,7 +10,7 @@ from werkzeug.utils import secure_filename
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from cloudalbum.util.file_control import delete_s3, save_s3, create_photo_info, presigned_url
-from cloudalbum.database.model_ddb import User
+from cloudalbum.database.model_ddb import User, Photo, photo_deserialize
 from cloudalbum.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
 import uuid
 
@@ -101,9 +102,7 @@ class FileUpload(Resource):
             filesize = save_s3(form['file'], filename, current_user['email'])
             user_id = current_user['user_id']
 
-            new_photo = create_photo_info(filename, filesize, form)
-
-            solution_put_photo_info_ddb(user_id, new_photo)
+            solution_put_photo_info_ddb(user_id, filename, form, filesize)
 
             return make_response({'ok': True, "photo_id": filename}, 200)
         except Exception as e:
@@ -126,25 +125,29 @@ class List(Resource):
     @jwt_required
     def get(self):
         """Get all photos as list"""
+
+        data = {
+            'photos': []
+        }
         try:
             user = get_jwt_identity()
-            photos = User.get(user['user_id']).photos
-
-            data = {
-                'photos': []
-            }
+            photos = Photo.query(user['user_id'])
 
             for photo in photos:
                 url = presigned_url(photo.id, user['email'], False)
                 data['photos'].append(url)
 
-            app.logger.debug("success:photos_list:%s" % data)
+            app.logger.debug("success:photos_list:{}".format(data))
+            return m_response(True, data, 200)
+        except GetError as e:
+            app.logger.debug("success:user have no photos:{}".format(data))
+            app.logger.debug(e)
             return m_response(True, data, 200)
 
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
             app.logger.error(e)
-            return m_response(False, None, 500)
+            return m_response(False, data, 500)
 
 
 @api.route('/<photo_id>')
@@ -162,23 +165,15 @@ class OnePhoto(Resource):
         """one photo delete"""
         try:
             user = get_jwt_identity()
-            photos = User.get(user['user_id']).photos
+            filename = solution_delete_photo_from_ddb(user, photo_id)
 
-            for photo in photos:
-                if photo.id != photo_id:
-                    continue
+            file_deleted = delete_s3(filename, user['email'])
 
-                filename = photo.filename
-                file_deleted = delete_s3(filename, user['email'])
-
-
-                solution_delete_photo_from_ddb(user, photos, photo)
-
-                if file_deleted:
-                    app.logger.debug("success:photo deleted: user_id:{}, photo_id:{}".format(user['user_id'], photo_id))
-                    return m_response(True, {'photo_id': photo_id}, 200)
-                else:
-                    raise FileNotFoundError
+            if file_deleted:
+                app.logger.debug("success:photo deleted: user_id:{}, photo_id:{}".format(user['user_id'], photo_id))
+                return m_response(True, {'photo_id': photo_id}, 200)
+            else:
+                raise FileNotFoundError
 
         except FileNotFoundError as e:
             app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))

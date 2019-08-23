@@ -3,7 +3,6 @@ from flask import current_app as app
 from PIL import Image
 from pathlib import Path
 
-
 from cloudalbum.solution import solution_put_object_to_s3, solution_generate_s3_presigned_url
 from cloudalbum.util.config import conf
 from cloudalbum.database.model_ddb import Photo, photo_deserialize
