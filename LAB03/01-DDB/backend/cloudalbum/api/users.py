@@ -89,10 +89,10 @@ class Users(Resource):
     def get(self, user_id):
         """Get a single user details"""
         try:
-            for user in User.query(hash_key=user_id):
-                if user is None:
-                    app.logger.error('ERROR:user_id not exist:{}'.format(user_id))
-                    return m_response(False, {'user_id': user_id}, 404)
+            user = User.get(hash_key=user_id)
+            if user is None:
+                app.logger.error('ERROR:user_id not exist:{}'.format(user_id))
+                return m_response(False, {'user_id': user_id}, 404)
 
             data = {
                 'user': {

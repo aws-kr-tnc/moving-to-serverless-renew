@@ -11,8 +11,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from pathlib import Path
 from cloudalbum.util.config import conf
 from cloudalbum.util.file_control import email_normalize, delete, save, create_photo_info
-from cloudalbum.database.model_ddb import User, photo_deserialize
+from cloudalbum.database.model_ddb import User, photo_deserialize, Photo
 from cloudalbum.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
+from pynamodb.exceptions import GetError
 import os, uuid
 
 authorizations = {
@@ -102,9 +103,8 @@ class FileUpload(Resource):
             filesize = save(form['file'], filename, current_user['email'])
             user_id = current_user['user_id']
 
-            new_photo = create_photo_info(filename, filesize, form)
-            # TODO 3: Implement following solution code to update photo information into User table
-            solution_put_photo_info_ddb(user_id, new_photo)
+            # TODO 3: Implement following solution code to put item into Photo table of DynamoDB
+            solution_put_photo_info_ddb(user_id, filename, form, filesize)
 
             return make_response({'ok': True, "photo_id": filename}, 200)
         except Exception as e:
@@ -127,24 +127,28 @@ class List(Resource):
     @jwt_required
     def get(self):
         """Get all photos as list"""
+
+        data = {
+            'photos': []
+        }
         try:
             user = get_jwt_identity()
-            photos = User.get(user['user_id']).photos
-
-            data = {
-                'photos': []
-            }
+            photos = Photo.query(user['user_id'])
 
             for photo in photos:
                 data['photos'].append(photo_deserialize(photo))
 
-            app.logger.debug("success:photos_list:%s" % data)
+            app.logger.debug("success:photos_list:{}".format(data))
+            return m_response(True, data, 200)
+        except GetError as e:
+            app.logger.debug("success:user have no photos:{}".format(data))
+            app.logger.debug(e)
             return m_response(True, data, 200)
 
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
             app.logger.error(e)
-            return m_response(False, None, 500)
+            return m_response(False, data,  500)
 
 
 @api.route('/<photo_id>')
@@ -162,23 +166,16 @@ class OnePhoto(Resource):
         """one photo delete"""
         try:
             user = get_jwt_identity()
-            photos = User.get(user['user_id']).photos
 
-            for photo in photos:
-                if photo.id != photo_id:
-                    continue
+            # TODO 4: Implement following solution code to delete a photo from Photos which is a list
+            filename = solution_delete_photo_from_ddb(user, photo_id)
+            file_deleted = delete(filename, user['email'])
 
-                filename = photo.filename
-                file_deleted = delete(filename, user['email'])
-
-                # TODO 4: Implement following solution code to delete a photo from Photos which is a list
-                solution_delete_photo_from_ddb(user, photos, photo)
-
-                if file_deleted:
-                    app.logger.debug("success:photo deleted: photo_id:{}".format(photo_id))
-                    return m_response(True, {'photo_id': photo_id}, 200)
-                else:
-                    raise FileNotFoundError
+            if file_deleted:
+                app.logger.debug("success:photo deleted: photo_id:{}".format(photo_id))
+                return m_response(True, {'photo_id': photo_id}, 200)
+            else:
+                raise FileNotFoundError
 
         except FileNotFoundError as e:
             app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
@@ -211,14 +208,14 @@ class OnePhoto(Resource):
             path = os.path.join(conf['UPLOAD_DIR'], email_normalize(email))
             full_path = Path(path)
 
-            photos = User.get(user['user_id']).photos
+            photo = Photo.get(user['user_id'], range_key=photo_id)
 
-            for photo in photos:
-                if photo.id == photo_id:
-                    if mode == "thumbnail":
-                        full_path = full_path / "thumbnails" / photo.filename
-                    else:
-                        full_path = full_path / photo.filename
+
+            if photo.id == photo_id:
+                if mode == "thumbnail":
+                    full_path = full_path / "thumbnails" / photo.filename
+                else:
+                    full_path = full_path / photo.filename
 
             with full_path.open('rb') as f:
                 contents = f.read()
@@ -230,5 +227,5 @@ class OnePhoto(Resource):
         except Exception as e:
             app.logger.error('ERROR:get photo failed:photo_id:{}'.format(photo_id))
             app.logger.error(e)
-            return 'http://placehold.it/400x300'
+            return m_response(False, {'msg':'not exist photo_id'}, 404)
 
