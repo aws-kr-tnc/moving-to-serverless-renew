@@ -114,7 +114,7 @@ def save(upload_file, filename, email):
     :param upload_file: file object
     :param filename: secure filename for upload
     :param email: user email address
-    :param app: Flask.application
+    :param application: Flask.application
     :return: file size (byte)
     """
     path = Path(conf['UPLOAD_DIR']) / email_normalize(email)

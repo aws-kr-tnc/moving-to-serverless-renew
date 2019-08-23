@@ -5,12 +5,14 @@ import json
 import datetime
 
 from bson.objectid import ObjectId
-from flask import Flask, jsonify, make_response  # new
+from flask import Flask, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
+
+from cloudalbum.util.jwt_helper import is_blacklisted_token_set
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -25,7 +27,7 @@ class JSONEncoder(json.JSONEncoder):
             return str(o)
         return json.JSONEncoder.default(self, o)
 
-# instantiate the db
+# instantiate the database
 db = SQLAlchemy()
 login = LoginManager()
 jwt = JWTManager()
@@ -33,7 +35,7 @@ jwt = JWTManager()
 
 def create_app(script_info=None):
 
-    # instantiate the app
+    # instantiate the application
     app = Flask(__name__)
 
     # initiate some config value for JWT Authentication
@@ -60,7 +62,7 @@ def create_app(script_info=None):
     app.logger.setLevel(logging.DEBUG)
 
     # set up extensions
-    # db.init_app(app)
+    # database.init_app(application)
 
     # register blueprints
     from cloudalbum.api.users import users_blueprint
@@ -69,10 +71,8 @@ def create_app(script_info=None):
     from cloudalbum.api.photos import photos_blueprint
     app.register_blueprint(photos_blueprint, url_prefix='/photos')
 
-
     @jwt.token_in_blacklist_loader
     def check_if_token_in_blacklist_DB(decrypted_token):
-        from cloudalbum.util.jwt_helper import is_blacklisted_token_set
         try:
             return is_blacklisted_token_set(decrypted_token)
         except Exception as e:
@@ -82,5 +82,5 @@ def create_app(script_info=None):
     # shell context for flask cli
     @app.shell_context_processor
     def ctx():
-        return {'app': app}
+        return {'application': app}
     return app

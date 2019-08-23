@@ -1,11 +1,20 @@
+"""
+    cloudalbum/__init__.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Environment configuration how to run application.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+
 import os
 import logging
 import sys
 import json
 import datetime
-
 from bson.objectid import ObjectId
-from flask import Flask, jsonify, make_response  # new
+from flask import Flask, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_login import LoginManager
@@ -24,7 +33,7 @@ class JSONEncoder(json.JSONEncoder):
             return str(o)
         return json.JSONEncoder.default(self, o)
 
-# instantiate the db
+# instantiate the database
 db = SQLAlchemy()
 login = LoginManager()
 jwt = JWTManager()
@@ -32,7 +41,7 @@ jwt = JWTManager()
 
 def create_app(script_info=None):
 
-    # instantiate the app
+    # instantiate the application
     app = Flask(__name__)
 
     # initiate some config value for JWT Authentication
@@ -60,13 +69,11 @@ def create_app(script_info=None):
     from cloudalbum.api.photos import photos_blueprint
     app.register_blueprint(photos_blueprint, url_prefix='/photos')
 
-    from cloudalbum.api.map import map_blueprint
-    app.register_blueprint(map_blueprint)
-
     # Setup models for DB operations
     with app.app_context():
         try:
             db.create_all()
+            app.logger.info('Create database tables')
         except Exception as e:
             app.logger.error(e)
 
@@ -84,6 +91,6 @@ def create_app(script_info=None):
     # shell context for flask cli
     @app.shell_context_processor
     def ctx():
-        return {'app': app, 'db': db}
+        return {'application': app, 'database': db}
 
     return app

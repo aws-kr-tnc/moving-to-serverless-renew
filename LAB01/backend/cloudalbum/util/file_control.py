@@ -1,13 +1,19 @@
+"""
+    cloudalbum/util/file_control.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Handling image files which uploaded by user.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+import os
 from flask import current_app as app
 from PIL import Image
 from pathlib import Path
-
-from cloudalbum.api.models import Photo
+from datetime import datetime
+from cloudalbum.database.models import Photo
 from cloudalbum import db
-
-from datetime import datetime
-import os, uuid
-from datetime import datetime
 
 
 def email_normalize(email):
@@ -78,7 +84,7 @@ def save(upload_file, filename, email):
     :param upload_file: file object
     :param filename: secure filename for upload
     :param email: user email address
-    :param app: Flask.application
+    :param application: Flask.application
     :return: file size (byte)
     """
     path = Path(app.config['UPLOAD_FOLDER']) / email_normalize(email)

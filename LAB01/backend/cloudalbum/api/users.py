@@ -1,18 +1,15 @@
-
 from flask import Blueprint, request
 from flask import current_app as app
+from flask import jsonify, make_response
+from flask_restplus import Api, Resource, fields
+from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt)
 from jsonschema import ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
-from cloudalbum import db, jwt
-from cloudalbum.api.models import User
-from flask_restplus import Api, Resource, fields
-
+from cloudalbum import db
+from cloudalbum.database.models import User
 from cloudalbum.schemas import validate_user
-from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt)
-from flask import jsonify, make_response
-
 from cloudalbum.util.response import m_response
-from cloudalbum.util.jwt_helper import add_token_to_database
+
 
 users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint, doc='/swagger/', title='Users',

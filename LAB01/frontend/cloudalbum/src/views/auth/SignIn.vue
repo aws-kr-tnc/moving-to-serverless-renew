@@ -34,6 +34,7 @@
                   prepend-icon="mdi-account"
                   type="text"
                   :rules="requiredRule"
+                  @keyup.enter="userSignIn()"
                 ></v-text-field>
                 <v-text-field
                   id="password"
@@ -43,6 +44,7 @@
                   prepend-icon="mdi-lock"
                   type="password"
                   :rules="requiredRule"
+                  @keyup.enter="userSignIn()"
                 ></v-text-field>
               </v-form>
             </v-card-text>
@@ -58,7 +60,7 @@
             <v-card-actions>
               <v-spacer></v-spacer>
               Not yet registered?
-              <v-btn text small href="/users/signup"
+              <v-btn text small @click="moveToSignup"
                      color="primary">
                 <v-icon>mdi-account-plus</v-icon>Sign up
               </v-btn>
@@ -121,6 +123,9 @@ export default {
         type: 'warning',
       });
       return false;
+    },
+    moveToSignup() {
+      this.$router.push({ name: 'signup' });
     },
   },
 };

@@ -1,12 +1,16 @@
+"""
+    cloudalbum/util/blacklist_helper.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Handling JWT token for signed out user.
 
-from datetime import datetime
-
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 from sqlalchemy.orm.exc import NoResultFound
-from flask_jwt_extended import decode_token
-
-# from exceptions import TokenNotFound
-from cloudalbum.api.models import BlacklistToken
+from cloudalbum.database.models import BlacklistToken
 from cloudalbum import db
+
 
 def add_token_to_database(decoded_token):
     """
@@ -21,6 +25,7 @@ def add_token_to_database(decoded_token):
     )
     db.session.add(db_token)
     db.session.commit()
+
 
 def is_blacklisted_token_db(decoded_token):
     """
@@ -39,6 +44,8 @@ def is_blacklisted_token_db(decoded_token):
 
 
 blacklist_set = set()
+
+
 def add_token_to_set(decoded_token):
     """
     Adds a new token to the set. It is not revoked when it is added.
@@ -47,6 +54,7 @@ def add_token_to_set(decoded_token):
 
     jti = decoded_token['jti']
     blacklist_set.add(jti)
+
 
 def is_blacklisted_token_set(decoded_token):
     """
@@ -61,5 +69,3 @@ def is_blacklisted_token_set(decoded_token):
             return True
     except NoResultFound:
         return False
-
-

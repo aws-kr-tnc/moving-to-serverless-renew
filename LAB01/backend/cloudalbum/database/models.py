@@ -1,7 +1,16 @@
-from cloudalbum import db
-from sqlalchemy import Float, DateTime, ForeignKey, Integer, String
+"""
+    cloudalbum/database/models.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Application data model defined here.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 from flask_login import UserMixin
+from sqlalchemy import Float, DateTime, ForeignKey, Integer, String
 from datetime import datetime
+from cloudalbum import db
 
 
 class User(UserMixin, db.Model):
@@ -42,7 +51,7 @@ class Photo(db.Model):
     __tablename__ = 'Photo'
 
     id = db.Column(Integer, primary_key=True)
-    user_id = db.Column(String(100), ForeignKey(User.id))
+    user_id = db.Column(Integer, ForeignKey(User.id))
     tags = db.Column(String(400), unique=False)
     desc = db.Column(String(400), unique=False)
     filename_orig = db.Column(String(400), unique=False)

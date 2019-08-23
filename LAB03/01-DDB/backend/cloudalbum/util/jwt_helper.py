@@ -10,6 +10,7 @@ def add_token_to_set(decoded_token):
     jti = decoded_token['jti']
     blacklist_set.add(jti)
 
+
 def is_blacklisted_token_set(decoded_token):
     """
     Checks if the given token is revoked or not. Because we are adding all the

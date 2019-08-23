@@ -19,7 +19,7 @@
           >
             <v-card>
               <v-img
-                @click="showOriginalPhoto(photo.originalSrc)"
+                @click="showOriginalPhoto(photo.id)"
                 ref="photos"
                 :src="photo.thumbSrc"
                 class="white--text"
@@ -60,7 +60,7 @@
                   <template v-slot:activator="{ on }">
                     <v-btn
                       icon v-on="on"
-                      @click="showOriginalPhoto(photo.originalSrc)"
+                      @click="showOriginalPhoto(photo.id)"
                     >
                       <v-icon>mdi-image-area</v-icon>
                     </v-btn>
@@ -89,7 +89,17 @@
               </v-card-actions>
             </v-card>
           </v-flex>
-          <v-flex v-if="photoList.length === 0">
+          <v-flex v-if="isLoading">
+            <div class="text-center">
+              <v-progress-circular
+                :size="70"
+                :width="7"
+                color="purple"
+                indeterminate
+              ></v-progress-circular>
+            </div>
+          </v-flex>
+          <v-flex v-if="isNoData && !isLoading">
             <v-alert
               dismissible
               color="primary"
@@ -116,8 +126,9 @@
 </template>
 
 <script>
-import { mapActions, mapState } from 'vuex';
+import { mapActions, mapState, mapGetters } from 'vuex';
 import MapDialog from '@/components/map/MapDialog';
+import service from '@/service';
 
 export default {
   name: 'PhotoList',
@@ -134,10 +145,14 @@ export default {
   computed: {
     ...mapState('Photo', [
       'photoList',
+      'isLoading',
+    ]),
+    ...mapGetters('Photo', [
+      'isNoData',
     ]),
   },
   methods: {
-    ...mapActions('Photo', ['getAllPhotoList', 'deletePhoto']),
+    ...mapActions('Photo', ['getAllPhotoList', 'deletePhoto', 'buildImgSrc']),
     showMap(latitude, longitude, description, tags) {
       this.mapDialogLat = latitude;
       this.mapDialogLng = longitude;
@@ -183,11 +198,16 @@ export default {
         console.error(error);
       }
     },
-    async showOriginalPhoto(originalSrc) {
+    async showOriginalPhoto(id) {
+
+      const mode = 'original';
+      const res = await service.Photo.getPhotoBlob(id, mode);
+      const originalSrc = URL.createObjectURL(res.data);
+      console.log(`showOriginalPhoto: ${id}`);
+
       this.$swal(
         {
           width: '95%',
-          height: '95%',
           html: `<div>
                    <a href='${originalSrc}' target=_blank>
                      <img src='${originalSrc}' width=90%>

@@ -6,11 +6,12 @@ So, we'll deploy the CloudAlbum application with HA(high availability) architect
 
 ## In this lab cover.. 
 
+> 그림 추가 필요 (s3 frontend)
+
 <img src=./images/lab02-eb-diagram.png width=700>
 
 * Configure [VPC](https://aws.amazon.com/vpc/) for the HA environment. (CloudFormation template will be provided.)
 * Configure [EFS](https://aws.amazon.com/efs/) for the scalable **shared storage**.
-* Configure [Elasticache](https://aws.amazon.com/elasticache/) - Redis for the **session store.**
 * Configure [ElasticBeanstalk](https://aws.amazon.com/elasticbeanstalk/).
   * with [RDS](https://aws.amazon.com/rds/), [ALB](https://aws.amazon.com/elasticloadbalancing/) and [AutoScaling](https://aws.amazon.com/autoscaling/). 
 
@@ -171,7 +172,9 @@ With Elastic Beanstalk, you can quickly deploy and manage applications in the AW
  
 36. Click **Select** button.
 
-37. In the **Create a web server environemnt** section, for **Description** type `Moving to AWS Serverless Workshop`
+37. Type domain nmae in **Domain** field. For example `myapp-<initial>` then click **Check Availability**.
+
+37. In the **Create a web server environemnt** section, for **Description** type `HA-CloudAlbum`
 
 38. In the **Base configuration** section, configure the following:
 
@@ -200,8 +203,8 @@ With Elastic Beanstalk, you can quickly deploy and manage applications in the AW
 
 42. In the **Database settings** section, configure following parameters.
 
- * **Username** : `serverless`
- * **Password** : `workshop`
+ * **Username** : `movingto`
+ * **Password** : `serverless`
  * **Retention** : `Delete`
  * **Availability** : `High (Multi-AZ)`
 
@@ -270,7 +273,7 @@ If the previous TASK was successfully completed, you will see the following scre
 Now, let's deploy our application.
 
 
-54. Click the **Configuration** button in the left navigation menu.
+54. Setup ElasticBeanstalk configuration to deploy back-end application.  Click the **Configuration** button in the left navigation menu.
 
     <img src=./images/lab02-task5-eb-configuration.png width=300>
 
@@ -287,28 +290,23 @@ Now, let's deploy our application.
 * ***Name*** : ***Value***
 * `APP_HOST` : `0.0.0.0`
 * `APP_PORT` : `5000`
-* `DB_URL` : `mysql+pymysql://serverless:workshop@<YOUR DATABASE ENDPOINT>/ebdb?charset=utf8`
+* `DATABASE_URL` : `mysql+pymysql://movingto:serverless@<YOUR DATABASE ENDPOINT>/ebdb?charset=utf8`
   * **NOTE**: Replace ***`<YOUR DATABASE ENDPOINT>`*** to **your own EndPoint** value which copied previous step. 
-  * For example : `mysql+pymysql://serverless:workshop@`aa1is6q2iidf84x.cjukz33spdko.ap-southeast-1.rds.amazonaws.com:3306`/ebdb?charset=utf8`
+  * For example : `mysql+pymysql://movingto:serverlessp@`aa1is6q2iidf84x.cjukz33spdko.ap-southeast-1.rds.amazonaws.com:3306`/ebdb?charset=utf8`
 * `EFS_ID` : `<YOUR FILE SYSTEM ID>`
   * We already copied it to notepad in **TASK 2**.
   * For example : fs-5d3e921c
-* `ELCACHE_EP` : `<YOUR ELASTICACHE_ENDPOINT>`
-  * We already copied it to notepad in **TASK 3**.
-  * For example (Exclude the port number): `session-store.ttvhbi.ng.0001.apse1.cache.amazonaws.com`
 * `FLASK_SECRET` : `serverless`
   * This value will be used for Flask app's SECRET_KEY.
-* `GMAPS_KEY` : `<GMAPS_KEY>`
-  * You already get this key from **instructor**.
 * `UPLOAD_FOLDER` : `/mnt/efs`
-* `LOG_FILE_PATH` : `/opt/python/log`
 
     <img src=./images/lab02-task5-eb-sw-env-var-1.png width=500>
 
-* You can check the `LAB02/CloudAlbum/cloudalbum/config.py` file about above variables.
+* You can check the `LAB02/backend/cloudalbum/config.py` file about above variables.
 
 
 58. Click **Apply** button.
+
 
 59. Click the **Configuration** button in the left navigation menu.
 
@@ -320,7 +318,7 @@ Now, let's deploy our application.
 
 62. Configure **Health check** variables.
 * **HTTP code** : `200`
-* **Path** : `/users/new`
+* **Path** : `/users/ping`
 
      <img src=./images/lab02-task5-eb-alb-health-2.png width=500>
 
@@ -329,66 +327,8 @@ Now, let's deploy our application.
 
 64. Next, click **Apply** button.
 
-65. You can download the application to your laptop as a ZIP file, from the below URL:
- <https://github.com/aws-kr-tnc/moving-to-serverless-workshop-1d/raw/master/resources/cloudalbum_v1.0.zip>
 
-66. In the **Dashboard**, click **Upload and Deploy** button.
-
-67. Click the **Browse...** button and choose `cloudalbum_v1.0.zip` file which downloaded previous step. 
-
-    <img src=./images/lab02-task5-deploy.png width=500>
-
-68. Click **Deploy** button.
-
-69. After deploy operation, visit the our application URL. you can see our application in your browser like below.
-
-    <img src=./images/lab02-task5-cloudalbum.png width=500>
-
-
-70. If the deployment is successful, Let's change your mimimum capacity configuration. In the Configuration menu, click **Modify** button of **Capacity** section.
-
-
-71. In the **Modify capacity** page, change the atttribute of AutoScalingGroup ***Min*** value from 1 to 2. (or what you want..)
-
-    <img src=./images/lab02-task5-asg.png width=500>
-
-
-72. Click the **Apply** button. let's wait until the configuration is applied.
- * We have modified our application to use Elasticache as a session store. So CloudAlbum works well in AutoScaling environment. **To confirm this, log in and press Ctrl + R or F5 to confirm that the service instance changes via page refresh.**
-
-    <img src=./images/lab02-task5-reload.png width=500>
-
-73. Test the deployed application and explore the ElasticBeastalk console. Let's go to TASK 6.
-
-
-## TASK 6. Perform application test
-
-74. Perform application test.
-<img src=./images/lab01-02.png width=800>
-
-* Sign in / up
-* Upload Sample Photos
-* Sample images download here
-  *  https://d2r3btx883i63b.cloudfront.net/temp/sample-photo.zip
-* Look your Album
-* Change Profile
-* Find photos with Search tool
-* Check the Photo Map
-
-
-## Options : Investigate the application changes
-As you may have recognized, we have added a couple of things to the previous application for this hands-on lab. Here's what we've added:
-
- * We needed a separate **session-store** for **scale-out** of the application. So, we add a [flask-session](https://github.com/fengsp/flask-session) package. Now, the session data is stored in **Elasticache**'s [Redis](https://redis.io/).
-
- * We added a **.ebextentions/cloudalbum.config** file for the application deployment.
-
- * We added **wsgi.py** file for ElasticBeanstalk python preconfigured environment. This file contains the code to store the session-data to Redis.
-
-Let's look a little closer now.
-
-75. Open the `LAB02/CloudAlbum/.ebextensions/cloudalbum.config` file. Take a look at the cloudalbum.config file. We use this file to configure the application. Install the necessary packages, mount EFS, and specify the required environment variables.
-
+65. Let's examine `.ebextensions/cloudalbum.config` in the backend application root directory.
 ```yaml
 packages:
   yum:
@@ -424,6 +364,8 @@ files:
 container_commands:
   efs_setup:
     command: /app/cloudalbum/efs_setup.sh
+  01_wsgipass:
+    command: 'echo "WSGIPassAuthorization On" >> ../wsgi.conf'
 
 option_settings:
   aws:elasticbeanstalk:application:environment:
@@ -434,58 +376,142 @@ option_settings:
     WSGIPath: wsgi.py
 
 ```
+* You can configure ElasticBeanstalk environment through `.ebextensions`.
+  * Install EFS utility package.
+  * Generate `efs_setup.sh` to mount EFS as a shared storage.
+  * Configure `WSGIPassAuthorization On`.
+    * The WSGIPassAuthorization directive can be used to control whether HTTP authorisation headers are passed through to a WSGI application in the HTTP_AUTHORIZATION variable of the WSGI application environment when the equivalent HTTP request headers are present.
+  * Specifies the WSGI executable script.
 
 
-76. We've changed the application source code to ensure that the CloudAlbum application has **High Availability** in the scale-out environment. For this we introduced a **session-store** and decided to use **Elasticache**'s Redis as the session-store. To do this, we added some codes at **wsgi.py** file.
+66. You can use `cloudalbum-v1.0.zip` file to deploy ElasticBeanstalk. Refer to below link.
+ * https://github.com/aws-kr-tnc/moving-to-serverless-renew/raw/master/resources/cloudalbum_v1.0.zip
 
-* **wsgi.py** is used to invoke a [WSGI](https://www.python.org/dev/peps/pep-3333/) application in an ElasticBeanstalk python configured environment. 
-
-* Review following code.
-
-
-```python
-
-from flask_session import Session
-
+* However, you can make a zip file using following command.
+  
+```console
+mkidr ~/environment/deploy
+cd ~environment/moving-to-serverless-renew/LAB02/backend/
+zip -r ~/environment/deploy/cloudalbum-v1.0.zip .
 ```
 
-* [Flask_Session](https://github.com/fengsp/flask-session) package is imported for using of Redis as an session-store.
+66. In the **Dashboard**, click **Upload and Deploy** button.
+
+67. Click the **Browse...** button and choose `cloudalbum_v1.0.zip` file which downloaded previous step. 
+
+    <img src=./images/lab02-task5-deploy.png width=500>
+
+68. Click **Deploy** button. When the deployment completes successfully, you will see the 'Health OK' message in your browser.
+
+69. You can test the Application by calling the following URL.
+ * `http://<ElasticBeanstalk URL>/users/ping`
 
 
-```python
+70. Now, let's run following command to build front-end application.
 
-# Flask Session for Redis
-application.config['SESSION_TYPE'] = 'redis'
-application.config['SESSION_REDIS'] = StrictRedis(host=conf['ELCACHE_EP'], port=6379)
-Session(application)
+* Before, build we need to modify `.env` file to change backend server end point. We will use ElasticBeastalk URL as a backend server end point.
 
+* open `~environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env` and modify it like below.
+```console
+// AXIOS api request time-out
+VUE_APP_TIMEOUT=15000
+
+//For test/development 
+//VUE_APP_API=http://127.0.0.1:5000
+
+//For deployment 
+VUE_APP_API=http://<Your Elastic Beanstalk URL>
 ```
-* Variables set-up to use Elasticache(Redis) as an session-store. 
+
+* Replace `<Your Elastic Beanstalk URL>` to your own.
+
+71. Let's build front-end application.
+
+```console
+cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/
+npm run build
+```
+* You can see similar messages below, if you complete the build.
+```console
+...
+...
+...
+ DONE  Build complete. The dist directory is ready to be deployed.
+ INFO  Check out deployment instructions at https://cli.vuejs.org/guide/deployment.html
+```
+
+72. Now, move front-end application to Amazon S3.
+```console
+aws s3 mb s3://frontend-<your-initial>
+```
+
+* You can see the message like below
+```console
+make_bucket: frontend-<your-initial>
+```
+
+* Copy front-end to S3 bucket and enable `Static website hosting`.
+```console
+cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/dist
+aws s3 sync . s3://frontend-<your-initial>/ --acl public-read
+aws s3 website s3://frontend-<your-initial>/ --index-document index.html
+``` 
+
+73. Connect to front-end via your browser. Here is S3 URL rule pattern.
+ * http://<BUCKER NAME>.s3-website-<REGION CODE>.amazonaws.com
+
+ * For example, if your frontend bucket name is 'frontend-1234' and the region you use is Singapore (ap-southeast-1):
+   * http://frontend-1234.s3-website-ap-southeast-1.amazonaws.com
+
+ * If everything are fine, you can see the frontend like below.
+
+ <img src="./images/lab01-08.png" width=500>
 
 
+74. Test the following features to make sure your application is working well.
 
+<img src=./images/lab01-02.png width=800>
+
+* Sign in / up
+* Upload Sample Photos
+* Check the Photo Map
+* Delete photo
+* Sign out
+
+
+75. If it works fine, let's change your mimimum capacity configuration. In the Configuration menu, click **Modify** button of **Capacity** section.
+
+
+76. In the **Modify capacity** page, change the atttribute of AutoScalingGroup ***Min*** value from 1 to 2. (or what you want..)
+
+    <img src=./images/lab02-task5-asg.png width=500>
+
+
+77. Click the **Apply** button. let's wait until the configuration is applied.
+ * We have modified our application to use Elasticache as a session store. So CloudAlbum works well in AutoScaling environment. **To confirm this, log in and press Ctrl + R or F5 to confirm that the service instance changes via page refresh.**
+
+> 그림 교채 필요
+
+<img src=./images/lab02-task5-reload.png width=500>
+
+78. Test the deployed application and explore the ElasticBeastalk console. 
 
 
 ## TASK 7. Remove your AWS resources
 **CAUTION**: If you have completed this hands-on lab so far, **please delete the AWS resources** which used in this lab. You may incur an unwanted fee.
 
-77. Remove your EB environment (RDS, ALB, ASG included). Click the **Actions** button in your ElasticBeanstalk application dashboard and then choose **Terminate Environment**. Confirm that resources created by ElasticBeanstalk are deleted.
+79. Remove your EB environment (RDS, ALB, ASG included). Click the **Actions** button in your ElasticBeanstalk application dashboard and then choose **Terminate Environment**. Confirm that resources created by ElasticBeanstalk are deleted.
 
     <img src=./images/lab02-task7-eb-delete.png width=600 >
 
 
-78. Remove your EFS. Choose your file-system(**shared-storage**) and click the **Actions** button then choose **Delete file system**. Confirm that the EFS resource has been deleted. 
+80. Remove your EFS. Choose your file-system(**shared-storage**) and click the **Actions** button then choose **Delete file system**. Confirm that the EFS resource has been deleted. 
 
     <img src=./images/lab02-task7-efs-delete.png width=500>
 
-79. Remove your Elasticache cluster. Choose your Redis cluster(**session-store**) and click the **Delete** button. Confirm **Create dinal backup?** : **NO** , then click **Delete** button. Confirm that the Elasticache resource has been deleted. 
-   
-    <img src=./images/lab02-task7-ec-delete.png width=500>
-
-* In the same way, **delete the subnet group** that was created together from the **Subnet Groups** menu.
 
 
-80. Remove your VPC from CloudFormation console. Choose your CloudFormation stack(**workshop-vpc**) and click the **Actions** button then choose **Delete Stack**. Confirm that the Stack resources has been deleted.
+81. Remove your VPC from CloudFormation console. Choose your CloudFormation stack(**workshop-vpc**) and click the **Actions** button then choose **Delete Stack**. Confirm that the Stack resources has been deleted.
 
     <img src=./images/lab02-task7-cf-delete.png width=500>
 

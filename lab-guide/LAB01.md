@@ -160,7 +160,15 @@ npm install
 ```
 * It contains below default properties.
 ```console
+//AXIOS api request time-out
+VUE_APP_TIMEOUT=15000
+
+//For test/development 
 VUE_APP_API=http://127.0.0.1:5000
+
+//For deployment 
+//VUE_APP_API=http://<DEPLOYED_SERVER>
+
 ```
 
 19. Let's take a look around backend application. (~environment/moving-to-serverless-renew/LAB01/backend)
@@ -206,13 +214,13 @@ class BaseConfig:
 
 class DevelopmentConfig(BaseConfig):
     """Development configuration"""
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:////tmp/sqlite_dev.db')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', database)
 
 
 class TestingConfig(BaseConfig):
     """Testing configuration"""
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_TEST_URL', 'sqlite:////tmp/sqlite_test.db')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_TEST_URL', database)
 
 
 class ProductionConfig(BaseConfig):

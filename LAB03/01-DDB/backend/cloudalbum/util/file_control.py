@@ -10,7 +10,6 @@ import os
 from datetime import datetime
 
 
-
 def email_normalize(email):
     return email.replace('@', '_at_').replace('.', '_dot_')
 
@@ -79,7 +78,7 @@ def save(upload_file, filename, email):
     :param upload_file: file object
     :param filename: secure filename for upload
     :param email: user email address
-    :param app: Flask.application
+    :param application: Flask.application
     :return: file size (byte)
     """
     path = Path(conf['UPLOAD_DIR']) / email_normalize(email)

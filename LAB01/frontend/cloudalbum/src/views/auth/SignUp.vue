@@ -23,7 +23,10 @@
               <v-spacer></v-spacer>
             </v-toolbar>
             <v-card-text>
-              <v-form>
+              <v-form
+                ref="form"
+                lazy-validation
+              >
                 <v-text-field
                   v-model="inputUsername"
                   i="username"
@@ -31,8 +34,9 @@
                   name="username"
                   prepend-icon="mdi-account"
                   type="text"
+                  :rules="requiredRule"
+                  @keyup.enter="userSignUp()"
                 ></v-text-field>
-
                 <v-text-field
                   v-model="inputEmail"
                   id="email"
@@ -40,8 +44,9 @@
                   name="email"
                   prepend-icon="mdi-email"
                   type="text"
+                  :rules="requiredRule"
+                  @keyup.enter="userSignUp()"
                 ></v-text-field>
-
                 <v-text-field
                   v-model="inputPassword"
                   id="password"
@@ -49,17 +54,19 @@
                   name="password"
                   prepend-icon="mdi-lock"
                   type="password"
+                  :rules="requiredRule"
+                  @keyup.enter="userSignUp()"
                 ></v-text-field>
-
                 <v-text-field
+                  v-model="passwordConfirm"
                   id="password-confirm"
                   label="Password Confirm"
                   name="password-confirm"
                   prepend-icon="mdi-check-bold"
                   type="password"
+                  :rules="passwordConfirmationRules"
+                  @keyup.enter="userSignUp()"
                 ></v-text-field>
-
-
               </v-form>
             </v-card-text>
             <v-card-actions>
@@ -72,7 +79,7 @@
               <v-spacer></v-spacer>
               Have already registered?
               <v-btn text small
-                     href="/users/signin"
+                     @click="moveToSignin"
                      color="primary">
                 <v-icon>mdi-login</v-icon>Sign in
               </v-btn>
@@ -94,10 +101,21 @@ export default {
       inputUsername: '',
       inputEmail: '',
       inputPassword: '',
+	    passwordConfirm: '',
+      requiredRule: [v => !!v || 'Required!'],
     };
+  },
+  computed: {
+  	passwordConfirmationRules() {
+  		return [
+        () => (this.inputPassword === this.passwordConfirm) || 'Password must match',
+  		  v => !!v || 'Confirmation password is required',
+	  ];
+    },
   },
   methods: {
     async userSignUp() {
+	    if (!this.isValide()) return false;
       try {
         const resp = await service.Auth.signUp(this.inputEmail, this.inputUsername, this.inputPassword);
         console.log(resp);
@@ -120,7 +138,19 @@ export default {
           },
         );
       }
+      return true;
     },
+    moveToSignin() {
+      this.$router.push({ name: 'signin' });
+    },
+	  isValide() {
+		  if (this.$refs.form.validate()) return true;
+		  this.$swal({
+			  title: 'Please check your input value.',
+			  type: 'warning',
+		  });
+		  return false;
+	  },
   },
 };
 </script>

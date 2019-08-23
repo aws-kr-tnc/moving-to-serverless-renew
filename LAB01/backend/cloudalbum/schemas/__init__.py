@@ -1,7 +1,16 @@
+"""
+    cloudalbum/schemas/__init__.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Jsonschema definiton for API request about json parameter validation.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+
 from jsonschema import validate, FormatChecker
 from jsonschema.exceptions import ValidationError
 from jsonschema.exceptions import SchemaError
-from flask import app
 
 user_schema = {
     "type": "object",
@@ -60,7 +69,13 @@ photo_info_schema = {
     }
 }
 
+
 def validate_photo_info(data):
+    """
+    Validate request json parameters
+    :param data:
+    :return:
+    """
     try:
         validate(data, photo_info_schema)
         return {'ok': True, 'data': data}
@@ -71,7 +86,13 @@ def validate_photo_info(data):
     except Exception as e:
         raise e
 
+
 def validate_user(data):
+    """
+    Validate request json parameters
+    :param data:
+    :return:
+    """
     try:
         validate(data, user_schema, format_checker=FormatChecker())
         return {'ok': True, 'data': data}
@@ -82,7 +103,13 @@ def validate_user(data):
     except Exception as e:
         raise e
 
+
 def validate_signin(data):
+    """
+    Validate request json parameters
+    :param data:
+    :return:
+    """
     try:
         validate(data, user_signin_schema, format_checker=FormatChecker())
         return {'ok': True, 'data': data}

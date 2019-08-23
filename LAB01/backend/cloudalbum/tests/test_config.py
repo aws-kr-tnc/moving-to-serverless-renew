@@ -1,7 +1,15 @@
+"""
+    cloudalbum/tests/test_config.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Test cases for application configuration
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 
 import os
 import unittest
-
 from flask import current_app
 from flask_testing import TestCase
 from cloudalbum import create_app
