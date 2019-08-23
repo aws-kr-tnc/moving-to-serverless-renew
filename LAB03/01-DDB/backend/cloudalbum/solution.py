@@ -29,7 +29,7 @@ def solution_get_user_data_with_idx(signin_data):
 
 def solution_put_photo_info_ddb(user_id, new_photo):
     app.logger.info("RUNNING TODO#3 SOLUTION CODE:")
-    app.logger.info("Update Photo informtation into User table!")
+    app.logger.info("Update Photo information into User table!")
     app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
 
     try:
