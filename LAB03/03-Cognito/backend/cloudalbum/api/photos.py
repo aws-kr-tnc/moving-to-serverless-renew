@@ -143,10 +143,7 @@ class List(Resource):
             app.logger.debug("success:photos_list:%s" % data)
             return m_response(True, data, 200)
 
-        # except ValidationException as e:
-            app.logger.error("ERROR:photos list failed")
-            app.logger.error(e)
-            return m_response(False, None, 400)
+
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
             app.logger.error(e)
