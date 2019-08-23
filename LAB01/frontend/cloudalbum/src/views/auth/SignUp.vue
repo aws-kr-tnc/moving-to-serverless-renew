@@ -129,8 +129,8 @@ export default {
           },
         );
       } catch (err) {
-        console.log(err.response)
-        console.log(err.response.data.Message);
+        // console.log(err.response)
+        // console.log(err.response.data.Message);
         this.$swal(
           {
             type: 'error',

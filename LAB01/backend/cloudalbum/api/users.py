@@ -139,7 +139,7 @@ class Signup(Resource):
         except ValidationError as e:
             app.logger.error('ERROR:invalid signup data format:{0}'.format(req_data))
             app.logger.error(e)
-            return m_response(False, req_data,400)
+            return m_response(False, {'Message':e.message, 'user':req_data}, 400)
         except Exception as e:
             app.logger.error('ERROR:unexpected signup error:{}'.format(req_data))
             app.logger.error(e)
@@ -181,7 +181,7 @@ class Signin(Resource):
         except ValidationError as e:
             app.logger.error('ERROR:invalid data format:{0}'.format(req_data))
             app.logger.error(e)
-            return m_response(False, {'msg':e.message, 'user':req_data} ,400)
+            return m_response(False, {'Message':e.message, 'user':req_data} ,400)
         except Exception as e:
             app.logger.error('ERROR:unexpected error:{0}'.format(req_data))
             app.logger.error(e)

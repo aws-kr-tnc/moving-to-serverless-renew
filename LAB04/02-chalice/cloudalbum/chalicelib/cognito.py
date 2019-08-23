@@ -13,36 +13,32 @@ def signup_confirm(id):
 
 def signup_cognito(app, user, dig):
     client = boto3.client('cognito-idp')
-    try:
-        response = client.sign_up(
-            ClientId=conf['COGNITO_CLIENT_ID'],
-            SecretHash=base64.b64encode(dig).decode(),
-            Username=user['email'],
-            Password=user['password'],
-            UserAttributes=[
-                {
-                    'Name': 'name',
-                    'Value': user['username']
-                }
-            ],
-            ValidationData=[
-                {
-                    'Name': 'name',
-                    'Value': user['username']
-                }
-            ]
+    response = client.sign_up(
+        ClientId=conf['COGNITO_CLIENT_ID'],
+        SecretHash=base64.b64encode(dig).decode(),
+        Username=user['email'],
+        Password=user['password'],
+        UserAttributes=[
+            {
+                'Name': 'name',
+                'Value': user['username']
+            }
+        ],
+        ValidationData=[
+            {
+                'Name': 'name',
+                'Value': user['username']
+            }
+        ]
 
-        )
+    )
 
-        email = response['CodeDeliveryDetails']['Destination']
-        id = response['UserSub']
+    email = response['CodeDeliveryDetails']['Destination']
+    id = response['UserSub']
 
-        # automatically confirm user for lab
-        signup_confirm(id)
-        return {'email': email, 'id': id}
-    except Exception as e:
-        app.log.error('ERROR:failed to enroll user into cognito')
-        app.log.error(e)
+    # automatically confirm user for lab
+    signup_confirm(id)
+    return {'email': email, 'id': id}
 
 
 
