@@ -183,7 +183,7 @@ def cognito_signin(user):
                                           ClientId=conf['COGNITO_CLIENT_ID'],
                                           AuthFlow='ADMIN_NO_SRP_AUTH',
                                           AuthParameters={'SECRET_HASH': auth,'USERNAME': user['email'], 'PASSWORD': user['password']})
-        print("secret key:{}".format(auth))
+
         access_token = resp['AuthenticationResult']['AccessToken']
         refresh_token = resp['AuthenticationResult']['RefreshToken']
 
