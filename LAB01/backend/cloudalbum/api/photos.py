@@ -9,7 +9,7 @@
 """
 import os, uuid
 from flask import current_app as app
-from flask import Blueprint, request, make_response
+from flask import Blueprint, request
 from flask_restplus import Api, Resource, fields
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
@@ -115,11 +115,11 @@ class FileUpload(Resource):
                                               filename=filename,
                                               filename_orig=filename_orig).first()
 
-            return make_response({'ok': True, "photo_id": committed.id}, 200)
+            return m_response(True, {"photo_id": committed.id}, 200)
         except Exception as e:
             app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
-            return make_response({'ok': False, 'data': {'user_id': get_jwt_identity()['user_id']}}, 500)
+            return m_response(False, {'user_id': get_jwt_identity()['user_id']}, 500)
 
 
 @api.route('/<photo_id>/info')

@@ -1,6 +1,6 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, make_response
 from flask import current_app as app
-from flask import jsonify, make_response
+from flask import jsonify
 from flask_restplus import Api, Resource, fields
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt)
 from jsonschema import ValidationError
@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from cloudalbum import db
 from cloudalbum.database.models import User
 from cloudalbum.schemas import validate_user
+from cloudalbum.util.jwt_helper import add_token_to_set
 from cloudalbum.util.response import m_response
 
 
@@ -65,7 +66,7 @@ class UsersList(Resource):
         except Exception as e:
             app.logger.error("users list failed:users list:%s" % data)
             app.logger.error(e)
-            return make_response(False, data, 500)
+            return m_response(False, data, 500)
 
 
 @api.route('/<user_id>')
