@@ -4,7 +4,6 @@ from flask import current_app as app
 from werkzeug.security import generate_password_hash
 
 from cloudalbum.database.model_ddb import User, Photo
-from cloudalbum.util.config import conf
 
 
 
@@ -71,7 +70,7 @@ def solution_put_object_to_s3(s3_client, key, upload_file_stream):
     app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
     try:
         s3_client.put_object(
-            Bucket=conf['S3_PHOTO_BUCKET'],
+            Bucket=app.config['S3_PHOTO_BUCKET'],
             Key=key,
             Body=upload_file_stream,
             ContentType='image/jpeg',
@@ -91,7 +90,7 @@ def solution_generate_s3_presigned_url(s3_client, key):
     app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
     url = s3_client.generate_presigned_url(
         'get_object',
-        Params={'Bucket': conf['S3_PHOTO_BUCKET'],
+        Params={'Bucket': app.config['S3_PHOTO_BUCKET'],
                 'Key': key})
     return url
 

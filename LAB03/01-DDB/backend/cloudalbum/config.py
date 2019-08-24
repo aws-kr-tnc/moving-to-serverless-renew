@@ -1,11 +1,6 @@
 import datetime
 import os
 
-# - FLASK_ENV=production
-# - APP_SETTINGS=cloudalbum.config.ProductionConfig
-# - DATABASE_URL=postgres://postgres:postgres@users-database:5432/users_prod
-# - DATABASE_TEST_URL=postgres://postgres:postgres@users-database:5432/users_test
-
 class BaseConfig:
     """Base configuration"""
     TESTING = False
