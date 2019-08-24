@@ -25,7 +25,7 @@ The application has following software stack.
 * Back-end
   * Flask : A lightweight WSGI web application framework. 
   * Flask-RESTPlus : An extension for Flask that adds support for quickly building REST APIs.
-  * SQLAlchemi : The Python SQL Toolkit and Object Relational Mapper.
+  * SQLAlchemy : The Python SQL Toolkit and Object Relational Mapper.
   * Pillow : Python Imaging Library (Fork)
 
 
