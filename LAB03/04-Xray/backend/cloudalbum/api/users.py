@@ -13,7 +13,7 @@ from cloudalbum.schemas import validate_user
 from cloudalbum.solution import solution_signup_cognito
 from cloudalbum.util.response import m_response
 from cloudalbum.util.jwt_helper import add_token_to_set, get_token_from_header, get_cognito_user, cog_jwt_required
-from cloudalbum.util.config import conf
+
 
 users_blueprint = Blueprint('users', __name__)
 api = Api(users_blueprint, doc='/swagger/', title='Users',
@@ -63,7 +63,7 @@ class UsersList(Resource):
             client = boto3.client('cognito-idp')
 
             response = client.list_users(
-                UserPoolId=conf['COGNITO_POOL_ID'],
+                UserPoolId=app.config['COGNITO_POOL_ID'],
                 AttributesToGet=['sub', 'email', 'name']
             )
 
@@ -100,7 +100,7 @@ class Users(Resource):
         try:
 
             response = client.admin_get_user(
-                UserPoolId=conf['COGNITO_POOL_ID'],
+                UserPoolId=app.config['COGNITO_POOL_ID'],
                 Username=user_id
             )
 
@@ -126,7 +126,7 @@ class Users(Resource):
 
 def cognito_signup(signup_user):
     user = signup_user;
-    msg = '{0}{1}'.format(user['email'], conf['COGNITO_CLIENT_ID'])
+    msg = '{0}{1}'.format(user['email'], app.config['COGNITO_CLIENT_ID'])
 
     dig = hmac.new(conf['COGNITO_CLIENT_SECRET'].encode('utf-8'),
                    msg=msg.encode('utf-8'),
@@ -173,14 +173,14 @@ class Signup(Resource):
 def cognito_signin(user):
     client = boto3.client('cognito-idp')
     try:
-        msg = '{0}{1}'.format(user['email'], conf['COGNITO_CLIENT_ID'])
+        msg = '{0}{1}'.format(user['email'], app.config['COGNITO_CLIENT_ID'])
 
         dig = hmac.new(conf['COGNITO_CLIENT_SECRET'].encode('utf-8'),
                        msg=msg.encode('utf-8'),
                        digestmod=hashlib.sha256).digest()
         auth= base64.b64encode(dig).decode()
-        resp = client.admin_initiate_auth(UserPoolId=conf['COGNITO_POOL_ID'],
-                                          ClientId=conf['COGNITO_CLIENT_ID'],
+        resp = client.admin_initiate_auth(UserPoolId=app.config['COGNITO_POOL_ID'],
+                                          ClientId=app.config['COGNITO_CLIENT_ID'],
                                           AuthFlow='ADMIN_NO_SRP_AUTH',
                                           AuthParameters={'SECRET_HASH': auth,'USERNAME': user['email'], 'PASSWORD': user['password']})
 
