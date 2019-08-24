@@ -12,7 +12,7 @@ from flask import make_response
 
 
 def m_response(bool, data, code):
-    return make_response({'ok': bool, 'photos': data}, code)
+    return make_response({'ok': bool, 'Message': data}, code)
 
 
 dic_default_response = {
