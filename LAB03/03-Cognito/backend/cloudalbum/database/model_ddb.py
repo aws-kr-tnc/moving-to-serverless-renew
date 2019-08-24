@@ -1,12 +1,8 @@
 from datetime import datetime
-
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute
-
-
 from tzlocal import get_localzone
 
-from cloudalbum.util.config import conf
 
 
 def photo_deserialize(photo):
@@ -39,7 +35,7 @@ class Photo(Model):
 
     class Meta:
         table_name = 'Photo'
-        region = conf['AWS_REGION']
+        region = app.config['AWS_REGION']
 
     user_id = UnicodeAttribute(hash_key=True)
     id = UnicodeAttribute(range_key=True)
