@@ -106,11 +106,11 @@ class FileUpload(Resource):
             # TODO 3: Implement following solution code to put item into Photo table of DynamoDB
             solution_put_photo_info_ddb(user_id, filename, form, filesize)
 
-            return make_response({'ok': True, "photo_id": filename}, 200)
+            return m_response(True, {"photo_id": filename}, 200)
         except Exception as e:
             app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
-            return make_response({'ok': False, 'data': {'user_id': get_jwt_identity()['user_id']}}, 500)
+            return m_response(False, {'user_id': get_jwt_identity()['user_id']}, 500)
 
 
 
@@ -228,4 +228,3 @@ class OnePhoto(Resource):
             app.logger.error('ERROR:get photo failed:photo_id:{}'.format(photo_id))
             app.logger.error(e)
             return m_response(False, {'msg':'not exist photo_id'}, 404)
-

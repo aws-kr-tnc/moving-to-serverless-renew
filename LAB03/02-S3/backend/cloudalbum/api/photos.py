@@ -104,11 +104,11 @@ class FileUpload(Resource):
 
             solution_put_photo_info_ddb(user_id, filename, form, filesize)
 
-            return make_response({'ok': True, "photo_id": filename}, 200)
+            return make_response(True,{"photo_id": filename}, 200)
         except Exception as e:
             app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
-            return make_response({'ok': False, 'data': {'user_id': get_jwt_identity()['user_id']}}, 500)
+            return make_response(False, {'user_id': get_jwt_identity()['user_id']}, 500)
 
 
 
