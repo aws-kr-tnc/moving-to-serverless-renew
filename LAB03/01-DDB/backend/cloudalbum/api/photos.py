@@ -9,7 +9,6 @@ from werkzeug.utils import secure_filename
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from pathlib import Path
-from cloudalbum.util.config import conf
 from cloudalbum.util.file_control import email_normalize, delete, save, create_photo_info
 from cloudalbum.database.model_ddb import User, photo_deserialize, Photo
 from cloudalbum.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
@@ -205,7 +204,7 @@ class OnePhoto(Resource):
             mode = request.args.get('mode')
             user = get_jwt_identity()
             email = user['email']
-            path = os.path.join(conf['UPLOAD_DIR'], email_normalize(email))
+            path = os.path.join(app.config['UPLOAD_DIR'], email_normalize(email))
             full_path = Path(path)
 
             photo = Photo.get(user['user_id'], range_key=photo_id)

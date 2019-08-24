@@ -1,13 +1,13 @@
-from cloudalbum.util.config import conf
+
 from cloudalbum.database.model_ddb import User, Photo
 from flask import current_app as app
 
 if not User.exists():
-    User.create_table(read_capacity_units=conf['DDB_RCU'], write_capacity_units=conf['DDB_WCU'], wait=True)
+    User.create_table(read_capacity_units=app.config['DDB_RCU'], write_capacity_units=app.config['DDB_WCU'], wait=True)
     app.logger.debug('DynamoDB User table created!')
 
 if not Photo.exists():
-    User.create_table(read_capacity_units=conf['DDB_RCU'], write_capacity_units=conf['DDB_WCU'], wait=True)
+    User.create_table(read_capacity_units=app.config['DDB_RCU'], write_capacity_units=app.config['DDB_WCU'], wait=True)
     app.logger.debug('DynamoDB User table created!')
 
 def create_table():
