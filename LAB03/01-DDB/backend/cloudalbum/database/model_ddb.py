@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from flask import current_app as app
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute, ListAttribute, MapAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
