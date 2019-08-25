@@ -105,10 +105,8 @@ export default {
     },
     popupAlert(resp) {
       let msg = '';
-      if (resp.response.data.Message) msg = resp.response.data.Message;
-      if (resp.response.data.Message) msg = resp.response.data.Message;
-      else msg = resp;
-      // console.log(resp.response);
+      if (!resp.response) msg = resp;
+      else msg = resp.response.data.Message;
 
       this.$swal(
         {
