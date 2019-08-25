@@ -1,4 +1,4 @@
-from cloudalbum.util.config import conf
+
 from cloudalbum.database.model_ddb import User, Photo
 from flask import current_app as app
 

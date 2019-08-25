@@ -201,21 +201,19 @@ In this TASK, we will introduce DynamoDB for CloudAlbum application. We also int
 
 1. Install required Python packaged:
 ```console
-sudo pip-3.6 install -r ~/environment/moving-to-serverless-workshop-1d/LAB03/01-CloudAlbum-DDB/requirements.txt
+sudo pip-3.6 install -r ~/environment/moving-to-serverless-workshop-1d/LAB03/01-DDB/requirements.txt
 ```
 
 
-2. Open the **models.py** which located in  '**LAB03/01-CloudAlbum-DDB**/cloudalbum/model/models.py'.
+2. Open the **model_ddb.py** which located in  '**LAB03/01-DDB**/backend/cloudalbum/database/model_ddb.py'.
 
 3. Review the data model definition via **SQLAlchemy**. ***User*** tables and ***Photo*** tables are inherited from SQLAlchemy's **db.Model** and are represented in **Python classes**.
+
 ```python
-from sqlalchemy import Float, DateTime, ForeignKey, Integer, String
 from flask_login import UserMixin
-from flask_sqlalchemy import SQLAlchemy
-from cloudalbum import login
-
-db = SQLAlchemy()
-
+from sqlalchemy import Float, DateTime, ForeignKey, Integer, String
+from datetime import datetime
+from cloudalbum import db
 
 class User(UserMixin, db.Model):
     """
@@ -224,21 +222,28 @@ class User(UserMixin, db.Model):
     __tablename__ = 'User'
 
     id = db.Column(Integer, primary_key=True)
+    email = db.Column(String(100), unique=True)
     username = db.Column(String(50), unique=False)
-    email = db.Column(String(50), unique=True)
     password = db.Column(String(100), unique=False)
 
     photos = db.relationship('Photo',
                              backref='user',
                              cascade='all, delete, delete-orphan')
 
-    def __init__(self, name, email, password):
-        self.username = name
+    def __init__(self, email, username, password):
         self.email = email
+        self.username = username
         self.password = password
 
     def __repr__(self):
         return '<%r %r %r>' % (self.__tablename__, self.username, self.email)
+
+    def to_json(self):
+        return {
+            'username': self.username,
+            'email': self.email,
+            'password': self.password
+        }
 
 
 class Photo(db.Model):
@@ -266,7 +271,7 @@ class Photo(db.Model):
     nation = db.Column(String(400), unique=False)
     address = db.Column(String(400), unique=False)
 
-    def __init__(self, user_id, tags, desc, filename_orig, filename, filesize, geotag_lat, geotag_lng, upload_date,
+    def __init__(self, user_id, filename_orig, filename, filesize, upload_date, tags, desc, geotag_lat, geotag_lng,
                  taken_date, make, model, width, height, city, nation, address):
         """Initialize"""
 
@@ -292,9 +297,36 @@ class Photo(db.Model):
         """print information"""
 
         return '<%r %r %r>' % (self.__tablename__, self.user_id, self.upload_date)
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'tags': self.tags,
+            'desc': self.desc,
+            'filename_orig': self.filename_orig,
+            'filename': self.filename,
+            'filesize': self.filesize,
+            'geotag_lat': self.geotag_lat,
+            'geotag_lng': self.geotag_lng,
+            'upload_date': self.upload_date,
+            'taken_date': self.taken_date,
+            'make': self.make,
+            'model': self.model,
+            'width': self.width,
+            'height': self.height,
+            'city': self.city,
+            'nation': self.nation,
+            'address': self.address
+        }
+
+    def insert_column(self, col, data):
+        self[col] = data
+
+
 ```
 
-4. Open the **models_ddb.py** which located in  'LAB03/01-CloudAlbum-DDB/cloudalbum/model/models_ddb.py'.
+4. Open the **models_ddb.py** which located in  'LAB03/01-DDB/backend/cloudalbum/model/models_ddb.py'.
 <img src=./images/lab03-task1-models_ddb-2.png width=300>
 
 
@@ -302,14 +334,36 @@ class Photo(db.Model):
 5. Review the data model definition via **PynamoDB**. This will show how DynamoDB tables and GSI are defined in PynamoDB. They are all expressed in **Python Class.**
 
 ```python
-from pynamodb.models import Model
-from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute
-from flask_login import UserMixin
-from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
-from cloudalbum import login
-from cloudalbum import util
-from cloudalbum.config import conf
+from datetime import datetime
 
+from pynamodb.models import Model
+from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute, ListAttribute, MapAttribute
+from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
+
+from tzlocal import get_localzone
+
+from cloudalbum.util.config import conf
+
+def photo_deserialize(photo):
+    photo_json = {}
+    photo_json['id'] = photo.id
+    photo_json['filename'] = photo.filename
+    photo_json['filename_orig'] = photo.filename_orig
+    photo_json['filesize'] = photo.filesize
+    photo_json['upload_date'] = photo.upload_date
+    photo_json['tags'] = photo.tags
+    photo_json['desc'] = photo.desc
+    photo_json['geotag_lat'] = photo.geotag_lat
+    photo_json['geotag_lng'] = photo.geotag_lng
+    photo_json['taken_date'] = photo.taken_date
+    photo_json['make'] = photo.make
+    photo_json['model'] = photo.model
+    photo_json['width'] = photo.width
+    photo_json['height'] = photo.height
+    photo_json['city'] = photo.city
+    photo_json['nation'] = photo.nation
+    photo_json['address'] = photo.address
+    return photo_json
 
 class EmailIndex(GlobalSecondaryIndex):
     """
@@ -328,7 +382,7 @@ class EmailIndex(GlobalSecondaryIndex):
     email = UnicodeAttribute(hash_key=True)
 
 
-class User(Model, UserMixin):
+class User(Model):
     """
     User table for DynamoDB
     """
@@ -346,7 +400,7 @@ class User(Model, UserMixin):
 
 class Photo(Model):
     """
-    User table for DynamoDB
+    Photo table for DynamoDB
     """
 
     class Meta:
@@ -354,120 +408,160 @@ class Photo(Model):
         region = conf['AWS_REGION']
 
     user_id = UnicodeAttribute(hash_key=True)
-    id = NumberAttribute(range_key=True)
-    tags = UnicodeAttribute(null=False)
-    desc = UnicodeAttribute(null=False)
-    filename_orig = UnicodeAttribute(null=False)
-    filename = UnicodeAttribute(null=False)
-    filesize = NumberAttribute(null=False)
-    geotag_lat = UnicodeAttribute(null=False)
-    geotag_lng = UnicodeAttribute(null=False)
-    upload_date = UTCDateTimeAttribute(default=util.the_time_now())
-    taken_date = UTCDateTimeAttribute(default=util.the_time_now())
+    id = UnicodeAttribute(range_key=True)
+    tags = UnicodeAttribute(null=True)
+    desc = UnicodeAttribute(null=True)
+    filename_orig = UnicodeAttribute(null=True)
+    filename = UnicodeAttribute(null=True)
+    filesize = NumberAttribute(null=True)
+    geotag_lat = UnicodeAttribute(null=True)
+    geotag_lng = UnicodeAttribute(null=True)
+    upload_date = UTCDateTimeAttribute(default=datetime.now(get_localzone()))
+    taken_date = UTCDateTimeAttribute(null=True)
     make = UnicodeAttribute(null=True)
     model = UnicodeAttribute(null=True)
-    width = UnicodeAttribute(null=False)
-    height = UnicodeAttribute(null=False)
+    width = UnicodeAttribute(null=True)
+    height = UnicodeAttribute(null=True)
     city = UnicodeAttribute(null=True)
-    nation = UnicodeAttribute(null=False)
-    address = UnicodeAttribute(null=False)
+    nation = UnicodeAttribute(null=True)
+    address = UnicodeAttribute(null=True)
 ```
 
-6. Review the ***__init__.py*** in the model package. The DynamoDB **User** and **Photo** **tables will be created automatically** for the convenience. **Note** the ***create_table*** function.
+6. Review the **__init__.py** in the database package. The DynamoDB **User** and **Photo** tables will be created automatically** for the convenience. **Note** the ***create_table*** function.
 
 ```python
-from cloudalbum.config import conf
-from cloudalbum.model.models_ddb import User
-from cloudalbum.model.models_ddb import Photo
+from flask import currenct_app as app
+from cloudalbum.database.model_ddb import User
+from cloudalbum.database.model_ddb import Photo
+
 
 if not User.exists():
-    User.create_table(read_capacity_units=conf['DDB_RCU'], write_capacity_units=conf['DDB_WCU'], wait=True)
-    print('DynamoDB User table created!')
+    User.create_table(read_capacity_units=app.config['DDB_RCU'], write_capacity_units=app.config['DDB_WCU'], wait=True)
+    app.logger.debug('DynamoDB User table created!')
 
 if not Photo.exists():
-    Photo.create_table(read_capacity_units=conf['DDB_RCU'], write_capacity_units=conf['DDB_WCU'], wait=True)
-    print('DynamoDB Photo table created!')
+    User.create_table(read_capacity_units=app.config['DDB_RCU'], write_capacity_units=app.config['DDB_WCU'], wait=True)
+    app.logger.debug('DynamoDB User table created!')
 ```
 
-7. Review the 'LAB03/01-CloudAlbum-DDB/cloudalbum/config.py' file. **New attributes** are added for DynamoDB.
+7. Review the 'LAB03/01-DDB/backend/cloudalbum/config.py' file. **New attributes** are added for DynamoDB.
 
- * Set up ***GMAPS_KEY*** value : Replace ***<REAL_GMAPS_KEY_PROVIDED_BY_INSTRUCTOR>*** to real value which used previous hands-on lab.
 
 ```python
 import os
 
-conf = {
+class BaseConfig:
+	(.. ..)
+	
+    AWS_REGION = os.getenv('AWS_REGION', 'ap-southeast-1')
+    DDB_RCU = os.getenv('DDB_RCU', 10)
+    DDB_WCU = os.getenv('DDB_WCU', 10)
 
-    # Mandatory variable
-    'GMAPS_KEY': os.getenv('GMAPS_KEY', '<REAL_GMAPS_KEY_PROVIDED_BY_INSTRUCTOR>'),
-
-    ( ... )
-
-    # DynamoDB
-    'AWS_REGION': os.getenv('AWS_REGION', 'ap-southeast-1'),
-    'DDB_RCU': os.getenv('DDB_RCU', 10),
-    'DDB_WCU': os.getenv('DDB_WCU', 10),
-
-}
 ```
 * The second parameter of **os.getenv** function is the default value to use when the first parameter does not exist.
 
-8. Review following code for user signup.
-* Find **TODO #1** in the 'LAB03/01-CloudAlbum-DDB/cloudalbum/controlloer/user/userView.py' file.
+8. Find **TODO #1** in the 'LAB03/01-DDB/backend/cloudalbum/api/users.py' file and please implement your own code instead of using following solution function which name is **solution\_put\_new\_user** for user signup.
+
+* TODO #1 
+
 ```python
-    if not user_exist:
-        ## TODO #1 : Review following code to save user information
-        ## -- begin --
-        user = User(uuid.uuid4().hex)
-        user.email = form.email.data
-        user.password = generate_password_hash(form.password.data)
-        user.username = form.username.data
-        user.save()
-        ## -- end --
+	if not exist_user:
+	    new_user_id = uuid.uuid4().hex
+	
+	    # TODO 1 : Implement following solution code to save user information into DynamoDB
+	    solution_put_new_user(new_user_id, user_data)
+	
+	    user = {
+	        "id": new_user_id,
+	        'username': user_data['username'],
+	        'email': email
+	    }
 ```
 
 **NOTE**: The partition key value of User table used **uuid.uuid4().hex** for the appropriate key distribution.
 
-9. Review following code to update user profile to DynamoDB.
-* Find **TODO #2** in the 'LAB03/01-CloudAlbum-DDB/cloudalbum/controlloer/user/userView.py' file.
-```python
-    ## TODO #2 : Review following code to update user profile to DynamoDB.
-    ## -- begin --
-    user = User.get(user_id)
-    user.update(actions=[
-        User.username.set(data['username']),
-        User.password.set(generate_password_hash(data['password']))
-    ])
-    ## --end --
-```
-* Above code shows the way of ***update*** DynamoDB table via PynamoDB query mapper.
+* Inside of **solution\_put\_new\_user**, you can find how to put item with **User** model which is defined at LAB03/01-DDB/backend/cloudalbum/database/model_ddb.py.
 
+```python 
+	user = User(new_user_id)
+	user.email = user_data['email']
+	user.password = generate_password_hash(user_data['password'])
+	user.username = user_data['username']
+	user.save()
 
-10. Review following code to search result via keyword in the DynamoDB.
-* Find **TODO #3** in the 'LAB03/01-CloudAlbum-DDB/cloudalbum/controlloer/photo/photoView.py' file.
-```python
-    ## TODO #3 : Review following code to search result via keyword in the DynamoDB.
-    ## -- begin --
-    keyword = request.form['search']
-    photo_pages = Photo.query(current_user.id,
-                                Photo.tags.contains(keyword) |
-                                Photo.desc.contains(keyword))
-    ## -- end --
-```
-* Above code shows how to use query filter via PynamoDB.
-
-
-11. Review following code to delete uploaded photo information in DynamoDB.
-* Find **TODO #4** in the 'LAB03/01-CloudAlbum-DDB/cloudalbum/controlloer/photo/photoView.py' file.
-```python
-    ## TODO #4 : Review following code to delete uploaded photo information in DynamoDB.
-    ## -- begin --
-    photo = Photo.get(current_user.id, photo_id)
-    photo.delete()
-    ## -- end --
 ```
 
-12. Open the ***run.py*** and run CloudAlbum application with DynamoDB. ***(LAB03/01-CloudAlbum-DDB/run.py)***
+9. Find **TODO #2** in the 'LAB03/01-DDB/backend/cloudalbum/api/users.py' file and please implement your own code instead of following solution function which name is **solution_get_user_data_with_idx** for user signin.
+
+```python
+	signin_data = validate_user(req_data)['data']
+
+    # TODO 2: Implement following solution code to get user profile with GSI
+    db_user = solution_get_user_data_with_idx(signin_data)
+
+    if db_user is None:
+        return m_response(False, {'msg':'not exist email', 'user':signin_data}, 400)
+```
+* Above solution code works the way of GSI which has a partition key as email.
+
+* Inside of **solution\_get\_user\_data\_with\_idx** function, you can find how to query to GSI **email_index**, which is defined at LAB03/01-DDB/backend/cloudalbum/database/model\_ddb.py.
+
+```python
+    for user_email in User.email_index.query(signin_data['email']):
+        if user_email is None:
+            return None
+        return user_email
+
+```
+
+10. Find **TODO #3** in the 'LAB03/01-DDB/backend/cloudalbum/api/photos.py' file and please implement your own code instead of following solution function which name is **solution\_put\_photo\_info\_ddb** to put item into Photo table.
+
+```python
+	# TODO 3: Implement following solution code to put item into Photo table of DynamoDB
+    solution_put_photo_info_ddb(user_id, filename, form, filesize)
+```
+
+* Inside of **solution\_put\_photo\_info\_ddb**, you can find how put item into DynamoDB with pynamodb's api. Just fill your data into Photo model, then save() it. 
+
+```python
+	new_photo = Photo(id=filename,
+              user_id=user_id,
+              filename=filename,
+              filename_orig=form['file'].filename,
+              filesize=filesize,
+              upload_date=datetime.today(),
+              tags=form['tags'],
+              desc=form['desc'],
+              geotag_lat=form['geotag_lat'],
+              geotag_lng=form['geotag_lng'],
+              taken_date=datetime.strptime(form['taken_date'], "%Y:%m:%d %H:%M:%S"),
+              make=form['make'],
+              model=form['model'],
+              width=form['width'],
+              height=form['height'],
+              city=form['city'],
+              nation=form['nation'],
+              address=form['address'])
+     new_photo.save()
+```
+
+
+11. Find **TODO #4** in the 'LAB03/01-DDB/backend/cloudalbum/api/photos.py' file and please implement your own code instead of following solution function which name is **solution\_delete\_photo\_from\_ddb** to put item into Photo table.
+
+```python
+
+	# TODO 4: Implement following solution code to delete a photo from Photos which is a list
+    filename = solution_delete_photo_from_ddb(user, photo_id)
+```
+
+* Inside of  **solution\_delete\_photo\_from\_ddb** function, you can find how to delete an item from Photo table with pynamodb api.
+
+```python
+	photo = Photo.get(user['user_id'], photo_id)
+   photo.delete()
+```
+
+12. Open the ***run.py*** and run CloudAlbum application with DynamoDB. ***(LAB03/01-DDB/run.py)***
 
 * **NOTE:** **GMAPS_KEY** variable is must defined before you run.
 
@@ -512,7 +606,7 @@ Is it OK? Let's move to the next TASK.
 
 
 ## TASK 3. Go to S3
-CloudAlbum stored user uploaded images into disk based storage. (EBS or NAS). However these storage is not scalable enough.
+CloudAlbum stored user uploaded images into disk based storage(EBS or NAS). However, disk storage has less scalability.
 
 [Amazon S3](https://aws.amazon.com/s3/) has a simple web services interface that you can use to store and retrieve any amount of data, at any time, from anywhere on the web. It gives any developer access to the same highly scalable, reliable, fast, inexpensive data storage infrastructure that Amazon uses to run its own global network of web sites. The service aims to maximize benefits of scale and to pass those benefits on to developers.
 
@@ -521,83 +615,63 @@ CloudAlbum stored user uploaded images into disk based storage. (EBS or NAS). Ho
 * We will use Boto3 - S3 API to handle uploaded photo image object from the user.
    * visit: https://boto3.readthedocs.io/en/latest/reference/services/s3.html
 
-* We will retrieve image object with pre-signed URL for authorized user.
+* We will retrieve image object with pre-signed URL and return it to the requested frontend side.
 
-17. Make a bucket to save photo image objects and retriev it from Amazon S3.
+17. Make a bucket to save image objects and retrieve it from Amazon S3. Before copy and paste under below AWS cli command which create a S3 bucket, you should replace **cloudalbum-\<INITIAL\>** with your own initial to make a globally unique bucket name. (e.g. cloudalbum-mrjb)
 
 ```
 aws s3 mb s3://cloudalbum-<INITIAL>
 ```
 
-18. Review the config.py file which located in ***LAB03/02-CloudAlbum-S3/cloudalbum/config.py***
-
-* Set up ***GMAPS_KEY*** value : Replace ***\<REAL_GMAPS_KEY_PROVIDED_BY_INSTRUCTOR\>*** to **real API key** which used previous hands-on lab.
+18. Review the config.py file which located in *** LAB03/02-S3/backend/cloudalbum/config.py***
 
 * Set up the value of 'S3_PHOTO_BUCKET'. Please change the ***cloudalbum-\<INITIAL\>*** to your **real bucket name** which made above.
 
 ```python
+import datetime
 import os
 
-conf = {
-
-    # Mandatory variable
-    'GMAPS_KEY': os.getenv('GMAPS_KEY', '<REAL_GMAPS_KEY_PROVIDED_BY_INSTRUCTOR>'),
-    
-    (....)
-
-    # DynamoDB
-    'AWS_REGION': os.getenv('AWS_REGION', 'ap-southeast-1'),
-    'DDB_RCU': os.getenv('DDB_RCU', 10),
-    'DDB_WCU': os.getenv('DDB_WCU', 10),
-
+class BaseConfig:
+	(...)
+   
     # S3
-    'S3_PHOTO_BUCKET': os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-<INITIAL>')
-}
+    S3_PHOTO_BUCKET = os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-<your-initial>')
+    S3_PRESIGNED_URL_EXPIRE_TIME = os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', 3600)
 ```
 
+* As you can see, expire time for the presigned url of an object set 3600 seconds.
 
-19. Review following code to save thumbnail image object to S3.
-* Find **TODO #5** in the 'LAB03/02-CloudAlbum-S3/cloudalbum/util.py' file.
+
+
+19. Find **TODO #5** in the 'LAB03/02-S3/backend/cloudalbum/util/file_control.py' file and please implement your own code instead of following solution function which name is **solution\_put\_object\_to\_s3** to put an image object with Boto3 SDK. 
+
 ```python
-    ## TODO #5 : Review following code to save thumbnail image object to S3
-    ## -- begin --
-    upload_file_stream.stream.seek(0)
-
-    s3_client.put_object(
-        Bucket=conf['S3_PHOTO_BUCKET'],
-        Key=key_thumb,
-        Body=make_thumbnails_s3(upload_file_stream, app),
-        ContentType='image/jpeg',
-        StorageClass='STANDARD'
-    )
-    ## -- end --
-```
-**NOTE**: To reuse file stream, we need to call **seek(0)**.
-```
-upload_file_stream.stream.seek(0)
+	# TODO 5 : Implement following solution code to save image object to S3
+    solution_put_object_to_s3(s3_client, key, original_bytes)
 ```
 
-20. Review your code to retrieve pre-signed URL from S3.
-* Find **TODO #6** in the 'LAB03/02-CloudAlbum-S3/cloudalbum/util.py' file.
+* Inside of the  **solution\_put\_object\_to\_s3**, you can find how to use Boto3 client to put an object into S3 bucket.
+
 ```python
-    ## TODO #6 : Review following code to retrieve pre-signed URL from S3.
-    ## -- begin --
-    if Thumbnail:
-        key_thumb = "{0}{1}".format(prefix_thumb, filename)
-        url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': conf['S3_PHOTO_BUCKET'],
-                    'Key': key_thumb})
-    else:
-        key = "{0}{1}".format(prefix, filename)
-        url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': conf['S3_PHOTO_BUCKET'],
-                    'Key': key})
-    ## -- end --
+s3_client.put_object(
+            Bucket=app.config['S3_PHOTO_BUCKET'],
+            Key=key,
+            Body=upload_file_stream,
+            ContentType='image/jpeg',
+            StorageClass='STANDARD'
+        )
 ```
-* Default expire time is 1 hour (3600 sec). Function description is below.
-  * Related document : https://boto3.readthedocs.io/en/latest/reference/services/s3.html 
+
+
+20. Find **TODO #6** in the 'LAB03/02-S3/backend/cloudalbum/util/file_control.py' file and please implement your own code instead of following solution function which name is **solution\_generate\_s3\_presigned\_url** to generate an presigned url of each object. 
+
+```python
+    # TODO 6 : Implement following solution code to retrieve pre-signed URL from S3.
+    url = solution_generate_s3_presigned_url(s3_client, key)
+```
+* Default expire time is 1 hour (3600 sec), we just defined expire time with same value in convinience. This is limited 36 hours. Below is Function description links.
+	* Related document : https://boto3.readthedocs.io/en/latest/reference/services/s3.html 
+
 ```python
 generate_presigned_url(ClientMethod, Params=None, ExpiresIn=3600, HttpMethod=None)
 
@@ -648,7 +722,7 @@ Is it OK? Let's move to the next TASK.
 <img src=./images/stop-app.png width=500>
 
 ## TASK 4. Go to Cognito
-In this TASK, you will add a sign-up/sign-in component to CloudAlbum application by using Amazon Cognito. After setting up Amazon Cognito, user information will retrieved from the Amazon Cognito.
+In this TASK, you will add a sign-up/sign-in component to CloudAlbum application by using Amazon Cognito. After setting up Amazon Cognito user pool, user information will stored into the Amazon Cognito.
 
 <img src=./images/lab03-task3-cognito-arc.png width=600>
 
@@ -751,36 +825,24 @@ sudo pip-3.6 install -r ~/environment/moving-to-serverless-workshop-1d/LAB03/03-
 ```
 
 58. Review 'LAB03/03.CloudAlbum-COGNITO/cloudalbum/config.py'
-* Set up **GMAPS_KEY** value : Replace **\<REAL_GMAPS_KEY_PROVIDED_BY_INSTRUCTOR\>** to real value which used previous hands-on lab.
 
 * Set up **S3_PHOTO_BUCKET** value : Replace **cloudalbum-\<INITIAL\>** to real value which used previous hands-on lab.
 
-```python
+```
+import datetime
 import os
 
-options = {
-
-    # Mandatory variable
-    'GMAPS_KEY': os.getenv('GMAPS_KEY', '<REAL_GMAPS_KEY_PROVIDED_BY_INSTRUCTOR>'),
-    
-    (.....)
-
-    # DynamoDB
-    'AWS_REGION': os.getenv('AWS_REGION', 'ap-southeast-1'),
-    'DDB_RCU': os.getenv('DDB_RCU', 10),
-    'DDB_WCU': os.getenv('DDB_WCU', 10),
-
-    # S3
-    'S3_PHOTO_BUCKET': os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-<INITIAL>'),
+class BaseConfig:
+	(...)
 
     # COGNITO
     'COGNITO_POOL_ID': os.getenv('COGNITO_POOL_ID', '<YOUR_POOL_ID>'),
     'COGNITO_CLIENT_ID': os.getenv('COGNITO_CLIENT_ID', '<YOUR_CLIENT_ID>'),
     'COGNITO_CLIENT_SECRET': os.getenv('COGNITO_CLIENT_SECRET', '<YOUR_CLIENT_SECRET>'),
     'COGNITO_DOMAIN': os.getenv('COGNITO_DOMAIN', '<YOUR_COGNITO_DOMAIN>'),
-    'BASE_URL': os.getenv('BASE_URL', '<PREVIEW_URL>')
 }
 ```
+
 * Check the values under ***# COGNITO***.
 * The second parameter of **os.getenv** is the default value to use when the first parameter does not exist.
 
@@ -789,45 +851,78 @@ options = {
 | COGNITO_CLIENT_ID | Copy and paste the App Client ID you noted earlier. |
 | COGNITO_CLIENT_SECRET | Copy and paste the App Client Secret you noted earlier. |
 |COGNITO_DOMAIN |Copy and paste the domain name you created earlier. It should look similar to the example below. Do not copy the entire URL starting with https://<YOUR_DOMAIN_NAME>.auth.ap-southeast-1.amazoncognito.com (for example(**without** `https://`): <YOUR_DOMAIN_NAME>.auth.ap-southeast-1.amazoncognito.com)|
-| BASE_URL | For **Cloud9 Preview** user set **https://<YOUR_PREVIEW_URL>** Do not include a trailing / for the BASE_URL. |
 
  * For example,
 
    <img src="images/lab03-task3-cognito-config.png" width="800">
 
 
+59. Find **TODO #7** in the 'LAB03/03-Cognito/backend/cloudalbum/api/users.py' file and please implement your own code instead of following solution function which name is **solution\_signup\_cognito** which is enroll user into Cognito user pool.
 
-59. Review following code to retrieve JSON Web Key (JWK) from cognito.
-* Find **TODO #7** in the 'LAB03/03-CloudAlbum-COGNITO/cloudalbum/controlloer/site/siteView.py' file.
 ```python
-## TODO #7: Review following code to retrieve JSON Web Key (JWK) from cognito
-## https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-with-identity-providers.html
-## -- begin --
-JWKS_URL = "https://cognito-idp.{0}.amazonaws.com/{1}/.well-known/jwks.json".\
-    format(conf['AWS_REGION'], conf['COGNITO_POOL_ID'])
-JWKS = requests.get(JWKS_URL).json()["keys"]
-## -- end --
+	# TODO 7: Implement following solution code to sign up user into cognito user pool
+   return solution_signup_cognito(user, dig)
 ```
 
+* Inside of the function, you can find how to create a user into Cognito user pool with Boto3. Let's review the code.
 
-60. Review following code to set up User objedct using id_token from Cognito.
-* Find **TODO #8** in the 'LAB03/03-CloudAlbum-COGNITO/cloudalbum/controlloer/site/siteView.py' file.
 ```python
-    ## TODO #8: Review following code to set up User objedct using id_token from Cognito
-    ## -- begin --
-    user = User()
-    user.id = id_token["cognito:username"]
-    user.email = id_token["email"]
-    user.username = id_token["name"]
+	client = boto3.client('cognito-idp')
+	
+	response = client.sign_up(
+            ClientId=app.config['COGNITO_CLIENT_ID'],
+            SecretHash=base64.b64encode(dig).decode(),
+            Username=user['email'],
+            Password=user['password'],
+            UserAttributes=[
+                {
+                    'Name': 'name',
+                    'Value': user['username']
+                }
+            ],
+            ValidationData=[
+                {
+                    'Name': 'name',
+                    'Value': user['username']
+                }
+            ]
 
-    session['id'] = id_token["cognito:username"]
-    session['email'] = id_token["email"]
-    session['name'] = id_token["name"]
-    session['expires'] = id_token["exp"]
-    session['refresh_token'] = response.json()["refresh_token"]
+        )
+```
+* UserAttributes means attributes that you checked when create Cognito user pool. According to upper code, your new user's attributes which stored in Cognito will look like this. This data structure is different from Cloudalbum's key name. 
 
-    login_user(user, remember=True)
-    ## -- begin --
+
+```json
+{
+	'username': 'user_email@a.c',
+	'password': 'password',
+	'name': 'user_name of CloudAlbum'
+}
+```
+
+* For instance, in CloudAlbum, the key name of email was just 'email', however it need to be changed into 'username' when stored into Cognito. 
+
+
+
+60. Find **TODO #7** in the 'LAB03/03-Cognito/backend/cloudalbum/api/users.py' file and please implement your own code instead of following solution function which name is **solution\_get\_cognito\_user\_data**. This function get user data from Cognito user pool with access_token with Boto3. 
+
+```python
+	# TODO 8: Implement follwing solution code to get user data from Cognito user pool
+   return solution_get_cognito_user_data(access_token)
+```
+
+* Let's look around solution_get_cognito_user_data function. All you need to implement is making a call to Boto3 get_user function, and parsing the the resopnse to set it properly as CloudAlbum's key name.
+
+```python
+	cognito_user = client.get_user(AccessToken=access_token)
+
+    user_data = {}
+    for attr in cognito_user['UserAttributes']:
+        key = attr['Name']
+        if key == 'sub':
+            key = 'user_id'
+        val = attr['Value']
+        user_data[key] = val
 ```
 
 
@@ -906,11 +1001,10 @@ unzip aws-xray-daemon-linux-3.x.zip
 
 * **Now, X-Ray daemon works and ready to use X-Ray to analyze applications.**
 
-70. Review, ***x-ray set up*** part in the 'LAB03/04-CloudAlbum-XRAY/run.py' file.
+70. Review # TODO #9 'LAB03/04-XRAY/cloudalbum/backend/__init__.py' file.
 
  * Related document
-   *  https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-python-configuration.html
-
+   * https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-python-configuration.html
    * https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-python-middleware.html
 
 * To instrument CloudAlbum, *our Flask application*, first configure a segment name on the xray_recorder. Then, use the XRayMiddleware function to patch our CloudAlbum application in code. 
@@ -923,23 +1017,35 @@ from aws_xray_sdk.ext.flask.middleware import XRayMiddleware
 
 (...)
 
-    ### x-ray set up ###
+	# TODO 9: Review X-ray setting
+    patch_modules = (
+        'boto3',
+        'botocore',
+        'pynamodb',
+        'requests',
+    )
     plugins = ('EC2Plugin',)
-    xray_recorder.configure(service='CloudAlbum', plugins=plugins)
+    xray_recorder.configure(service='CloudAlbum',
+                            plugins=plugins,
+                            context_missing='LOG_ERROR',
+                            sampling=False)
+
     XRayMiddleware(app, xray_recorder)
-    patch_all()
+    patch(patch_modules)
+    
 
 (...)
 ```
 
-* This tells the X-Ray recorder to trace requests served by your Flask application with the default sampling rate. You can configure the recorder in code to apply custom sampling rules or change other settings. 
+* To instrument downstream calls, define libraries that your application uses into patch_modules. The X-Ray SDK for Python can patch the following libraries.
+	* **NOTE:** Patching Libraries to Instrument Downstream Calls
+	* https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-python-patching.html
 
-
+* Sampling keywords argument tells the X-Ray recorder to trace requests served by your Flask application with the default sampling rate. You can configure the recorder in code to apply custom sampling rules or change other settings. 
 
 **NOTE**: You can use 'xray_recorder' decorator for capture function execution information.
-```python
-## for example:
 
+```python
 from aws_xray_sdk.core import xray_recorder
 (...)
 
@@ -948,39 +1054,39 @@ def print_abc():
     print('abc')
 
 ```
-* **NOTE:** Patching Libraries to Instrument Downstream Calls
-  * https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-python-patching.html
 
-71. Review 'LAB03/04.CloudAlbum-XRAY/cloudalbum/config.py' (This is same step above ***step 58*** for ***03.CloudAlbum-COGNITO***)
-* Set up **GMAPS_KEY** value : Replace **\<REAL_GMAPS_KEY_PROVIDED_BY_INSTRUCTOR\>** to real value which used previous hands-on lab.
+
+71. Implement your unique data into 'LAB03/04-XRAY/cloudalbum/backend/config.py'. This step is identical to the step 58.
 
 * Set up **S3_PHOTO_BUCKET** value : Replace **cloudalbum-\<INITIAL\>** to real value which used previous hands-on lab.
 
-```python
+```
+import datetime
 import os
 
-options = {
-
-    # Mandatory variable
-    'GMAPS_KEY': os.getenv('GMAPS_KEY', '<REAL_GMAPS_KEY_PROVIDED_BY_INSTRUCTOR>'),
-    
-    (.....)
-
-    # DynamoDB
-    'AWS_REGION': os.getenv('AWS_REGION', 'ap-southeast-1'),
-    'DDB_RCU': os.getenv('DDB_RCU', 10),
-    'DDB_WCU': os.getenv('DDB_WCU', 10),
-
-    # S3
-    'S3_PHOTO_BUCKET': os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-<INITIAL>'),
+class BaseConfig:
+	(...)
 
     # COGNITO
     'COGNITO_POOL_ID': os.getenv('COGNITO_POOL_ID', '<YOUR_POOL_ID>'),
     'COGNITO_CLIENT_ID': os.getenv('COGNITO_CLIENT_ID', '<YOUR_CLIENT_ID>'),
     'COGNITO_CLIENT_SECRET': os.getenv('COGNITO_CLIENT_SECRET', '<YOUR_CLIENT_SECRET>'),
     'COGNITO_DOMAIN': os.getenv('COGNITO_DOMAIN', '<YOUR_COGNITO_DOMAIN>'),
-    'BASE_URL': os.getenv('BASE_URL', '<PREVIEW_URL>')
 }
+```
+
+* Check the values under ***# COGNITO***.
+* The second parameter of **os.getenv** is the default value to use when the first parameter does not exist.
+
+| COGNITO_POOL_ID | Copy and paste the pool ID you noted earlier. |
+----|----
+| COGNITO_CLIENT_ID | Copy and paste the App Client ID you noted earlier. |
+| COGNITO_CLIENT_SECRET | Copy and paste the App Client Secret you noted earlier. |
+|COGNITO_DOMAIN |Copy and paste the domain name you created earlier. It should look similar to the example below. Do not copy the entire URL starting with https://<YOUR_DOMAIN_NAME>.auth.ap-southeast-1.amazoncognito.com (for example(**without** `https://`): <YOUR_DOMAIN_NAME>.auth.ap-southeast-1.amazoncognito.com)|
+
+ * For example,
+
+   <img src="images/lab03-task3-cognito-config.png" width="800">
 ```
 72. **Open the run.py** and run the application. You can run the application to check all features are works well. Then you will see function tracing data collected on the X-Ray console.
 

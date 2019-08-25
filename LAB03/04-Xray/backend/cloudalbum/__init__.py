@@ -64,7 +64,7 @@ def create_app(script_info=None):
                             sampling=False)
 
     XRayMiddleware(app, xray_recorder)
-    patch_all(patch_modules)
+    patch(patch_modules)
 
     # set config
     app_settings = os.getenv('APP_SETTINGS')
@@ -73,7 +73,6 @@ def create_app(script_info=None):
     # set logger to STDOUT
     app.logger.addHandler(logging.StreamHandler(sys.stdout))
     app.logger.setLevel(logging.DEBUG)
-    # app.logger('aws_xray_sdk').setLevel(logging.DEBUG)
 
     # register blueprints
     from cloudalbum.api.users import users_blueprint
