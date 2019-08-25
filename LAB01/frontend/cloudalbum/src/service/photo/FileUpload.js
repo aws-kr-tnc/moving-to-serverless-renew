@@ -17,6 +17,7 @@ const fileUpload = (file, name = 'file', param) => {
   formData.append('city', param.city);
   formData.append('nation', param.nation);
   formData.append('address', param.address);
+  formData.append('filename_orig', param.filename_orig);
 
   console.log(formData.keys());
 

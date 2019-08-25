@@ -97,7 +97,7 @@ export default {
       try {
         const resp = await this.getTokens({ email: this.inputEmail, password: this.inputPassword });
         if (resp.status !== 200) this.popupAlert(resp);
-        if (this.isAuthenticated) this.$router.push({ name: 'photolist' });
+        if (this.isAuthenticated) await this.$router.push({ name: 'photolist' });
       } catch (err) {
         this.popupAlert(err);
       }
@@ -105,14 +105,16 @@ export default {
     },
     popupAlert(resp) {
       let msg = '';
-      if (resp.status === 400) msg = '400 error';
-      if (resp.status === 500) msg = resp.body;
-      if (resp.status === undefined) msg = resp;
+      if (resp.response.data.Message) msg = resp.response.data.Message;
+      if (resp.response.data.Message) msg = resp.response.data.Message;
+      else msg = resp;
+      // console.log(resp.response);
+
       this.$swal(
         {
           type: 'error',
-          title: 'Oops...',
-          text: `Something went wrong! (${msg})`,
+          title: 'Something went wrong!',
+          text: msg,
         },
       );
     },

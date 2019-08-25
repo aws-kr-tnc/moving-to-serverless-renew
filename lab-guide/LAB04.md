@@ -11,6 +11,11 @@ There are various serverless frameworks. Here is a brief introduction to each of
 * A decorator based API for integrating with Amazon API Gateway, Amazon S3, Amazon SNS, Amazon SQS, and other AWS services.
 * Automatic IAM policy generation
 
+* References
+  * Official document: https://buildmedia.readthedocs.org/media/pdf/chalice/latest/chalice.pdf
+  * AWS Chalice workshop: https://chalice-workshop.readthedocs.io/en/latest/
+  * Github repo: https://github.com/aws/chalice
+
 ### Serverless 
 The ***Serverless*** Framework (https://serverless.com) is an MIT open source framework that’s actively developed and maintained by a full-time team. At its essence, it allows users to define a serverless application—including Lambda functions and API Gateway APIs—and then deploy it using a command-line interface (CLI). It helps you organize and structure serverless applications, which is of great benefit as you begin to build larger systems, and it’s fully extensible via its plugin system.
 

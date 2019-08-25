@@ -9,21 +9,18 @@
 """
 
 from datetime import datetime
+
+from chalice import ChaliceViewError
 from tzlocal import get_localzone
 from chalicelib.config import conf
 from PIL import Image
 from io import BytesIO
-# from jose import jwt
-# from http.cookies import SimpleCookie
-# import requests
-import sys
-import time
-import os
 import boto3
+import os
 import cgi
+import pprint
 
-current_milli_time = lambda: int(round(time.time() * 1000))
-
+pp = pprint.PrettyPrinter(indent=2)
 
 def get_parts(app):
     rfile = BytesIO(app.current_request.raw_body)
@@ -32,6 +29,26 @@ def get_parts(app):
     parameters['boundary'] = parameters['boundary'].encode('utf-8')
     parsed = cgi.parse_multipart(rfile, parameters)
     return parsed
+
+
+def get_param(param_name):
+    """
+    This function reads a secure parameter from AWS' SSM service.
+    The request must be passed a valid parameter name, as well as
+    temporary credentials which can be used to access the parameter.
+    The parameter's value is returned.
+    """
+    # Create the SSM Client
+    ssm = boto3.client('ssm')
+
+    # Get the requested parameter
+    response = ssm.get_parameters(
+        Names=[param_name, ], WithDecryption=True
+    )
+
+    # Store the credentials in a variable
+    result = response['Parameters'][0]['Value']
+    return result
 
 
 def get_password_reset_url():
@@ -117,12 +134,15 @@ def save_s3(upload_file_stream, filename, email, app):
     return len(original_bytes)
 
 
-def save_s3_chalice(bytes, filename, email, app):
+def save_s3_chalice(bytes, filename, email, logger):
     prefix = "photos/{0}/".format(email_normalize(email))
     prefix_thumb = "photos/{0}/thumbnails/".format(email_normalize(email))
 
     key = "{0}{1}".format(prefix, filename)
     key_thumb = "{0}{1}".format(prefix_thumb, filename)
+
+    logger.debug('key: {0}'.format(key))
+    logger.debug('key_thumb: {0}'.format(key_thumb))
 
     s3_client = boto3.client('s3')
     # original_bytes = upload_file_stream.read()
@@ -132,21 +152,21 @@ def save_s3_chalice(bytes, filename, email, app):
         with open(temp_file, 'wb') as f:
             f.write(bytes)
             statinfo = os.stat(temp_file)
-            app.log.debug(statinfo)
+            logger.debug(statinfo)
 
         s3_client.upload_file(temp_file, conf['S3_PHOTO_BUCKET'], key)
-        thumb_path = make_thumbnails('/tmp', temp_file, app)
-        app.log.debug('thumb_path for upload: {0}'.format(thumb_path))
-        app.log.debug('prefix_thumb: {0}'.format(prefix_thumb))
+        thumb_path = make_thumbnails('/tmp', temp_file, logger)
+        logger.debug('thumb_path for upload: {0}'.format(thumb_path))
+        logger.debug('prefix_thumb: {0}'.format(prefix_thumb))
 
         statinfo = os.stat(temp_file)
-        app.log.debug(statinfo)
+        logger.debug(statinfo)
 
         s3_client.upload_file(thumb_path, conf['S3_PHOTO_BUCKET'], key_thumb)
 
     except Exception as e:
-        app.log.error('Error occurred while saving file:%s', e)
-        raise e
+        logger.error('Error occurred while saving file:%s', e)
+        raise ChaliceViewError('Error occurred while saving file.')
 
     return len(bytes)
 
@@ -167,12 +187,12 @@ def delete_s3(app, filename, current_user):
         raise e
 
 
-def make_thumbnails(path, filename, app):
+def make_thumbnails(path, filename, logger):
     """
     Generate thumbnail from original image file.
     :param path: target path
     :param filename: secure file name
-    :param app: Falsk.application
+    :param logger: app logger
     :return: None
     """
     thumb_full_path = '/tmp/thumbnail.jpg'
@@ -184,7 +204,7 @@ def make_thumbnails(path, filename, app):
         im.save(thumb_full_path)
 
     except Exception as e:
-        app.log.error("Thumbnails creation error : %s, %s", thumb_full_path, e)
+        logger.error("Thumbnails creation error : %s, %s", thumb_full_path, e)
         raise e
 
     return thumb_full_path
@@ -255,16 +275,24 @@ def presigned_url(filename, email, Thumbnail=True):
             url = s3_client.generate_presigned_url(
                 'get_object',
                 Params={'Bucket': conf['S3_PHOTO_BUCKET'],
-                        'Key': key_thumb})
+                        'Key': key_thumb},
+                ExpiresIn=conf['S3_PRESIGNED_EXP'])
         else:
             key = "{0}{1}".format(prefix, filename)
             url = s3_client.generate_presigned_url(
                 'get_object',
                 Params={'Bucket': conf['S3_PHOTO_BUCKET'],
-                        'Key': key})
+                        'Key': key},
+                ExpiresIn=conf['S3_PRESIGNED_EXP'])
 
     except Exception as e:
         # flash('Error occurred! Please try again : {0}'.format(e))
         raise e
 
     return url
+
+
+# form['filename_orig'][0].decode('utf-8')
+
+
+
