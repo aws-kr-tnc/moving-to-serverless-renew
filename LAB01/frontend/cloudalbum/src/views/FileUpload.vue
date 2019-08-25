@@ -140,6 +140,10 @@
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
+              <v-btn color="secondary" target="_blank"
+                     href="https://d2r3btx883i63b.cloudfront.net/temp/sample-photo.zip" >
+                <v-icon>mdi-arrow-down-bold-circle</v-icon> Sample photo DOWN
+              </v-btn>
               <v-btn color="primary" @click="attemptUpload">
                 <v-icon>mdi-upload</v-icon> Submit
               </v-btn>
