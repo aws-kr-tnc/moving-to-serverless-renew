@@ -12,7 +12,6 @@ app = Chalice(app_name='cloudalbum')
 app.debug = True
 app.log.setLevel(logging.DEBUG)
 
-
 @app.authorizer()
 def jwt_auth(auth_request):
     """
@@ -147,7 +146,3 @@ def signout():
     return Response(status_code=200, body={'ok': True},
                     headers={'Content-Type': 'application/json'})
 
-# @app.route('/introspect')
-# def introspect():
-#     return app.current_request.to_dict()
-#

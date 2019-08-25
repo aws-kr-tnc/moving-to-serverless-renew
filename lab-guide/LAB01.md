@@ -243,6 +243,7 @@ export FLASK_ENV=development
 export APP_SETTINGS=cloudalbum.config.DevelopmentConfig
 export UPLOAD_FOLDER=/tmp
 ```
+* Or, `source shell.env`
 
 * Then, run following command.
 ```

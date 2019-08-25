@@ -76,10 +76,10 @@ This TASK will provide an introduction on how to use AWS Chalice and provide ins
 5. We installed AWS Chalice serverless framework previous step, it is time to create your first Chalice application. Run the ***chalice new-project*** command to create a project called ***myapp***:
 
 ```console
-mkdir -p ~/environment/moving-to-serverless-workshop-1d/LAB04/01-Chalice/
+mkdir -p ~/environment/moving-to-serverless-renew/LAB04/01-Chalice/
 ```
 ```console
-cd ~/environment/moving-to-serverless-workshop-1d/LAB04/01-Chalice/
+cd ~/environment/moving-to-serverless-renew/LAB04/01-Chalice/
 ```
 ```console
 chalice new-project myapp
@@ -201,11 +201,15 @@ def user_add():
 * Review above code for new ***app.py***. ***Response*** and ***logging*** are importted from top of the ***app.py*** file. Debug option is enabled for the application logging. ***user_info*** and ***user_add*** functions are added.
 
 * Replace ***app.py*** file with the contents of above source code.
-  * ***app.py*** file is located in ***~/environment/moving-to-serverless-workshop-1d/LAB04/01-Chalice/myapp/app.py***
+  * ***app.py*** file is located in ***~/environment/moving-to-serverless-renew/LAB04/01-Chalice/myapp/app.py***
 
 9. Stop the previous ***chalice local --port 8080*** command with **CTRL+C** and run the new version of ***myapp***.
 ```console
 chalice local --port 8080
+```
+* Or,
+```console
+chalice --debug local --port 8080
 ```
 
 10. Test new Chalice application. For the convenience, you can open additional terminal in the Cloud9 environment. 
@@ -265,7 +269,18 @@ myapp - DEBUG - {'query_params': None, 'headers': {'host': 'localhost:8080', 'us
 
 ```
 
-11. Stop the previous *chalice local --port 8080* command with *CTRL+C* and **deploy** it to **API Gateway** and **Lambda**. You can deploy this application using Chalice CLI command. (Make sure, you working directory is ***~/environment/moving-to-serverless-workshop-1d/LAB04/01-Chalice/myapp***)
+12. Now, add an route funtion fot introspection in end of `app.py` file.
+```python
+@app.route('/introspect')
+def introspect():
+    return app.current_request.to_dict()
+```
+Run, Chalice local server and then request `/introspect`
+```console
+chalice local --port 8080
+```
+
+13. Stop the previous *chalice local --port 8080* command with *CTRL+C* and **deploy** it to **API Gateway** and **Lambda**. You can deploy this application using Chalice CLI command. (Make sure, you working directory is ***~/environment/moving-to-serverless-workshop-1d/LAB04/01-Chalice/myapp***)
 ```console
 chalice deploy
 ```
@@ -315,7 +330,7 @@ chalice.deploy.deployer.ChaliceDeploymentError: ERROR - While deploying your cha
 ```
 
 
-12. Test your first Chalice application. 
+14. Test your first Chalice application. 
 
 * **Test #1**: ***@app.route('/users/{name}', methods=['GET'])***
 ```console
@@ -387,7 +402,7 @@ tree -a .
 5 directories, 7 files
 ```
 
-13. Examine your **API Gateway** and **Lambda** Console. You can see the new API and Lambda functions.
+15. Examine your **API Gateway** and **Lambda** Console. You can see the new API and Lambda functions.
 * API Gateway console (myapp)
 <img src=./images/lab04-task1-api-gw-console.png width=700>
 
@@ -395,7 +410,7 @@ tree -a .
 <img src=./images/lab04-task1-lambda-console.png width=700>
 
 
-14. Delete deployed application
+16. Delete deployed application
 ```console
 cd ~/environment/moving-to-serverless-workshop-1d/LAB04/01-Chalice/myapp
 ```
@@ -443,41 +458,19 @@ Finally, all servers are gone!
 <img src=./images/lab04-task2-serverless-full.png width=700>
 
 
-15. Let's take a look around ***~/environment/moving-to-serverless-workshop-1d/LAB04/02-CloudAlbum-Chalice/cloudalbum/*** directory.
+17. Let's take a look around ***~/environment/moving-to-serverless-renew/LAB04/02-CloudAlbum-Chalice/cloudalbum/*** directory.
 
 ```console
-cd ~/environment/moving-to-serverless-workshop-1d/LAB04/02-CloudAlbum-Chalice/cloudalbum/
+cd ~/environment/moving-to-serverless-renew/LAB04/02-CloudAlbum-Chalice/cloudalbum/
 ```
-```console
-tree -L 2 -a .
-```
-* output
-```
-├── app.py
-├── .chalice
-│   └── config.json
-├── chalicelib
-│   ├── config.py
-│   ├── __init__.py
-│   ├── models_ddb.py
-│   ├── templates
-│   └── util.py
-├── .gitignore
-├── requirements.txt
-└── vendor
-    ├── bin
-    ├── jinja2
-    ├── Jinja2-2.10.dist-info
-    ├── markupsafe
-    ├── pyasn1
-    ├── pyasn1-0.4.3.dist-info
-    ├── python_jose-3.0.0.dist-info
-    ├── rsa
-    └── rsa-3.4.2.dist-info
+<img src=./images/lab03-task3-chalice-app-structure.png width=700>
 
-```
 
-* All of route functions are in the ***app.py*** and ***template*** and modules are in the ***chalicelib*** directory.
+* All of route functions are in the ***app.py*** and python modules are in the ***chalicelib*** directory.
+
+* This application works well with our CloudAlbum front-end application. 
+* You can experience the simplicity, manageability, and scalability of the serverless architecture with this application.
+
 
 **3rd Party Packages:** 
 There are two options for handling python package dependencies:
@@ -494,40 +487,35 @@ There are two options for handling python package dependencies:
 
 * A package is installable with requirements.txt but has optional c extensions. Chalice can build the dependency without the c extensions, but if you want better performance you can vendor a version that is compiled.
 
-* As a general rule of thumb, code that you write goes in either ***app.py*** or ***chalicelib/***, and dependencies are
+* As a general rule of thumb, code that you write goes in either ***app.py*** or ***chalicelib/*** , and dependencies are
 either specified in ***requirements.txt*** or placed in the ***vendor/*** directory.
 
-16. Examine ***.py*** files. **Flask dependecies are removed**. Only **Jinja2 package is alived** in the ***vendorv directory. 
 
 
-17. Set up application parameters. We will user **Parameter Store** (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-paramstore.html) for the application configuration.
+18. Set up application parameters. We will user **Parameter Store** (https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-paramstore.html) for the application configuration.
 
 * **NOTE:** Please make sure replace ***<...>*** values **YOUR OWN VALUE**.
   * https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-cli.html 
 
 ```console
 
-aws ssm put-parameter --name "/cloudalbum/GMAPS_KEY" --value "<REAL_GMAPS_KEY_PROVIDED_BY_INSTRUCTOR>" --type "SecureString"
 aws ssm put-parameter --name "/cloudalbum/S3_PHOTO_BUCKET" --value "cloudalbum-<INITIAL>" --type "SecureString"
+aws ssm put-parameter --name "/cloudalbum/S3_PRESIGNED_EXP" --value "3600" --type "SecureString"
 aws ssm put-parameter --name "/cloudalbum/COGNITO_POOL_ID" --value "<COGNITO_POOL_ID>" --type "SecureString"
 aws ssm put-parameter --name "/cloudalbum/COGNITO_CLIENT_ID" --value "<COGNITO_CLIENT_ID>" --type "SecureString"
 aws ssm put-parameter --name "/cloudalbum/COGNITO_CLIENT_SECRET" --value "<COGNITO_CLIENT_SECRET>" --type "SecureString"
 aws ssm put-parameter --name "/cloudalbum/COGNITO_DOMAIN" --value "<COGNITO_DOMAIN>" --type "SecureString"
-
 aws ssm put-parameter --name "/cloudalbum/THUMBNAIL_WIDTH" --value "300" --type "SecureString"
 aws ssm put-parameter --name "/cloudalbum/THUMBNAIL_HEIGHT" --value "200" --type "SecureString"
 aws ssm put-parameter --name "/cloudalbum/AWS_REGION" --value "ap-southeast-1" --type "SecureString"
 aws ssm put-parameter --name "/cloudalbum/DDB_RCU" --value "10" --type "SecureString"
 aws ssm put-parameter --name "/cloudalbum/DDB_WCU" --value "10" --type "SecureString"
-aws ssm put-parameter --name "/cloudalbum/BASE_URL" --value "DUMMY" --type "SecureString"
 ```
-* Above **DUMMY** value of ***/cloudalbum/BASE_URL*** will be replaced real thing.(**We can get API Gateway url after deploy**)
-
 
 * **NOTE:** If you put the wrong value, you can **overwrite** that value with ***--overwrite*** parameter. If ***--overwrite*** parameter ommited, you can see the following error message. ***(An error occurred (ParameterAlreadyExists) when calling the PutParameter operation: ...)***
 
 
-18. Verify your parameters. 
+19. Verify your parameters. 
 
 ```console
 aws ssm describe-parameters
@@ -541,15 +529,7 @@ aws ssm describe-parameters
             "Type": "SecureString",
             "KeyId": "alias/aws/ssm",
             "LastModifiedDate": 1533589218.29,
-            "LastModifiedUser": "arn:aws:iam::123456789012:user/poweruser",
-            "Version": 1
-        },
-        {
-            "Name": "/cloudalbum/BASE_URL",
-            "Type": "SecureString",
-            "KeyId": "alias/aws/ssm",
-            "LastModifiedDate": 1533589322.314,
-            "LastModifiedUser": "arn:aws:iam::123456789012:user/poweruser",
+            "LastModifiedUser": "arn:aws:iam::xxxxxxxxxxxx:user/poweruser",
             "Version": 1
         },
         {
@@ -557,7 +537,7 @@ aws ssm describe-parameters
             "Type": "SecureString",
             "KeyId": "alias/aws/ssm",
             "LastModifiedDate": 1533589258.2,
-            "LastModifiedUser": "arn:aws:iam::123456789012:user/poweruser",
+            "LastModifiedUser": "arn:aws:iam::xxxxxxxxxxxx:user/poweruser",
             "Version": 1
         },
         {
@@ -567,6 +547,11 @@ aws ssm describe-parameters
         }
 }
 ```
+* For the convenience, you can use `--query` filter like below.
+```console
+aws ssm get-parameters-by-path --path "/cloudalbum" --query "Parameters[].[Name, Value]" --with-decryption --recursive
+```
+* Now, get specific parameter value.
 
 ```console
 aws ssm get-parameters --names "/cloudalbum/DDB_RCU" --with-decryption
@@ -592,11 +577,26 @@ aws ssm get-parameters --names "/cloudalbum/DDB_RCU" --with-decryption
 <img src="./images/lab04-task3-ps-console.png" width="600">
 
 
-19. Review ***config.py*** file located in '**LAB04/02-CloudAlbum-Chalice/cloudalbum/chalicelib/config.py**'.
+20. Review ***config.py*** file located in '**LAB04/02-CloudAlbum-Chalice/cloudalbum/chalicelib/config.py**'.
 
 ```python
-from chalice import CORSConfig
 import boto3
+from chalice import CORSConfig
+from aws_parameter_store import AwsParameterStore
+
+
+def get_param_path(param_path):
+    """
+    Retrieve all key:values in the Parameter Store.
+    :param param_path:
+    :return:
+    """
+    region = boto3.session.Session().region_name
+    store = AwsParameterStore(region)
+    return store.get_parameters_dict(param_path)
+
+# store configuration values for Cloudalbum
+conf = get_param_path('/cloudalbum/')
 
 
 def get_param(param_name):
@@ -616,129 +616,39 @@ def get_param(param_name):
 
     # Store the credentials in a variable
     result = response['Parameters'][0]['Value']
-
     return result
 
 
-conf = {
-    # Mandatory variable
-    'GMAPS_KEY': get_param('/cloudalbum/GMAPS_KEY'),
-
-    # Default config values
-    'THUMBNAIL_WIDTH': get_param('/cloudalbum/THUMBNAIL_WIDTH'),
-    'THUMBNAIL_HEIGHT': get_param('/cloudalbum/THUMBNAIL_HEIGHT'),
-
-    # DynamoDB
-    'AWS_REGION': get_param('/cloudalbum/AWS_REGION'),
-    'DDB_RCU': get_param('/cloudalbum/DDB_RCU'),
-    'DDB_WCU': get_param('/cloudalbum/DDB_WCU'),
-
-    # S3
-    'S3_PHOTO_BUCKET': get_param('/cloudalbum/S3_PHOTO_BUCKET'),
-
-    # COGNITO
-    'COGNITO_POOL_ID': get_param('/cloudalbum/COGNITO_POOL_ID'),
-    'COGNITO_CLIENT_ID': get_param('/cloudalbum/COGNITO_CLIENT_ID'),
-    'COGNITO_CLIENT_SECRET': get_param('/cloudalbum/COGNITO_CLIENT_SECRET'),
-    'COGNITO_DOMAIN': get_param('/cloudalbum/COGNITO_DOMAIN'),
-    'BASE_URL': "https://{0}".format(get_param('/cloudalbum/BASE_URL'))
-}
-
-
-S3_STATIC_URL = "https://s3-{0}.amazonaws.com/{1}/static".format(conf['AWS_REGION'], conf['S3_PHOTO_BUCKET'])
-
 cors_config = CORSConfig(
     allow_origin='*',
-    allow_headers=['X-Special-Header'],
+    allow_headers=['*'],
     max_age=600,
     expose_headers=['X-Special-Header'],
     allow_credentials=True
 )
 
-```
-
-
-20. Review the ***get_param*** function in the ***config.py*** file. Through this function, we can get value easily in the **Parameter Store**.
-
-```python
-def get_param(param_name):
-    """
-    This function reads a secure parameter from AWS' SSM service.
-    The request must be passed a valid parameter name, as well as
-    temporary credentials which can be used to access the parameter.
-    The parameter's value is returned.
-    """
-    # Create the SSM Client
-    ssm = boto3.client('ssm')
-
-    # Get the requested parameter
-    response = ssm.get_parameters(
-        Names=[param_name, ], WithDecryption=True
-    )
-
-    # Store the credentials in a variable
-    result = response['Parameters'][0]['Value']
-
-    return result
-```
-
-
-21. Copy static files to your S3 Bucket for **static file hosting** such as **CSS** and **JavaScript**.
- * Following **cloudalbum-\<INITIAL\>** value must replace **YOUR OWN VALUE.**
-```console
-aws s3 sync ~/environment/moving-to-serverless-workshop-1d/resources/static s3://cloudalbum-<INITIAL>/static/ --acl public-read
-```
-
-22. Enable your S3 bucket (cloudalbum-\<INITIAL\>) CORS configuration in your S3 Console. (https://docs.aws.amazon.com/AmazonS3/latest/dev/cors.html)
-
-<img src=./images/lab04-task2-s3-cors.png width=700>
-
-* **REVIEW** the CORS configuration, and **copy and paste** it!
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-<CORSRule>
-    <AllowedOrigin>*</AllowedOrigin>
-    <AllowedMethod>GET</AllowedMethod>
-    <MaxAgeSeconds>3000</MaxAgeSeconds>
-    <AllowedHeader>Authorization</AllowedHeader>
-</CORSRule>
-</CORSConfiguration>
 
 ```
 
-23. Review template files. Template files which stored ***moving-to-serverless-workshop-1d/LAB04/02-CloudAlbum-Chalice/cloudalbum/chalicelib/templates*** are already changed to **load static resources in your S3 bucket**. You can refer above variable in the config.py file.
-```python
-S3_STATIC_URL = "https://s3-{0}.amazonaws.com/{1}/static".format(conf['AWS_REGION'], conf['S3_PHOTO_BUCKET'])
-```
+**NOTE** : When reading the variable value in Parameter Store, each variable can be accessed one by one, but it is efficient to get the entire parameter corresponding to a specific path at once by specifying the path. We have imported and used the `aws_parameter_store` Python package for convenience.
+
+  *  get_parameter(**kwargs)
+     * https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ssm.html#SSM.Client.get_parameter
+  * get_parameters_by_path(**kwargs)
+     * https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ssm.html#SSM.Client.get_parameters_by_path 
 
 
-24. Review the ***app.py*** in the 'LAB04/02-CloudAlbum-Chalice/cloudalbum/app.py' 
+
+21. Review the ***app.py*** in the 'LAB04/02-CloudAlbum-Chalice/cloudalbum/app.py' 
 * Flask dependencies are removed
   * Flask, url_for, flash, flask_login and so on.
 
-* Chalice has similar features like flask route decorator structure.
+* As you know, AWS Chalice has similar features like flask route decorator structure.
 
-* CloudAlbum is not restful, it is still **tightly coupled with Jinja2 template engine**. So, we use Jinja2 template engine in this time.
-
-* Chalice permmited to load python modules **from the ***chalicelib*** directory**. We will use this directory which contains ***templates*** directory. You can refer to following code in ***LAB04/02-CloudAlbum-Chalice/cloudalbum/app.py***. 
-```python
-env = Environment(
-    loader=PackageLoader(__name__, 'chalicelib/templates'),
-    autoescape=select_autoescape(['html', 'xml']))
-```
-
-* We can use Jinja2 template engine like below:
-
-```python
-t = env.get_template('upload.html')
-body = t.render(current_user=user, gmaps_key=conf['GMAPS_KEY'], s3_static_url=S3_STATIC_URL)
-```
-
-**NOTE:** `static` contents will be moved S3, so we need to copy static files in your S3 bucket. Jinja2 Template engine will load template in the `chalicelib/templates` directory.
+* Chalice permmited to load python modules **from the ***chalicelib*** directory**. We will use this directory for python module. 
 
 
-25. Review provided **Lambda execution policy** before run. 
+22. Review provided **Lambda execution policy** before run. 
 * **NOTE:** As you know, this policy is just example for the convinience not for practical environment. 
 
 * This policy is provided for the workshop as ***policy-dev.json*** in the ***LAB04/02-CloudAlbum-Chalice/cloudalbum/.chalice/policy-dev.json***. 
@@ -764,10 +674,123 @@ body = t.render(current_user=user, gmaps_key=conf['GMAPS_KEY'], s3_static_url=S3
 }
 ```
 
-* Whenever your application is deployed using chalice, the **auto generated policy** is written to disk at <projectdir>/.chalice/policy.json. When you run the chalice deploy command, you can also specify the --no-autogen-policy option. Doing so will result in the chalice CLI loading the <projectdir>/.chalice/policy.json file and using that file as the policy for the IAM role. You can manually edit this file and **specify --no-autogen-policy** if you'd like to have full control over what IAM policy to associate with the IAM role.
+* Whenever your application is deployed using Chalice, the **auto generated policy** is written to disk at <projectdir>/.chalice/policy.json. When you run the chalice deploy command, you can also specify the --no-autogen-policy option. Doing so will result in the chalice CLI loading the <projectdir>/.chalice/policy.json file and using that file as the policy for the IAM role. You can manually edit this file and **specify --no-autogen-policy** if you'd like to have full control over what IAM policy to associate with the IAM role.
+
+23. Let's take a quick look at the `app.py` file.
+```python
+....
+....
+@app.authorizer()
+def jwt_auth(auth_request):
+    """
+    JWT based authorizer
+    :param auth_request:
+    :return: AuthResponse
+    """
+    token = auth_request.token
+    try:
+        decoded = cognito.token_decoder(token)
+        return AuthResponse(routes=['*'], principal_id=decoded['sub'])
+    except Exception as e:
+        app.log.error(e)
+        return AuthResponse(routes=[''], principal_id='')
 
 
-26. Now, you can deploy CloudAlbum application with chalice. 
+@app.route('/photos/file', methods=['POST'], cors=cors_config,
+           authorizer=jwt_auth, content_types=['multipart/form-data'])
+def upload():
+    """
+    File upload with multipart/form data.
+    :return:
+    """
+    form = get_parts(app)
+    filename_orig = form['filename_orig'][0].decode('utf-8')
+    extension = (filename_orig.rsplit('.', 1)[1]).lower()
+    try:
+        current_user = cognito.user_info(cognito.get_token(app.current_request))
+        filename = "{0}.{1}".format(uuid.uuid4(), extension)
+        filesize = save_s3_chalice(form['file'][0], filename, current_user['email'], app.log)
+
+        pp.pprint(current_user)
+        new_photo = create_photo_info(current_user['user_id'], filename, filesize, form)
+        new_photo.save()
+        return Response(status_code=200, body={'ok': True},
+                        headers={'Content-Type': 'application/json'})
+    except Exception as e:
+        raise ChaliceViewError(e)
+....
+....
+```
+* The `jwt_auth` function is a kind of Custom Authorizer that verify a request. It catch the JWT based `Authorization` header and decode it. This function becomes a Custom Authorizer Lambda function when it is deployed.
+
+* The `jwt_auth` function can be passed to the `@app.route` decorator so that it can be verified when API is requested.
+```python
+@app.route('/photos/file', methods=['POST'], cors=cors_config,
+           authorizer=jwt_auth, content_types=['multipart/form-data'])
+def upload():
+...
+...
+```
+
+
+24. Let's run CloudAlbum backend developed with AWS Chalice.
+```console
+cd ~environment/moving-to-serverless-renew/LAB04/02-CloudAlbum-Chalice/cloudalbum
+
+pip install -r requirements.txt
+
+chalice local --port 5000
+```
+* And then, request Sign-up API via HTTPie. 
+```console
+echo '{ "email": "super@mario.com", "password": "Super2019!", "username": "SuperMario"}' | http POST http://localhost:5000/users/signup
+```
+```console
+HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Headers: *,Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key
+Access-Control-Allow-Origin: *
+Access-Control-Expose-Headers: X-Special-Header
+Access-Control-Max-Age: 600
+Content-Length: 11
+Content-Type: application/json
+Date: Sun, 25 Aug 2019 21:15:25 GMT
+Server: BaseHTTP/0.6 Python/3.6.6
+
+{
+    "ok": true
+}
+
+```
+
+* How about sign-in? Let's do it.
+```console
+echo '{ "email": "super@mario.com", "password": "Super2019!"}' | http POST http://localhost:5000/users/signin
+```
+* Output
+```console
+echo '{ "email": "super@mario.com", "password": "Super2019!"}' | http POST http://localhost:5000/users/signin
+HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Headers: *,Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key
+Access-Control-Allow-Origin: *
+Access-Control-Expose-Headers: X-Special-Header
+Access-Control-Max-Age: 600
+Content-Length: 2856
+Content-Type: application/json
+Date: Sun, 25 Aug 2019 21:17:30 GMT
+Server: BaseHTTP/0.6 Python/3.6.6
+
+{
+    "accessToken": "eyJraWQiOiJ2YnFIazZsQlwvRWtjXC9kSEZtM0RISnV4STFaOWM1bG9DbmxEaWxnM1ZSYXc9IiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiI3YTVlMWNlNC1jYjlmLTQwMzYtODg3MC05OTFjNDc4Yjk0NGYiLCJldmVudF9pZCI6ImQ4ZGYzMjBjLWUzZWUtNDc3My1hNzlkLWRmNWYxYTViZjYyZiIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjE1NjY3Njc4NTAsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC5hcC1zb3V0aGVhc3QtMS5hbWF6b25hd3MuY29tXC9hcC1zb3V0aGVhc3QtMV9NYkM1WHA4QVYiLCJleHAiOjE1NjY3NzE0NTAsImlhdCI6MTU2Njc2Nzg1MSwianRpIjoiNDVkZmQyZTQtZmVhMS00NGJjLWJiNjEtODQ4ZjIyZTUxMzg3IiwiY2xpZW50X2lkIjoiNmo0b25zbTUyaWgyZGVraTdnZnFrOXNrOTIiLCJ1c2VybmFtZSI6IjdhNWUxY2U0LWNiOWYtNDAzNi04ODcwLTk5MWM0NzhiOTQ0ZiJ9.nt2NWqGnIk8iHGVIHeDfDGXYPEbrGOWPnkLeP_m7D5pZjwc8JN-MKuYX8QmQXFBIotYlM69eRmRfFS7SYV0Pmoe5sCUDuUdciPGMho3zrOVlvP2YcrnNV09Ct-vGkRQJF1b0cb_9XofGZIXbRiM2xXYi79eeYFddDbF7wP7T7J9-xrYfU7TcMPGcPPfsHLthJmXQpdp25JuCcCmoTeXZO2y1ypKHy-02e2DxCpf5v9E4GgaHKCe7U_vVLS_Tjwb_lMHB3yWjiP_teD4QKpOwnnXZG4eGTCCF8pt9XNmrG9VUAjP1bF5AFK0JOF0WnL35bwtQTyniJrh5wCApUAMmIw",
+    "refreshToken": "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ.OZN6BelUMYsuDIPYz6jCNV4z1DIO3WkH_FDxgibdRG8dA3bWF1ImRT9sLP3w9uCcP7Vii3XX3CPIvPLO2FP6NdxXUosNItvlC93VfateEAbasAiDXCAxr3OacwWKa6LZvx2lV19_49TRN9xPOmdTlId1k3fC25dnOFAt6wpKyD1O8nPboBoAcT57mw0O51tcIV5NmkWXdYj0DiOlTjL3CMwTRgM7tY4bXAq8BIZHrnHi-YQZRuJAP3ZoC5HlxfwWQGXivCtnYCMEPcMHp5EplCbs0qLqYe0XgygOuVKXCz2SglVdBHPj7OSKAl7muMOU0ysvcUnO7vfL_rbBZFYgyw.JKcvifCXPEqguuX9.f9rGGQaQCiSms-wQMRaegnz3VJVHmDpuPNCp40di2ekNP-w1DBn4p3Di0ZNq6l_WhmKX9cQXgU5YBjBsXdtEEBbqUU-f-bvt3tJ8yud_eYm5ssFQXCySaP2xpahbcy9ZBRLC7FpsSa873uVXaMjOzILHgT4fGvKcfwX9sZwdsHsnFUo32c7UX5gjgPSRELfOqj5gcz9iX2lbqb69_mHhPQ39HzZV4l6d4Nnsh7ndJn2VB3ax2NIa6B-EJjkrK9HcojMe97eTSi7S-jbKGq-nLKJT3h3RCPTZDIbHiTnsAhFLr3ArHfRnvpZE1XbD2LIxWm8JSVhOZpjfo86I0ikdXG7tIBSc5vi-jvaOEvoSHBO-6uj9XGNDE3ZbM5Ws2EYXB1JG-WSO6-MLeUQf4KaHTly7P3rZc8vdQbBKS8it4KIMfHicfZVAQe3V46bA9AymMiLl6xv9D58ehd5RYZ6FeT-2COoZWO0R6H6XJvG8evucSIRg8qlDnGEHkM0vzCWR_bySaieppCKXexOHrvyj-uNGe31JCmrsnAsUbCphuSGZ2621n7Hw8-of0lJS6FP5B1f2TbZFFM-Z21UFIavzIghy7SkqwUuP7fwy7c_2dCOCTI-Vy0b13PLW223dbHgKXxbIxqA8GE66bFyeKclV-2_ishVJK4GsGkjuk-9UnC5rZny99KCJlAISjPCxfWVLkY37F1wWBUgGlE-TQg7eGX-RiVtzgTVxL1E7fjRAX6-E8wAdgF8tLoa3h9zrunpJQW5aLfv7Of6xUx8zILoyit5oJ9iRxbB7SZe82EiJgePuRxgbUsCC65p-ubPpbn0-rdc1ojPwtoknKTnwiFiwDVrJEJepbOptoHt5BlSIv-l-8RyMFgl0LWYmlPJ31LqLJY763ic4Zq9oKQfQCRucSQXfgKlwIVl0L_lz4AIDc0NWVQYcZlTJBU3PGW2bh3voPfW8cWrmI9qzD10m5Irt23BDB5T9neaVFr4pWzJWqBsu_pFB3q2GKOPQW2BkGSPECcO7rxVLXOoDon8Fpi7nQVv1c-a1eeG4256BtCmkOqZ0H2R3lT2jPykZvT03yjj4NqVjYFxQ8Nxy4ST-Gx_DufNDHgsH5hxywW9uh5yvog227y8tso7BkCFohK9x8fsw-omI-ux0e8CSutc1dC0zugS0AWmyXqNRsCci0pd_BnjFgMmHA3LprahK1JHtvVBBvxHIctpApdt_SJw5y7dZ9NO0JXyvb9atjNsmp_LaotSV1c3zqx446llIZjd44zDom3EP8hoL9mT3l20a57OP0fG241BjtKP5ZP2RgwfQWtkmXfb3T6SSk1QI2N5mzkhE9I5XRBnaYoeq.dNBWDdZYrmpLmFF2DCPbvw"
+}
+
+
+```
+
+
+25. Now, you can deploy CloudAlbum application with chalice.
 ```console
 chalice deploy --no-autogen-policy
 ```
@@ -777,41 +800,100 @@ chalice deploy --no-autogen-policy
 Creating deployment package.
 Updating policy for IAM role: cloudalbum-dev-api_handler
 Updating lambda function: cloudalbum-dev
+Updating policy for IAM role: cloudalbum-dev-jwt_auth
+Updating lambda function: cloudalbum-dev-jwt_auth
 Updating rest API
 Resources deployed:
-  - Lambda ARN: arn:aws:lambda:ap-southeast-1:389833669077:function:cloudalbum-dev
-  - Rest API URL: https://v1mehmiqsj.execute-api.ap-southeast-1.amazonaws.com/api/
-```
+  - Lambda ARN: arn:aws:lambda:ap-southeast-1:xxxxxxxxxxxx:function:cloudalbum-dev
+  - Lambda ARN: arn:aws:lambda:ap-southeast-1:xxxxxxxxxxxx:function:cloudalbum-dev-jwt_auth
+  - Rest API URL: https://3g34rwxxxx.execute-api.ap-southeast-1.amazonaws.com/api/
 
-* Keep the ***Rest API URL*** value and **update Parameter Store** using this value. You **should remove** ***https://*** and ***/ (last character)*** like following strins.
 
-   * ***Rest API URL*** : v1mehmiqsj.execute-api.ap-southeast-1.amazonaws.com/api
-
-```console
-aws ssm put-parameter --name "/cloudalbum/BASE_URL" --value "<YOUR REST API URL>" --type "SecureString" --overwrite
 ```
 
 
-27. Configure ***App client cloudalbum*** in the **Cognito console.**
-<img src=./images/lab04-task2-cog-console.png width=700>
-
-* Update ***Callback URL(s)***.
-* Update ***Sign out URL(s)***.
-
-28. Look into your **Lambda Console.**
+26. Look into your **Lambda Console.**
 <img src=./images/lab04-task2-lambda-console.png width=700>
 
 
-29. Look into your **API Gateway Console.**
+27. Look into your **API Gateway Console.**
 <img src=./images/lab04-task2-apigw-console.png width=700>
 
 
-30. Connect to your application through API Gateway. Open your Rest API URL looks like this ***https://v1mehmiqsj.execute-api.ap-southeast-1.amazonaws.com/api*** in your browser. 
-* If you missed API Gateway **URL**, you can use ***chalice url*** command.
-<img src=./images/lab03-task3-cognito-login.png width=500>
+* You can enable X-Ray easily.
+<img src=./images/lab04-task2-apigw-console-xray.png width=700>
 
 
-31. Perform application test.
+* You can also check `jwt_auth` custom authorizer.
+<img src=./images/lab04-task2-apigw-console-auth.png width=700>
+
+
+28. Now, configure our front-end to S3 bucket.
+
+* First, check our serverles backend API URL.
+```console
+chalice url
+```
+* output
+```console
+https://3g34rwxxxx.execute-api.ap-southeast-1.amazonaws.com/api/
+```
+* Now, go to frontend directory, then open `.env` file in your Cloud9 editor. (`~environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env`)
+* It contains below default properties.
+```console
+//AXIOS api request time-out
+VUE_APP_TIMEOUT=15000
+
+//For test/development api end-point
+//VUE_APP_API=http://127.0.0.1:5000
+
+//For deployment
+VUE_APP_API=<YOUR serverless backend API URL>
+
+//Is using S3 presinged URL?!
+VUE_APP_S3_PRESIGNED_URL=true
+
+```
+* You should setup, `VUE_APP_API` URL and save this file.
+
+29. Let's build front-end application.
+
+```console
+cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/
+npm run build
+```
+* You can see similar messages below, if you complete the build.
+```console
+...
+...
+...
+ DONE  Build complete. The dist directory is ready to be deployed.
+ INFO  Check out deployment instructions at https://cli.vuejs.org/guide/deployment.html
+```
+
+30. Now, move front-end application to Amazon S3. (It might be same with `/cloudalbum/S3_PHOTO_BUCKET` variable.)
+
+* Copy front-end to S3 bucket and enable `Static website hosting`.
+```console
+cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/dist
+aws s3 sync . s3://frontend-<your-initial>/ --acl public-read
+aws s3 website s3://frontend-<your-initial>/ --index-document index.html
+``` 
+
+31. Connect to front-end via your browser. Here is S3 URL rule pattern.
+ * http://<BUCKER NAME>.s3-website-<REGION CODE>.amazonaws.com
+
+ * For example, if your frontend bucket name is 'frontend-1234' and the region you use is Singapore (ap-southeast-1):
+   * http://frontend-1234.s3-website-ap-southeast-1.amazonaws.com
+
+ * If everything are fine, you can see the frontend like below.
+
+ <img src="./images/lab01-08.png" width=500>
+
+
+
+
+32. Enjoy Serverless CloudAlbum service.
 <img src=./images/lab01-02.png width=700>
 
 * Sign in / up
@@ -823,15 +905,6 @@ aws ssm put-parameter --name "/cloudalbum/BASE_URL" --value "<YOUR REST API URL>
 * Find photos with Search tool
 * Check the Photo Map
 
-## Go further
-* Legacy backend is **tightly coupled with Jinja2** Template Engine!
-<img src="./images/lab04-task3-go-further-jinja2.png" width="550">
-
-* It means almost request returned rendered HTML **not JSON data**.
-* If you want to build **more flexible backend**, you can **re-design your client code rendering it self using data response from backend API**.
-* AWS Chalice is suitable for **RESTful API** server.
-* **Continuous Deployment** (CD)
-   * Related document: https://chalice.readthedocs.io/en/latest/topics/cd.html
 
 ## TASK 3 : Remove your AWS resources
 **CAUTION**: If you have completed this hands-on lab so far, please delete the AWS resources which used in this lab. You may incur an unwanted fee.
@@ -846,24 +919,22 @@ chalice delete
 
 33. Delete Parameter store
 ```console
-aws ssm delete-parameter --name "/cloudalbum/GMAPS_KEY"
 aws ssm delete-parameter --name "/cloudalbum/S3_PHOTO_BUCKET"
+aws ssm delete-parameter --name "/cloudalbum/S3_PRESIGNED_EXP"
 aws ssm delete-parameter --name "/cloudalbum/COGNITO_POOL_ID"
 aws ssm delete-parameter --name "/cloudalbum/COGNITO_CLIENT_ID"
 aws ssm delete-parameter --name "/cloudalbum/COGNITO_CLIENT_SECRET"
 aws ssm delete-parameter --name "/cloudalbum/COGNITO_DOMAIN"
-
 aws ssm delete-parameter --name "/cloudalbum/THUMBNAIL_WIDTH"
 aws ssm delete-parameter --name "/cloudalbum/THUMBNAIL_HEIGHT"
 aws ssm delete-parameter --name "/cloudalbum/AWS_REGION"
 aws ssm delete-parameter --name "/cloudalbum/DDB_RCU"
 aws ssm delete-parameter --name "/cloudalbum/DDB_WCU"
-aws ssm delete-parameter --name "/cloudalbum/BASE_URL"
 ```
 
 34. Delete S3 
 ```console
-aws s3 rb s3://cloudalbum-<INITIAL> --force
+aws s3 rm s3://frontend-<INITIAL> --force
 ```
 
 35. Delete DynamoDB
