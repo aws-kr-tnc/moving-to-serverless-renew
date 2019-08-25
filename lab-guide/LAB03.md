@@ -486,7 +486,7 @@ class BaseConfig:
 ```
 13. Run your application!
 
-* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_connect](LAB_make_Connection.md)
+* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](LAB_make_Connection.md)
 
 
 14. Then look into AWS DynamoDB console.
@@ -592,36 +592,22 @@ generate_presigned_url(ClientMethod, Params=None, ExpiresIn=3600, HttpMethod=Non
 ```
 
 
-21. Open the ***run.py*** and run the application with DynamoDB and S3.
+21. Run your application!
 
-* Ensure **Runner: Python 3**
-<img src=./images/lab03-task1-run-console.png width=800>
+* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](LAB_make_Connection.md)
 
-22. Connect to your application using **Cloud9 preview** in your browser. 
-
-23. Perform application test.
+22. Perform application test.
 <img src=./images/lab01-02.png width=700>
 
-* Sign in / up
-* Upload Sample Photos
-* Sample images download here
-  *  https://d2r3btx883i63b.cloudfront.net/temp/sample-photo.zip
-* Look your Album
-* Change Profile
-* Find photos with Search tool
-* Check the Photo Map
-
-24. Examine DynamoDB Console and S3 Console.
+23. Examine DynamoDB Console and S3 Console.
 <img src=./images/lab03-task2-s3-console.png width=500>
 
 * You can find your uploaded image objects with thumbnails.
 
 Is it OK? Let's move to the next TASK.
 
-**NOTE:** Click the ***stop icon*** to stop your application.
-  * **Close your terminal** after application stop.
-  * **Close all your opened file tab.**
-<img src=./images/stop-app.png width=500>
+24. Stop your application. 
+* You can stop both frontend and backend application by press `ctrl+c` in your Cloud9 Terminal.
 
 
 ## TASK 4. Go to Cognito
@@ -763,9 +749,7 @@ class BaseConfig:
 
 
 
-
-
-59. Before implement TODO #7, you need to review ***LAB03/03-Cognito/backend/cloudalbum/database/model_ddb.py* file. Compare to the previous lab, there is only one table:Photo. It means from now **Cognito User pool replace original User table of DynamoDB**.
+59. Before implement TODO #7, you need to review **LAB03/03-Cognito/backend/cloudalbum/database/model_ddb.py** file. Compare to the previous lab, there is only one table:Photo. It means from now **Cognito User pool replace original User table of DynamoDB**.
 
 ```python
 class Photo(Model):
@@ -885,14 +869,9 @@ def user_signup_confirm(id):
 ```
 
 
-61. **Open the run.py** and run the application. Connect to your application using **Cloud9 preview**in your browser. 
-* You can find default Cognito Login Screen.
-<img src="images/lab03-task3-cognito-login.png" width="450">
+61. Run your backend/frontend application!
 
-* You need to verify your email address after signup.
-<img src="images/lab03-task3-cog-verify.png" width="450">
-
-* You can **change default login screen** in the Cognito console dashboard.
+* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](LAB_make_Connection.md)
 
 
 62. Perform application test.
@@ -912,12 +891,11 @@ def user_signup_confirm(id):
 
 * You can find your profile information.
 
-Is it OK? Let's move to the next TASK.
 
-**NOTE:** Click the ***stop icon*** to stop your application.
-  * **Close your terminal** after application stop.
-  * **Close all your opened file tab.**
-<img src=./images/stop-app.png width=500>
+* Stop your application. 
+* You can stop both frontend and backend application by press `ctrl+c` in your Cloud9 Terminal.
+
+
 
 ## TASK 5. Go to X-ray
 
@@ -1043,19 +1021,13 @@ class BaseConfig:
 | COGNITO_CLIENT_SECRET | Copy and paste the App Client Secret you noted earlier. |
 |COGNITO_DOMAIN |Copy and paste the domain name you created earlier. It should look similar to the example below. Do not copy the entire URL starting with https://<YOUR_DOMAIN_NAME>.auth.ap-southeast-1.amazoncognito.com (for example(**without** `https://`): <YOUR_DOMAIN_NAME>.auth.ap-southeast-1.amazoncognito.com)|
 
- * For example,
 
-   <img src="images/lab03-task3-cognito-config.png" width="800">
 
-72. **Open the run.py** and run the application. You can run the application to check all features are works well. Then you will see function tracing data collected on the X-Ray console.
+72. Run your backend/frontend application!
 
-73. Connect to your application using **Cloud9 preview** in your browser. 
-* You can find default Cognito Login Screen.
-<img src=images/lab03-task3-cognito-login.png width=500>
+* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](LAB_make_Connection.md)
 
-* You can change default login screen in the Cognito console dashboard.
-
-74. Perform application test.
+73. Perform application test.
 
 <img src=images/lab01-02.png width=700>
 
@@ -1068,15 +1040,13 @@ class BaseConfig:
 * Find photos with Search tool
 * Check the Photo Map
 
-75. Examine X-Ray Console dashboard
+74. Examine X-Ray Console dashboard
 <img src=images/lab03-task4-x-ray.png width=500>
 
 Is it OK? Let's go to next LAB.
 
-**NOTE:** Click the ***stop icon*** to stop your application.
-  * **Close your terminal** after application stop.
-  * **Close all your opened file tab.**
-<img src=images/stop-app.png width=700>
+75. Stop your application. 
+* You can stop both frontend and backend application by press `ctrl+c` in your Cloud9 Terminal.
 
 
 # Congratulation! You completed LAB03.
