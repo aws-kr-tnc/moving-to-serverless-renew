@@ -854,14 +854,14 @@ def user_signup_confirm(id):
 
 ### TODO #8
 
-60. Find **TODO #8** in the 'LAB03/03-Cognito/backend/cloudalbum/api/users.py' file and please implement your own code instead of following solution function which name is **solution\_get\_cognito\_user\_data**. This function get user data from Cognito user pool with access_token with Boto3. 
+60. Find **TODO #8** in the **LAB03/03-Cognito/backend/cloudalbum/api/users.py** file and please implement your own code instead of following solution function which name is **solution\_get\_cognito\_user\_data**. This function get user data from Cognito user pool with access_token with Boto3. 
 
 ```python
 	# TODO 8: Implement follwing solution code to get user data from Cognito user pool
 	return solution_get_cognito_user_data(access_token)
 ```
 
-* Let's look around solution_get_cognito_user_data function. All you need to implement is making a call to Boto3 get_user function, and parsing the the resopnse to set it properly as CloudAlbum's key name.
+* Let's look around **solution\_get\_cognito\_user\_data** function. All you need to implement is making a call to Boto3 get_user function, and parsing the the response to set it properly as CloudAlbum's key name.
 
 ```python
 	cognito_user = client.get_user(AccessToken=access_token)
