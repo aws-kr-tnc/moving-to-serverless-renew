@@ -260,7 +260,7 @@ class Photo(db.Model):
 ```
 
 4. Open the **models_ddb.py** which located in  'LAB03/01-DDB/backend/cloudalbum/database/models_ddb.py'.
-<img src=./images/lab03-task1-models_ddb-2.png width=300>
+<img src=./images/lab03-task1-models_ddb-2.png width=150>
 
 
 
