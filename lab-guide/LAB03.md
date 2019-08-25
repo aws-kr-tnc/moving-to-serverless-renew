@@ -836,6 +836,22 @@ class BaseConfig:
 
 * For instance, in CloudAlbum, the key name of email was just 'email', however it need to be changed into 'username' when stored into Cognito. 
 
+* After register a user into Cognito User pool, admin need to confirm that user. For your convinience, We automatically confirmed user right after success to register. Please refer below code which is located in **LAB03/03-Cognito/backend/cloudalbum/soultion.py**
+
+```python 
+def user_signup_confirm(id):
+    client = boto3.client('cognito-idp')
+    try:
+        client.admin_confirm_sign_up(
+            UserPoolId=conf['COGNITO_POOL_ID'],
+            Username=id
+        )
+        app.logger.debug('success: user confirm automatically:user id:{}'.format(id))
+    except Exception as e:
+        app.logger.error('ERROR: user confirm failed:user id:{}'.format(id))
+        app.logger.error(e)
+```
+
 ### TODO #8
 
 60. Find **TODO #8** in the 'LAB03/03-Cognito/backend/cloudalbum/api/users.py' file and please implement your own code instead of following solution function which name is **solution\_get\_cognito\_user\_data**. This function get user data from Cognito user pool with access_token with Boto3. 
