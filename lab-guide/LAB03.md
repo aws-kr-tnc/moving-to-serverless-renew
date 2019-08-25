@@ -201,7 +201,7 @@ In this TASK, we will introduce DynamoDB for CloudAlbum application. We also int
 
 1. Install required Python packaged:
 ```console
-sudo pip-3.6 install -r ~/environment/moving-to-serverless-workshop-1d/LAB03/01-DDB/requirements.txt
+sudo pip install -r ~/environment/moving-to-serverless-workshop-renew/LAB03/01-DDB/requirements.txt
 ```
 
 
@@ -666,39 +666,6 @@ To begin, follow the steps below.
 
 47. In the left navigation menu, under **App integration**, click **App client settings**.
 
-48. For **Enabled Identity Providers**, check **Cognito User Pool**.
-* Check the Cloud9 ResourceId at the **Cloud9 Terminal.** 
-```console 
-RESOURCE_ID=$(aws ec2 describe-tags --query "Tags[].Value" --filters "Name=resource-id, Values=`ec2-metadata --instance-id | cut -f2 -d ' '`" "Name=key, Values=aws:cloud9:environment" --output text)
-
-echo "https://$RESOURCE_ID.vfs.cloud9.ap-southeast-1.amazonaws.com"
-
-```
-* **\<YOUR PREVIEW URL\>** is :  
-```
-https://<CLOUD9_RESOURCE_ID>.vfs.cloud9.ap-southeast-1.amazonaws.com
-```
-* **KEEP THIS VALUE FOR LATER USE**
-
- * For **Cloud9 Preview** user:
-   * For **Callback URL(s)** type `https://<YOUR PREVIEW URL>/callback`
-   * For **Sign out URL(s)** type `https://<YOUR PREVIEW URL>`
-   * **NOTE:** This is an **alternative way** of check ResourceId. If you complete checking <YOUR PREVIEW URL>, You can pass below steps and go to STEP 49. 
-   
-   <img src='images/lab03-task3-cloud9-preview.png' width='550'>
-
-
-49. Under **OAuth 2.0**, for **Allowed OAuth Flows**, select **Authorization code grant** and for **Allowed OAuth Scopes**, select **openid**.
-<img src="images/lab03-task2-cognito-app-client.png" width="500">
-
-50. Click **Save changes** at the bottom.
-
-51. In the left navigation menu, under **App integration**, click **Domain name**.
-
-52. Type a **domain name**(for example: `cloudalbum-<INITIAL>`, check its availability, and click **Save changes**. Write down the domain name for later use.
- * **NOTE:** Domain name You have to use **lowercase**.
-<img src="images/lab03-task2-cognito-domain.png" width="500">
-
 53. In the left navigation menu, under **General settings**, click **App clients**.
 
 54. Click **Show details**.
@@ -710,7 +677,7 @@ https://<CLOUD9_RESOURCE_ID>.vfs.cloud9.ap-southeast-1.amazonaws.com
 
 57. Install required Python packages:
 ```console
-sudo pip-3.6 install -r ~/environment/moving-to-serverless-workshop-1d/LAB03/03-CloudAlbum-COGNITO/requirements.txt
+sudo pip install -r ~/environment/moving-to-serverless-workshop-renew/LAB03/03-COGNITO/requirements.txt
 ```
 
 58. Review 'LAB03/03-COGNITO/cloudalbum/config.py'
@@ -905,7 +872,7 @@ AWS [X-Ray](https://aws.amazon.com/xray/) helps developers analyze and debug pro
 
 64. Install required Python packages for AWS X-Ray.
 ```console
-sudo pip-3.6 install -r ~/environment/moving-to-serverless-workshop-1d/LAB03/04-CloudAlbum-XRAY/requirements.txt
+sudo pip install -r ~/environment/moving-to-serverless-workshop-renew/LAB03/04-XRAY/requirements.txt
 ```
 
 **Download and run the AWS X-Ray daemon on your AWS Cloud9 instance.**
