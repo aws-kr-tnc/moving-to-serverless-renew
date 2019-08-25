@@ -62,7 +62,7 @@ secret_key                <not set>             None    None
 ### [1-3] Create an Instance Profile for Cloud9 instance
 We will grant appropriate permissions to Cloud9 instance for application development. If you prefer to use the AWS CLI to do this, see the LINK below.
 
-* **For CLI (local machine or EC2) users** : [CLI GUIDE (click)](LAB03-ROLE-CLI.md){:target="_blank"}.
+* **For CLI (local machine or EC2) users** : [CLI GUIDE (click)](LAB03-ROLE-CLI.md)
 
 #### Let's Start!
 
@@ -104,9 +104,9 @@ We will grant appropriate permissions to Cloud9 instance for application develop
 
 * Click **Review Policy** in the bottom line.
 * Type `workshop-cloud9-policy` in the name field and click **Create Policy** in the bottom line.
-* Ok. You made the IAM policy used in the role.
+* Ok. You made the IAM policy for the role.
 * Next, you will make "assume role" with the predefined policy.
-* Click **Role** in the left menu.
+* Click **Role** on the left menu.
 * Click **Create Role** button.
 * Select **AWS services** in the **Select type of trusted entity** section.
 * Select **EC2** in the **Choose the service that will use this role** section.
@@ -259,7 +259,7 @@ class Photo(db.Model):
 
 ```
 
-4. Open the **models_ddb.py** which located in  'LAB03/01-DDB/backend/cloudalbum/model/models_ddb.py'.
+4. Open the **models_ddb.py** which located in  'LAB03/01-DDB/backend/cloudalbum/database/models_ddb.py'.
 <img src=./images/lab03-task1-models_ddb-2.png width=300>
 
 
