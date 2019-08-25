@@ -375,10 +375,11 @@ class BaseConfig:
 * For provisioned mode tables, you specify throughput capacity in terms of Read Capacity Units (RCU) and Write Capacity Units(WCU).
 	* visit : https://docs.aws.amazon.com/ko_kr/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html
 
+### TODO #1
 
 8. Find **TODO #1** in the 'LAB03/01-DDB/backend/cloudalbum/api/users.py' file and please implement your own code instead of using following solution function which name is **solution\_put\_new\_user** for user signup.
 
-### TODO #1
+
 
 ```python
 	if not exist_user:
