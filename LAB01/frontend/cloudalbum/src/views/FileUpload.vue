@@ -177,6 +177,7 @@ export default {
       make: '',
       width: '',
       height: '',
+      filename_orig: '',
       requiredRule: [v => !!v || 'Required!'],
     };
   },
@@ -213,8 +214,11 @@ export default {
       const self = this;
       try {
         if (!this.$refs.pictureInput.file) throw new Error('Old browser. No support for Filereader API');
+
         EXIF.getData(this.$refs.pictureInput.file, function () {
           self.exifObj = this.exifdata;
+          self.filename_orig = this.name;
+
           if (Object.keys(self.exifObj).length === 0) {
             self.popupNoExif();
             self.seen = false;
@@ -236,7 +240,9 @@ export default {
       const params = this.makeParam();
       try {
         const resp = await photoApi.fileUpload(this.$refs.pictureInput.file, 'file', params);
-        if (resp.data.ok !== true) throw new Error(resp);
+        console.log(resp);
+        // console.log(resp.data.ok);
+        // if (resp.data.ok !== true) throw new Error(resp);
         console.log('Image uploaded successfully ✨');
         this.$swal(
           {
@@ -248,7 +254,7 @@ export default {
           },
         );
       } catch (error) {
-        console.error(error);
+        console.log(error);
       }
     },
     popupNoExif() {
@@ -303,6 +309,7 @@ export default {
       param.city = this.city;
       param.address = this.address;
       param.nation = this.country;
+      param.filename_orig = this.filename_orig;
 
       console.log(`param: ${param}`);
 

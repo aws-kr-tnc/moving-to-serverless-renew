@@ -20,21 +20,30 @@ const buildImgSrc = async (id, mode) => {
 };
 
 const getAllPhotoList = async (store) => {
+  console.log(`process.env.VUE_APP_S3_PRESIGNED_URL: ${process.env.VUE_APP_S3_PRESIGNED_URL}`);
+
   try {
     setIsLoading(store, true);
     const resp = await service.Photo.photoList();
     if (resp.data.ok !== true) return;
     console.log('Photo list retrieved successfully ✨');
-    const photoList = await Promise.all(resp.data.photos.map(async (obj) => {
-      const thumbnailBlobUrl = await buildImgSrc(obj.id, 'thumbnail');
-      return { ...obj, thumbSrc: thumbnailBlobUrl };
-    }));
+    let photoList;
+
+    if (process.env.VUE_APP_S3_PRESIGNED_URL === 'true') {
+      photoList = resp.data.photos;
+    } else {
+      photoList = await Promise.all(resp.data.photos.map(async (obj) => {
+        const thumbnailBlobUrl = await buildImgSrc(obj.id, 'thumbnail');
+        return { ...obj, thumbSrc: thumbnailBlobUrl };
+      }));
+    }
     setAllPhotoList(store, photoList);
     setIsLoading(store, false);
   } catch (error) {
     console.error(error);
   }
 };
+
 
 const deletePhoto = async (store, id) => {
   try {

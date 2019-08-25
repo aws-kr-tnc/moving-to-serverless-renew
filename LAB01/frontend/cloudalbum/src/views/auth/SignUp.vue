@@ -129,13 +129,14 @@ export default {
           },
         );
       } catch (err) {
-        // console.log(err.response)
-        // console.log(err.response.data.Message);
+        let errMsg = '';
+        if (!err.response) errMsg = 'Error: Network Connection Error!';
+        else errMsg = err.response.data.Message;
         this.$swal(
           {
             type: 'error',
             title: 'Something went wrong!',
-            text: err.response.data.Message,
+            text: errMsg,
           },
         );
       }
