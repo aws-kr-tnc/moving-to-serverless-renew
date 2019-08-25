@@ -789,8 +789,43 @@ class BaseConfig:
 
 
 
+
+
+59. Before implement TODO #7, you need to review ***LAB03/03-Cognito/backend/cloudalbum/database/model_ddb.py* file. Compare to the previous lab, there is only one table:Photo. It means from now **Cognito User pool replace original User table of DynamoDB**.
+
+```python
+class Photo(Model):
+    """
+    Photo table for DynamoDB
+    """
+
+    class Meta:
+        table_name = 'Photo'
+        region = conf['AWS_REGION']
+
+    user_id = UnicodeAttribute(hash_key=True)
+    id = UnicodeAttribute(range_key=True)
+    tags = UnicodeAttribute(null=True)
+    desc = UnicodeAttribute(null=True)
+    filename_orig = UnicodeAttribute(null=True)
+    filename = UnicodeAttribute(null=True)
+    filesize = NumberAttribute(null=True)
+    geotag_lat = UnicodeAttribute(null=True)
+    geotag_lng = UnicodeAttribute(null=True)
+    upload_date = UTCDateTimeAttribute(default=datetime.now(get_localzone()))
+    taken_date = UTCDateTimeAttribute(null=True)
+    make = UnicodeAttribute(null=True)
+    model = UnicodeAttribute(null=True)
+    width = UnicodeAttribute(null=True)
+    height = UnicodeAttribute(null=True)
+    city = UnicodeAttribute(null=True)
+    nation = UnicodeAttribute(null=True)
+    address = UnicodeAttribute(null=True)
+```
+
 ### TODO #7
-59. Find **TODO #7** in the 'LAB03/03-Cognito/backend/cloudalbum/api/users.py' file and please implement your own code instead of following solution function which name is **solution\_signup\_cognito** which is enroll user into Cognito user pool.
+
+Find **TODO #7** in the 'LAB03/03-Cognito/backend/cloudalbum/api/users.py' file and please implement your own code instead of following solution function which name is **solution\_signup\_cognito** which is enroll user into Cognito user pool.
 
 ```python
 	# TODO 7: Implement following solution code to sign up user into cognito user pool
