@@ -482,7 +482,7 @@ class BaseConfig:
 
 ```python
 	photo = Photo.get(user['user_id'], photo_id)
-   photo.delete()
+	photo.delete()
 ```
 
 12. Open the ***run.py*** and run CloudAlbum application with DynamoDB. ***(LAB03/01-DDB/run.py)***
