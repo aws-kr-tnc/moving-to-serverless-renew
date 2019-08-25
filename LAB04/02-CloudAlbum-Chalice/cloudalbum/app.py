@@ -1,3 +1,13 @@
+"""
+    cloudalbum/app.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    AWS Chalice main application module
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+
 import boto3
 import logging
 import uuid
@@ -11,7 +21,6 @@ from chalicelib.model_ddb import Photo, create_photo_info, ModelEncoder, with_pr
 app = Chalice(app_name='cloudalbum')
 app.debug = True
 app.log.setLevel(logging.DEBUG)
-
 
 @app.authorizer()
 def jwt_auth(auth_request):
@@ -147,7 +156,3 @@ def signout():
     return Response(status_code=200, body={'ok': True},
                     headers={'Content-Type': 'application/json'})
 
-# @app.route('/introspect')
-# def introspect():
-#     return app.current_request.to_dict()
-#
