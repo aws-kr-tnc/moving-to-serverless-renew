@@ -43,7 +43,7 @@ export default {
       try {
         const resp = await service.Auth.signOut();
         if (resp.data.ok === true) {
-          console.log('Image deleted successfully ✨');
+          console.log('Signout successfully ✨');
           this.$swal(
             {
               title: 'Success!',
@@ -77,7 +77,8 @@ export default {
           text: 'Your account has been signed out successfully.',
           type: 'success',
           onClose: () => {
-            this.$router.push({ name: 'signin' });
+            this.signOut();
+            // this.$router.push({ name: 'signin' });
           },
         });
       } else {

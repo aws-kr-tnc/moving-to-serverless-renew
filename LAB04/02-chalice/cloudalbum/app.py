@@ -1,20 +1,16 @@
 import boto3
 import logging
-from chalice import Chalice, Response, BadRequestError, AuthResponse, ChaliceViewError
-from chalicelib import cognito
-from chalicelib.model_ddb import Photo, create_photo_info, ModelEncoder
-from chalicelib.config import conf, cors_config
-from chalicelib.util import pp, save_s3_chalice, get_parts, presigned_url
 import uuid
 import json
-import datetime
+from chalicelib import cognito
+from chalicelib.config import cors_config
+from chalicelib.util import pp, save_s3_chalice, get_parts, delete_s3
+from chalice import Chalice, Response, BadRequestError, AuthResponse, ChaliceViewError
+from chalicelib.model_ddb import Photo, create_photo_info, ModelEncoder, with_presigned_url
 
 app = Chalice(app_name='cloudalbum')
 app.debug = True
 app.log.setLevel(logging.DEBUG)
-
-
-
 
 
 @app.authorizer()
@@ -51,7 +47,7 @@ def upload():
         pp.pprint(current_user)
         new_photo = create_photo_info(current_user['user_id'], filename, filesize, form)
         new_photo.save()
-        return Response(status_code=200, body={'ok': 'true'},
+        return Response(status_code=200, body={'ok': True},
                         headers={'Content-Type': 'application/json'})
     except Exception as e:
         raise ChaliceViewError(e)
@@ -59,26 +55,56 @@ def upload():
 
 @app.route('/photos', methods=['GET'], cors=cors_config,
            authorizer=jwt_auth, content_types=['application/json'])
-def photos():
+def photo_list():
+    """
+    Retrieve Photo table items with signed URL attribute.
+    :return:
+    """
     current_user = cognito.user_info(cognito.get_token(app.current_request))
-    photos = Photo.query(current_user['user_id'])
-    data = {'photos': list(photos)}
-    body=json.dumps(data, cls=ModelEncoder)
+    try:
+        photos = Photo.query(current_user['user_id'])
+        data = {'ok': True, 'photos': []}
+        [data['photos'].append(with_presigned_url(current_user, photo)) for photo in photos]
+        body = json.dumps(data, cls=ModelEncoder)
+        return Response(status_code=200, body=body,
+                        headers={'Content-Type': 'application/json'})
+    except Exception as e:
+        raise ChaliceViewError(e)
 
-    return Response(status_code=200, body=body,
-                    headers={'Content-Type': 'application/json'})
+
+@app.route('/photos/{photo_id}', methods=['DELETE'], cors=cors_config,
+           authorizer=jwt_auth, content_types=['application/json'])
+def delete(photo_id):
+    """
+    Delete specific item in Photo table and S3 object
+    :param photo_id:
+    :return:
+    """
+    current_user = cognito.user_info(cognito.get_token(app.current_request))
+    try:
+        photo = Photo.get(current_user['user_id'], photo_id)
+        file_deleted = delete_s3(app.log, photo.filename, current_user)
+        photo.delete()
+        body = data = {'ok': True, 'photo_id': photo_id}
+        return Response(status_code=200, body=body,
+                        headers={'Content-Type': 'application/json'})
+    except Exception as e:
+        raise ChaliceViewError(e)
 
 
 @app.route('/users/signin', methods=['POST'],
            cors=cors_config, content_types=['application/json'])
 def signin():
+    """
+    Sign in to retrieve JWT.
+    :return:
+    """
     req_data = app.current_request.json_body
     auth = cognito.generate_auth(req_data)
     client = boto3.client('cognito-idp')
     try:
         body = cognito.generate_token(client, auth, req_data)
         return Response(status_code=200, body=body, headers={'Content-Type': 'application/json'})
-
     except client.exceptions.NotAuthorizedException as e:
         raise BadRequestError(e.response['Error']['Message'])
     except Exception as e:
@@ -88,12 +114,16 @@ def signin():
 @app.route('/users/signup', methods=['POST'],
            cors=cors_config, content_types=['application/json'])
 def signup():
+    """
+    Sign up to get Cloudalbum service account
+    :return:
+    """
     req_data = app.current_request.json_body
     dig = cognito.generate_digest(req_data)
     client = boto3.client('cognito-idp')
     try:
         cognito.signup(client, req_data, dig)
-        return Response(status_code=200, body={'ok': 'true'},
+        return Response(status_code=200, body={'ok': True},
                         headers={'Content-Type': 'application/json'})
     except client.exceptions.ParamValidationError as e:
         raise BadRequestError(e.response['Error']['Message'])
@@ -101,6 +131,23 @@ def signup():
         raise BadRequestError(e.response['Error']['Message'])
 
 
-@app.route('/introspect')
-def introspect():
-    return app.current_request.to_dict()
+@app.route('/users/signout', methods=['POST'], cors=cors_config,
+           authorizer=jwt_auth, content_types=['application/json'])
+def signout():
+    """
+    Revoke current access token.
+    :return:
+    """
+    access_token = cognito.get_token(app.current_request)
+    client = boto3.client('cognito-idp')
+    response = client.global_sign_out(
+        AccessToken=access_token
+    )
+    app.log.debug('Access token expired: {0}'.format(access_token))
+    return Response(status_code=200, body={'ok': True},
+                    headers={'Content-Type': 'application/json'})
+
+# @app.route('/introspect')
+# def introspect():
+#     return app.current_request.to_dict()
+#

@@ -1,38 +1,19 @@
-from pynamodb.models import Model
-from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute, ListAttribute, MapAttribute
-from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
+"""
+    cloudalbum/chalicelib/model_ddb.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Data model class for Photos table.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+import json
 from datetime import datetime
 from tzlocal import get_localzone
+from pynamodb.models import Model
 from chalicelib.config import conf
-import json
-
-
-def local_time_now():
-    local_tz = get_localzone()
-    return datetime.now(local_tz)
-
-
-def photo_deserialize(photo):
-    photo_json = {}
-    photo_json['user_id'] = photo.user_id
-    photo_json['id'] = photo.id
-    photo_json['filename'] = photo.filename
-    photo_json['filename_orig'] = photo.filename_orig
-    photo_json['filesize'] = photo.filesize
-    photo_json['upload_date'] = photo.upload_date
-    photo_json['tags'] = photo.tags
-    photo_json['desc'] = photo.desc
-    photo_json['geotag_lat'] = photo.geotag_lat
-    photo_json['geotag_lng'] = photo.geotag_lng
-    photo_json['taken_date'] = photo.taken_date
-    photo_json['make'] = photo.make
-    photo_json['model'] = photo.model
-    photo_json['width'] = photo.width
-    photo_json['height'] = photo.height
-    photo_json['city'] = photo.city
-    photo_json['nation'] = photo.nation
-    photo_json['address'] = photo.address
-    return photo_json
+from chalicelib.util import presigned_url_both
+from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute
 
 
 class Photo(Model):
@@ -98,3 +79,35 @@ class ModelEncoder(json.JSONEncoder):
 if not Photo.exists():
     Photo.create_table(read_capacity_units=conf['DDB_RCU'], write_capacity_units=conf['DDB_WCU'], wait=True)
     print('DynamoDB Photo table created!')
+
+
+def with_presigned_url(current_user, photo):
+    """
+    Append additional attributes for presigned URL access.
+    :param current_user:
+    :param photo:
+    :return:
+    """
+    thumbSrc, originalSrc = presigned_url_both(photo.filename, current_user['email'])
+    temp = {}
+    temp['address'] = photo.address
+    temp['city'] = photo.city
+    temp['desc'] = photo.desc
+    temp['filename'] = photo.filename
+    temp['filename_orig'] = photo.filename_orig
+    temp['filesize'] = photo.filesize
+    temp['geotag_lat'] = float(photo.geotag_lat)
+    temp['geotag_lng'] = float(photo.geotag_lng)
+    temp['height'] = photo.height
+    temp['id'] = photo.id
+    temp['make'] = photo.make
+    temp['model'] = photo.model
+    temp['nation'] = photo.nation
+    temp['tags'] = photo.tags
+    temp['taken_date'] = photo.taken_date
+    temp['upload_date'] = photo.upload_date
+    temp['user_id'] = photo.user_id
+    temp['width'] = photo.width
+    temp['thumbSrc'] = thumbSrc
+    temp['originalSrc'] = originalSrc
+    return temp

@@ -19,7 +19,7 @@
           >
             <v-card>
               <v-img
-                @click="showOriginalPhoto(photo.id)"
+                @click="showOriginalPhoto(photo.id, photo.originalSrc)"
                 ref="photos"
                 :src="photo.thumbSrc"
                 class="white--text"
@@ -60,7 +60,7 @@
                   <template v-slot:activator="{ on }">
                     <v-btn
                       icon v-on="on"
-                      @click="showOriginalPhoto(photo.id)"
+                      @click="showOriginalPhoto(photo.id, photo.originalSrc)"
                     >
                       <v-icon>mdi-image-area</v-icon>
                     </v-btn>
@@ -141,6 +141,7 @@ export default {
     mapDialogLng: 0,
     mapDialogDesc: '',
     mapDialogTags: '',
+    s3PresignedUrl: process.env.VUE_APP_S3_PRESIGNED_URL,
   }),
   computed: {
     ...mapState('Photo', [
@@ -198,13 +199,12 @@ export default {
         console.error(error);
       }
     },
-    async showOriginalPhoto(id) {
-
-      const mode = 'original';
-      const res = await service.Photo.getPhotoBlob(id, mode);
-      const originalSrc = URL.createObjectURL(res.data);
-      console.log(`showOriginalPhoto: ${id}`);
-
+    async showOriginalPhoto(id, presigned = '') {
+      let originalSrc = '';
+      if (presigned.length === 0) {
+        const res = await service.Photo.getPhotoBlob(id, 'original');
+        originalSrc = URL.createObjectURL(res.data);
+      } else originalSrc = presigned;
       this.$swal(
         {
           width: '95%',

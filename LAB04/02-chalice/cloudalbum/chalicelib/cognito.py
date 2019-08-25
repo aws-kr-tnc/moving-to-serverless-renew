@@ -5,11 +5,10 @@ import json
 import time
 import boto3
 import requests
-
 from jose import jwk, jwt
-from jose.utils import base64url_decode
-from chalice import UnauthorizedError
 from chalicelib.config import conf
+from chalice import UnauthorizedError
+from jose.utils import base64url_decode
 
 POOL_KEYS = None
 POOL_URL = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.\
@@ -17,10 +16,15 @@ POOL_URL = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.\
 
 
 def remove_barer(token):
-    return token.replace('Bearer ','')
+    return token.replace('Bearer ', '')
 
 
 def generate_digest(req_data):
+    """
+    Generate HMAC digest code.
+    :param req_data:
+    :return:
+    """
     msg = '{0}{1}'.format(req_data['email'], conf['COGNITO_CLIENT_ID'])
     dig = hmac.new(conf['COGNITO_CLIENT_SECRET'].encode('utf-8'),
                    msg=msg.encode('utf-8'),
@@ -29,6 +33,13 @@ def generate_digest(req_data):
 
 
 def signup(client, user, dig):
+    """
+    Register a user to Cognito User Pool
+    :param client:
+    :param user:
+    :param dig:
+    :return:
+    """
     response = client.sign_up(
         ClientId=conf['COGNITO_CLIENT_ID'],
         SecretHash=base64.b64encode(dig).decode(),
@@ -57,11 +68,17 @@ def signup(client, user, dig):
         UserPoolId=conf['COGNITO_POOL_ID'],
         Username=id
     )
-
     return {'email': email, 'id': id}
 
 
 def generate_token(client, auth, req_data):
+    """
+    Retrieve JWT tokens for authentication.
+    :param client:
+    :param auth:
+    :param req_data:
+    :return:
+    """
     resp = client.admin_initiate_auth(
         UserPoolId=conf['COGNITO_POOL_ID'],
         ClientId=conf['COGNITO_CLIENT_ID'],
@@ -74,9 +91,6 @@ def generate_token(client, auth, req_data):
     res_body = {"accessToken": access_token, "refreshToken": refresh_token}
     return res_body
 
-
-# def decode_token(token):
-#     return jwt.decode(token, _SECRET, algorithms=['HS256'])
 
 def set_cognito_data_global():
     global POOL_KEYS
@@ -119,6 +133,11 @@ def token_decoder(token):
 
 
 def generate_auth(req_data):
+    """
+    Generate HMAC authentication code.
+    :param req_data:
+    :return:
+    """
     msg = '{0}{1}'.format(req_data['email'], conf['COGNITO_CLIENT_ID'])
     dig = hmac.new(conf['COGNITO_CLIENT_SECRET'].encode('utf-8'),
                    msg=msg.encode('utf-8'),
@@ -128,12 +147,22 @@ def generate_auth(req_data):
 
 
 def get_token(request):
+    """
+    Retrieve 'Authorization' header value.
+    :param request:
+    :return:
+    """
     token = request.headers['authorization']
     token = remove_barer(token)
     return token
 
 
 def user_info(access_token):
+    """
+    Retrieve user information in the Cognito user pool.
+    :param access_token:
+    :return:
+    """
     client = boto3.client('cognito-idp')
     try:
         cognito_user = client.get_user(AccessToken=access_token)
