@@ -357,7 +357,7 @@ if not Photo.exists():
     app.logger.debug('DynamoDB User table created!')
 ```
 
-7. Review the 'LAB03/01-DDB/backend/cloudalbum/config.py' file. **New attributes** are added for DynamoDB.
+7. Review the **LAB03/01-DDB/backend/cloudalbum/config.py** file. **New attributes** are added for DynamoDB.
 
 * The second parameter of **os.getenv** function is the default value to use when the first parameter does not exist.
 
