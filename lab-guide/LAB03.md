@@ -1005,7 +1005,7 @@ def print_abc():
 ```
 
 
-71. Implement your unique data into 'LAB03/04-XRAY/cloudalbum/backend/config.py'. This step is identical to the step 58.
+71. Implement your unique data into **LAB03/04-XRAY/cloudalbum/backend/config.py**. This step is identical to the step 58.
 
 * Set up **S3_PHOTO_BUCKET** value : Replace **cloudalbum-\<INITIAL\>** to real value which used previous hands-on lab.
 
