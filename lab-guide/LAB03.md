@@ -953,7 +953,7 @@ unzip aws-xray-daemon-linux-3.x.zip
 
 ### TODO #9
 
-70. Review # TODO #9 'LAB03/04-XRAY/cloudalbum/backend/__init__.py' file.
+70. Review TODO #9 which is in **LAB03/04-XRAY/cloudalbum/backend/__init__.py** file.
 
 * To instrument CloudAlbum, *our Flask application*, first configure a segment name on the xray_recorder. Then, use the XRayMiddleware function to patch our CloudAlbum application in code. 
 * Related document
@@ -966,22 +966,22 @@ from aws_xray_sdk.core import xray_recorder, patch_all
 from aws_xray_sdk.ext.flask.middleware import XRayMiddleware
 
 (...)
-
+	
 	# TODO 9: Review X-ray setting
-    patch_modules = (
-        'boto3',
-        'botocore',
-        'pynamodb',
-        'requests',
-    )
-    plugins = ('EC2Plugin',)
-    xray_recorder.configure(service='CloudAlbum',
-                            plugins=plugins,
-                            context_missing='LOG_ERROR',
-                            sampling=False)
-
-    XRayMiddleware(app, xray_recorder)
-    patch(patch_modules)
+	patch_modules = (
+	    'boto3',
+	    'botocore',
+	    'pynamodb',
+	    'requests',
+	)
+	plugins = ('EC2Plugin',)
+	xray_recorder.configure(service='CloudAlbum',
+	                        plugins=plugins,
+	                        context_missing='LOG_ERROR',
+	                        sampling=False)
+	
+	XRayMiddleware(app, xray_recorder)
+	patch(patch_modules)
     
 (...)
 ```
