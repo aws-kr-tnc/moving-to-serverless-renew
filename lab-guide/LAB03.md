@@ -438,7 +438,7 @@ class BaseConfig:
 
 ### TODO #3
 
-10. Find **TODO #3** in the 'LAB03/01-DDB/backend/cloudalbum/api/photos.py' file and please implement your own code instead of following solution function which name is **solution\_put\_photo\_info\_ddb** to put item into Photo table.
+10. Find **TODO #3** in the **LAB03/01-DDB/backend/cloudalbum/api/photos.py** file and please implement your own code instead of following solution function which name is **solution\_put\_photo\_info\_ddb** to put item into Photo table.
 
 ```python
 	# TODO 3: Implement following solution code to put item into Photo table of DynamoDB
@@ -471,62 +471,33 @@ class BaseConfig:
 
 ### TODO #4 
 
-11. Find **TODO #4** in the 'LAB03/01-DDB/backend/cloudalbum/api/photos.py' file and please implement your own code instead of following solution function which name is **solution\_delete\_photo\_from\_ddb** to delete item from Photo table.
+11. Find **TODO #4** in the **LAB03/01-DDB/backend/cloudalbum/api/photos.py** file and please implement your own code instead of following solution function which name is **solution\_delete\_photo\_from\_ddb** to delete item from Photo table.
 
 ```python
 	# TODO 4: Implement following solution code to delete a photo from Photos which is a list
 	filename = solution_delete_photo_from_ddb(user, photo_id)
 ```
 
-* Inside of **solution\_delete\_photo\_from\_ddb** function, you can find how to delete an item from Photo table with Pynamodb api.
+12. Inside of **solution\_delete\_photo\_from\_ddb** function, you can find how to delete an item from Photo table with Pynamodb api.
 
 ```python
 	photo = Photo.get(user['user_id'], photo_id)
 	photo.delete()
 ```
+13. Run your application!
 
-12. Open the ***run.py*** and run CloudAlbum application with DynamoDB. ***(LAB03/01-DDB/run.py)***
-
-* **NOTE:** **GMAPS_KEY** variable is must defined before you run.
-
-* Ensure **Runner: Python 3**
-<img src=./images/lab03-task1-run-console.png width=700>
+* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_connect](LAB_make_Connection.md)
 
 
-13. Connect to your application using **Cloud9 preview** in your browser. 
-<img src=images/lab01-08.png width=500>
-
-* You need to **Sign-up** first.
-
-14. Perform application test.
-<img src=./images/lab01-02.png width=800>
-
-* Sign in / up
-* Upload Sample Photos
-* Sample images download here
-  *  https://d2r3btx883i63b.cloudfront.net/temp/sample-photo.zip
-* Look your Album
-* Change Profile
-* Find photos with Search tool
-* Check the Photo Map
-
-15. Then look into AWS DynamoDB console.
+14. Then look into AWS DynamoDB console.
 * User and Photo tables are auto generated with 'user-email-index'
 * Review saved data of each DynamoDB tables.
 <img src=./images/lab03-task1-ddb_result.png width=800>
 
 Is it OK? Let's move to the next TASK.
 
-**NOTE:** Click the ***stop icon*** to stop your application.
-  * **Close your terminal** after application stop.
-  * **Close all your opened file tab.**
-<img src=./images/stop-app.png width=500>
-
-16. Delete data in the application for the next TASK.
-* File system will be changed from **local disk** to **Amazon S3**.
-* So, if you don't delete your album article which submitted this task, then **you will see your album article without images** when you run the application on the next TASK,
-
-<img src=images/lab03-task2-delete.png width=400>
+15. Stop your application. 
+* You can stop both frontend and backend application by press `ctrl+c` in your Cloud9 Terminal.
 
 
 ## TASK 3. Go to S3
@@ -541,15 +512,18 @@ CloudAlbum stored user uploaded images into disk based storage(EBS or NAS). Howe
 
 * We will retrieve image object with pre-signed URL and return it to the requested frontend side.
 
-17. Make a bucket to save image objects and retrieve it from Amazon S3. Before copy and paste under below AWS cli command which create a S3 bucket, you should replace **cloudalbum-\<INITIAL\>** with your own initial to make a globally unique bucket name(e.g. cloudalbum-mrjb). We will use this bucket until end of this hands-on, please copy and paste your bucket name into your notes pad.
+16. Make a bucket to save image objects and retrieve it from Amazon S3. 
 
 ```
 aws s3 mb s3://cloudalbum-<INITIAL>
 ```
 
-18. Review the config.py file which located in *** LAB03/02-S3/backend/cloudalbum/config.py***
+* Before copy and paste under below AWS cli command which create a S3 bucket, you should replace **cloudalbum-\<INITIAL\>** with your own initial to make a globally unique bucket name(e.g. cloudalbum-mrjb). We will use this bucket until end of this hands-on, please copy and paste your bucket name into your notes pad.
 
-* Set up the value of 'S3_PHOTO_BUCKET'. Please change the **cloudalbum-\<INITIAL\>** to your **real bucket name** which made above.
+
+17. Review the config.py file which located in **LAB03/02-S3/backend/cloudalbum/config.py**
+
+18. Set up the value of 'S3_PHOTO_BUCKET'. Please change the **cloudalbum-\<INITIAL\>** to your **real bucket name** which made above.
 
 ```python
 import datetime

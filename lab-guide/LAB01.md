@@ -241,7 +241,6 @@ class ProductionConfig(BaseConfig):
 ```console
 export FLASK_ENV=development
 export APP_SETTINGS=cloudalbum.config.DevelopmentConfig
-export UPLOAD_FOLDER=/tmp
 ```
 
 * Then, run following command.
@@ -253,20 +252,18 @@ python manage.py run -h 0.0.0.0 -p 5000
 * And now, you can see the following messages on your terminal.
 	
 ```console
-[2019-08-21 06:30:13,866] INFO in manage: SQLALCHEMY_DATABASE_URI: sqlite:////tmp/sqlite_dev.db
-SQLALCHEMY_DATABASE_URI: sqlite:////tmp/sqlite_dev.db
-[2019-08-21 06:30:13,866] INFO in manage: UPLOAD_FOLDER: /tmp
-UPLOAD_FOLDER: /tmp
- * Environment: development
- * Debug mode: on
+(venv) demo:~/environment/moving-to-serverless-renew/LAB01/backend (master) $ python3 manage.py run -h 0.0.0.0 -p 5000
+[2019-08-25 13:07:17,022] INFO in __init__: Create database tables
+Create database tables
+[2019-08-25 13:07:17,023] INFO in manage: SQLALCHEMY_DATABASE_URI: sqlite:////tmp/sqlite_dev.database
+SQLALCHEMY_DATABASE_URI: sqlite:////tmp/sqlite_dev.database
+[2019-08-25 13:07:17,023] INFO in manage: UPLOAD_FOLDER: /home/ec2-user/environment/moving-to-serverless-renew/LAB01/backend/upload
+UPLOAD_FOLDER: /home/ec2-user/environment/moving-to-serverless-renew/LAB01/backend/upload
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: off
  * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
- * Restarting with stat
-[2019-08-21 06:30:14,383] INFO in manage: SQLALCHEMY_DATABASE_URI: sqlite:////tmp/sqlite_dev.db
-SQLALCHEMY_DATABASE_URI: sqlite:////tmp/sqlite_dev.db
-[2019-08-21 06:30:14,384] INFO in manage: UPLOAD_FOLDER: /tmp
-UPLOAD_FOLDER: /tmp
- * Debugger is active!
- * Debugger PIN: 171-963-592
 ```
 
 23. Let's call a simple api to check if the back-end application ran successfully. We'll use httpie to test it.
@@ -277,21 +274,20 @@ http localhost:5000/users/ping
 * Now you can see similar messages below.
 
 ```console
-(venv) lachesis:~/environment $ http localhost:5000/users/ping
+(venv) demo:~/environment $ http localhost:5000/users/ping                                                                                                                                                        
 HTTP/1.0 200 OK
 Access-Control-Allow-Origin: *
-Content-Length: 56
+Content-Length: 38
 Content-Type: application/json
-Date: Wed, 21 Aug 2019 06:37:20 GMT
+Date: Sun, 25 Aug 2019 13:07:32 GMT
 Server: Werkzeug/0.15.5 Python/3.6.8
 
 {
-    "ok": true,
-    "users": {
+    "Message": {
         "msg": "pong!"
-    }
+    },
+    "ok": true
 }
-
 ```
 
 
