@@ -736,7 +736,7 @@ def upload():
 
 24. Let's run CloudAlbum backend developed with AWS Chalice.
 ```console
-cd ~environment/moving-to-serverless-renew/LAB04/02-CloudAlbum-Chalice/cloudalbum
+cd ~/environment/moving-to-serverless-renew/LAB04/02-CloudAlbum-Chalice/cloudalbum
 pip install -r requirements.txt
 chalice local --port 5000
 ```
