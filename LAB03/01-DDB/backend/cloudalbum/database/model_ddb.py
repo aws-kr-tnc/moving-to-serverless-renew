@@ -1,12 +1,10 @@
 from datetime import datetime
-
+from flask import current_app as app
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute, ListAttribute, MapAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
 
 from tzlocal import get_localzone
-
-from cloudalbum.util.config import conf
 
 def photo_deserialize(photo):
     photo_json = {}
@@ -53,7 +51,7 @@ class User(Model):
 
     class Meta:
         table_name = 'User'
-        region = conf['AWS_REGION']
+        region = app.config['AWS_REGION']
 
     id = UnicodeAttribute(hash_key=True)
     email_index = EmailIndex()
@@ -69,7 +67,7 @@ class Photo(Model):
 
     class Meta:
         table_name = 'Photo'
-        region = conf['AWS_REGION']
+        region = app.config['AWS_REGION']
 
     user_id = UnicodeAttribute(hash_key=True)
     id = UnicodeAttribute(range_key=True)
