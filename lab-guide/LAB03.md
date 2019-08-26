@@ -490,7 +490,7 @@ class BaseConfig:
 ```
 13. Run your application!
 
-* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](LAB_make_Connection.md)
+* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](https://github.com/aws-kr-tnc/moving-to-serverless-renew/blob/master/lab-guide/LAB_make_connection.md)
 
 
 14. Then look into AWS DynamoDB console.
@@ -515,6 +515,21 @@ CloudAlbum stored user uploaded images into disk based storage(EBS or NAS). Howe
    * visit: https://boto3.readthedocs.io/en/latest/reference/services/s3.html
 
 * We will retrieve image object with pre-signed URL and return it to the requested frontend side.
+* For your convenience, let's set frontend variable ```VUE_APP_S3_PRESIGNED_URL``` value to **True**. You can find this variable in **~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env**.
+
+```console
+//AXIOS api request time-out
+VUE_APP_TIMEOUT=15000
+
+//For test/development api end-point
+VUE_APP_API=http://127.0.0.1:5000
+
+//For deployment
+//VUE_APP_API=http://<DEPLOYED_SERVER>
+
+//Is using S3 presinged URL?!
+VUE_APP_S3_PRESIGNED_URL=true
+```
 
 16. Make a bucket to save image objects and retrieve it from Amazon S3. 
 

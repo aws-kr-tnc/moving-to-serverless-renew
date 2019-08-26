@@ -836,7 +836,7 @@ chalice url
 ```console
 https://3g34rwxxxx.execute-api.ap-southeast-1.amazonaws.com/api/
 ```
-* Now, go to frontend directory, then open `.env` file in your Cloud9 editor. (`~environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env`)
+* Now, go to frontend directory, then open `.env` file in your Cloud9 editor. (`~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env`)
 * It contains below default properties.
 ```console
 //AXIOS api request time-out
