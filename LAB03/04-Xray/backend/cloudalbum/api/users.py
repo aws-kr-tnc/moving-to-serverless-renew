@@ -156,11 +156,11 @@ class Signup(Resource):
         except ValidationError as e:
             app.logger.error('ERROR:invalid signup data format:{0}'.format(req_data))
             app.logger.error(e)
-            return err_response('ERROR:invalid signup data format:{0}'.format(req_data), 400)
+            return err_response(e.message, 400)
         except Exception as e:
             app.logger.error('ERROR:unexpected signup error:{}'.format(req_data))
             app.logger.error(e)
-            return err_response('ERROR:unexpected signup error:{}'.format(req_data), 500)
+            return err_response(e, 500)
 
 
 def cognito_signin(user):
@@ -168,7 +168,7 @@ def cognito_signin(user):
     try:
         msg = '{0}{1}'.format(user['email'], app.config['COGNITO_CLIENT_ID'])
 
-        dig = hmac.new(conf['COGNITO_CLIENT_SECRET'].encode('utf-8'),
+        dig = hmac.new(app.config['COGNITO_CLIENT_SECRET'].encode('utf-8'),
                        msg=msg.encode('utf-8'),
                        digestmod=hashlib.sha256).digest()
         auth= base64.b64encode(dig).decode()
@@ -216,11 +216,12 @@ class Signin(Resource):
         except ValidationError as e:
             app.logger.error('ERROR:invalid data format:{0}'.format(req_data))
             app.logger.error(e)
-            return err_response('ERROR:invalid data format:{0}'.format(req_data), 400)
+            return err_response(e.message, 400)
         except Exception as e:
             app.logger.error('ERROR:unexpected error:{0}'.format(req_data))
             app.logger.error(e)
-            return err_response('ERROR:unexpected error:{0}'.format(req_data), 500)
+            return err_response(e, 400)
+
 
 
 @api.route('/signout')
@@ -245,5 +246,5 @@ class Signout(Resource):
         except Exception as e:
             app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_cognito_user(token)))
             app.logger.error(e)
-            return err_response('ERROR:Sign-out:unknown issue:user:{}'.format(get_cognito_user(token)), 500)
+            return err_response(e, 400)
 

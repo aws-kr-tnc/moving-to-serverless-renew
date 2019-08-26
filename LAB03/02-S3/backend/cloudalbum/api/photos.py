@@ -75,7 +75,7 @@ class Ping(Resource):
     @jwt_required
     def get(self):
         app.logger.debug('success:pong!')
-        return m_response(True, {'msg': 'pong!'}, 200)
+        return m_response({'msg': 'pong!'}, 200)
 
 
 @api.route('/file')
@@ -102,11 +102,11 @@ class FileUpload(Resource):
 
             solution_put_photo_info_ddb(user_id, filename, form, filesize)
 
-            return m_response(True,{"photo_id": filename}, 200)
+            return m_response({"photo_id": filename}, 200)
         except Exception as e:
             app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
-            return err_response(False, 'ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']), 500)
+            return err_response(e, 500)
 
 
 
@@ -136,12 +136,12 @@ class List(Resource):
                 data['photos'].append(url)
 
             app.logger.debug("success:photos_list:{}".format(data))
-            return m_response(True, data, 200)
+            return m_response(data, 200)
 
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
             app.logger.error(e)
-            return err_response(False,e , 500)
+            return err_response(e , 500)
 
 
 @api.route('/<photo_id>')
@@ -165,18 +165,18 @@ class OnePhoto(Resource):
 
             if file_deleted:
                 app.logger.debug("success:photo deleted: user_id:{}, photo_id:{}".format(user['user_id'], photo_id))
-                return m_response(True, {'photo_id': photo_id}, 200)
+                return m_response({'photo_id': photo_id}, 200)
             else:
                 raise FileNotFoundError
 
         except FileNotFoundError as e:
             app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
             app.logger.error(e)
-            return err_response(False, 'ERROR:not exist photo_id:{}'.format(photo_id), 404)
+            return err_response('ERROR:not exist photo_id:{}'.format(photo_id), 404)
         except Exception as e:
             app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
             app.logger.error(e)
-            return err_response(False, "ERROR:photo delete failed: photo_id:{}".format(photo_id), 500)
+            return err_response("ERROR:photo delete failed: photo_id:{}".format(photo_id), 500)
 
     @api.doc(
         responses=
@@ -188,7 +188,12 @@ class OnePhoto(Resource):
     @jwt_required
     @api.expect(photo_get_parser)
     def get(self, photo_id):
-
+        """
+        Return image for thumbnail and original photo.
+        :param photo_id: target photo id
+        :queryparam mode: None(original) or thumbnail
+        :return: image url for authenticated user
+        """
         try:
             mode = request.args.get('mode')
             user = get_jwt_identity()

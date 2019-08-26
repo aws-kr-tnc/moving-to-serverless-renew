@@ -109,7 +109,7 @@ class FileUpload(Resource):
         except Exception as e:
             app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_cognito_user(token)['user_id']))
             app.logger.error(e)
-            return err_response('ERROR:file upload failed:user_id:{}'.format(get_cognito_user(token)['user_id']), 500)
+            return err_response(e, 500)
 
 
 @api.route('/')
@@ -144,7 +144,7 @@ class List(Resource):
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
             app.logger.error(e)
-            return err_response("ERROR:photos list failed", 500)
+            return err_response(e, 500)
 
 
 @api.route('/<photo_id>')

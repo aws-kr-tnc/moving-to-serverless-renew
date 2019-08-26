@@ -1,15 +1,11 @@
 import uuid
-
 from flask import Blueprint, request
 from flask import current_app as app
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt)
 from flask import jsonify, make_response
 from flask_restplus import Api, Resource, fields
-
 from jsonschema import ValidationError
 from werkzeug.security import check_password_hash
-
-
 from cloudalbum.schemas import validate_user
 from cloudalbum.database.model_ddb import User
 from cloudalbum.solution import solution_put_new_user, solution_get_user_data_with_idx
@@ -46,7 +42,7 @@ class Ping(Resource):
     def get(self):
         """Ping api"""
         app.logger.debug("success:ping pong!")
-        return m_response(True, {'msg':'pong!'}, 200)
+        return m_response( {'msg':'pong!'}, 200)
 
 
 @api.route('/')
@@ -72,12 +68,12 @@ class UsersList(Resource):
                 data.append(one_user)
 
             app.logger.debug("success:users_list:%s" % data)
-            return m_response(True, data, 200)
+            return m_response( data, 200)
 
         except Exception as e:
             app.logger.error("users list failed")
             app.logger.error(e)
-            return err_response(False, "users list failed", 500)
+            return err_response( "users list failed", 500)
 
 
 @api.route('/<user_id>')
@@ -92,7 +88,7 @@ class Users(Resource):
             user = User.get(hash_key=user_id)
             if user is None:
                 app.logger.error('ERROR:user_id not exist:{}'.format(user_id))
-                return m_response(False, {'user_id': user_id}, 404)
+                return err_response( {'user_id': user_id}, 404)
 
             data = {
                 'user': {
@@ -102,15 +98,15 @@ class Users(Resource):
                 }
             }
             app.logger.debug("success:user_get_by_id:%s" % data['user'])
-            return m_response(True, data, 200)
+            return m_response( data, 200)
         except ValueError as e:
             app.logger.error("ERROR:user_get_by_id:{}".format(user_id))
             app.logger.error(e)
-            return err_response(False, "ERROR:user_get_by_id:{}".format(user_id) , 500)
+            return err_response( "ERROR:user_get_by_id:{}".format(user_id) , 500)
         except Exception as e:
             app.logger.error("ERROR:user_get_by_id:{}".format(user_id))
             app.logger.error(e)
-            return err_response(False, "ERROR:user_get_by_id:{}".format(user_id), 500)
+            return err_response( "ERROR:user_get_by_id:{}".format(user_id), 500)
 
 
 @api.route('/signup')
@@ -147,20 +143,19 @@ class Signup(Resource):
                 }
 
                 app.logger.debug('success:user_signup: {0}'.format(user))
-                return m_response(True, user, 201)
+                return m_response( user, 201)
 
             else:
                 app.logger.error('ERROR:exist user: {0}'.format(user_data))
-                return err_response(False, 'exist user', 409)
+                return err_response( 'exist user', 409)
         except ValidationError as e:
             app.logger.error('ERROR:invalid signup data format:{0}'.format(req_data))
             app.logger.error(e)
-            return err_response(False, e.message, 400)
+            return err_response( e.message, 400)
         except Exception as e:
             app.logger.error('ERROR:unexpected signup error:{}'.format(req_data))
             app.logger.error(e)
-
-            return err_response(False, e, 500)
+            return err_response( e, 500)
 
 @api.route('/signin')
 class Signin(Resource):
@@ -180,8 +175,7 @@ class Signin(Resource):
             db_user = solution_get_user_data_with_idx(signin_data)
 
             if db_user is None:
-                # return m_response(False, {'msg':'not exist email', 'user':signin_data}, 400)
-                return make_response({'ok': False, 'Message': 'not exist email'}, 400)
+                return err_response('not exist email', 400)
 
             token_data = {'user_id': db_user.id, 'username':db_user.username, 'email':db_user.email}
 
@@ -194,18 +188,18 @@ class Signin(Resource):
                 return make_response(res, 200)
             else:
                 app.logger.error('ERROR:user signin failed:password unmatched or invalid user: {0}'.format(signin_data))
-                return err_response(False, 'password unmatched or invalid user', 400)
+                return err_response( 'password unmatched or invalid user', 400)
 
         except ValidationError as e:
             app.logger.error('ERROR:invalid data format:{0}'.format(req_data))
             app.logger.error(e)
 
-            return err_response(False, e.message, 400)
+            return err_response( e.message, 400)
         except Exception as e:
             app.logger.error('ERROR:unexpected error:{0}'.format(req_data))
             app.logger.error(e)
 
-            return err_response(False, e, 400)
+            return err_response( e, 400)
 
 
 @api.route('/signout')
@@ -222,12 +216,12 @@ class Signout(Resource):
             add_token_to_set(get_raw_jwt())
 
             app.logger.debug("user token signout: {}".format(user))
-            return m_response(True, {'user':user, 'msg':'logged out'}, 200)
+            return m_response( {'user':user, 'msg':'logged out'}, 200)
 
         except Exception as e:
             app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_jwt_identity()))
             app.logger.error(e)
 
-            return err_response(False, e, 500)
+            return err_response( e, 500)
 
 

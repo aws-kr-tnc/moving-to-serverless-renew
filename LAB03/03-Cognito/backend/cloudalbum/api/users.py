@@ -219,7 +219,7 @@ class Signin(Resource):
         except Exception as e:
             app.logger.error('ERROR:unexpected error:{0}'.format(req_data))
             app.logger.error(e)
-            return err_response('ERROR:unexpected error:{0}'.format(req_data), 500)
+            return err_response(e, 500)
 
 
 @api.route('/signout')
@@ -244,5 +244,5 @@ class Signout(Resource):
         except Exception as e:
             app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_cognito_user(token)))
             app.logger.error(e)
-            return err_response('ERROR:Sign-out:unknown issue:user:{}'.format(get_cognito_user(token)), 500)
+            return err_response(e, 500)
 

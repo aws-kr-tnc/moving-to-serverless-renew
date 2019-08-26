@@ -77,7 +77,7 @@ class Ping(Resource):
     @jwt_required
     def get(self):
         app.logger.debug('success:pong!')
-        return m_response(True, {'msg': 'pong!'}, 200)
+        return m_response({'msg': 'pong!'}, 200)
 
 
 @api.route('/file')
@@ -93,8 +93,7 @@ class FileUpload(Resource):
 
             if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
                 app.logger.error('ERROR:file format is not supported:{0}'.format(filename_orig))
-                return m_response(False, {'filename': filename_orig,
-                                          'msg': 'not supported file format:{}'.format(extension)}, 400)
+                return err_response('not supported file format:{}'.format(extension), 400)
 
             current_user = get_jwt_identity()
 
@@ -105,11 +104,11 @@ class FileUpload(Resource):
             # TODO 3: Implement following solution code to put item into Photo table of DynamoDB
             solution_put_photo_info_ddb(user_id, filename, form, filesize)
 
-            return m_response(True, {"photo_id": filename}, 200)
+            return m_response({"photo_id": filename}, 200)
         except Exception as e:
             app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
-            return m_response(False, {'user_id': get_jwt_identity()['user_id']}, 500)
+            return err_response(e, 500)
 
 
 
@@ -136,16 +135,11 @@ class List(Resource):
                 data['photos'].append(photo_deserialize(photo))
 
             app.logger.debug("success:photos_list:{}".format(data))
-            return m_response(True, data['photos'], 200)
-        except GetError as e:
-            app.logger.debug("success:user have no photos:{}".format(data))
-            app.logger.debug(e)
-            return m_response(True, data, 200)
-
+            return m_response(data['photos'], 200)
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
             app.logger.error(e)
-            return m_response(False, data,  500)
+            return err_response(e,500)
 
 
 @api.route('/<photo_id>')
@@ -170,17 +164,18 @@ class OnePhoto(Resource):
 
             if file_deleted:
                 app.logger.debug("success:photo deleted: photo_id:{}".format(photo_id))
-                return m_response(True, {'photo_id': photo_id}, 200)
+                return m_response({'photo_id': photo_id}, 200)
             else:
                 raise FileNotFoundError
 
         except FileNotFoundError as e:
             app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
-            return err_response(False, 'not exist photo_id:{}'.format(photo_id), 404)
+            app.logger.error(e)
+            return err_response('ERROR:not exist photo_id:{}'.format(photo_id), 404)
         except Exception as e:
             app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
             app.logger.error(e)
-            return m_response(False, "ERROR:photo delete failed: photo_id:{}".format(photo_id), 500)
+            return err_response("ERROR:photo delete failed: photo_id:{}".format(photo_id), 500)
 
     @api.doc(
         responses=
@@ -224,4 +219,4 @@ class OnePhoto(Resource):
         except Exception as e:
             app.logger.error('ERROR:get photo failed:photo_id:{}'.format(photo_id))
             app.logger.error(e)
-            return err_response(False,'not exist photo_id', 404)
+            return err_response('not exist photo_id', 404)
