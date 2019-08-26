@@ -109,7 +109,7 @@ Amazon ElastiCache offers fully managed Redis and Memcached. Seamlessly deploy, 
 
 24. In the left navigation pane, click **Redis**.
 
-25. Click **Create**.
+25. Click **Get Started Now**.
 * This will bring you to the **Create your Amazon ElastiCache cluster** page. **Do not choose** ***Cluster Mode enabled***. 
  
  * Cluster engine : ***Redis***
@@ -172,7 +172,7 @@ With Elastic Beanstalk, you can quickly deploy and manage applications in the AW
  
 36. Click **Select** button.
 
-37. Type domain nmae in **Domain** field. For example `myapp-<initial>` then click **Check Availability**.
+37. Type domain name in **Domain** field. For example `myapp-<initial>` then click **Check Availability**.
 
 37. In the **Create a web server environemnt** section, for **Description** type `HA-CloudAlbum`
 
