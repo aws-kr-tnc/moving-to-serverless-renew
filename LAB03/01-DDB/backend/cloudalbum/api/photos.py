@@ -1,7 +1,7 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
 
-from cloudalbum.util.response import m_response
+from cloudalbum.util.response import m_response, err_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
@@ -9,8 +9,8 @@ from werkzeug.utils import secure_filename
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from pathlib import Path
-from cloudalbum.util.file_control import email_normalize, delete, save, create_photo_info
-from cloudalbum.database.model_ddb import User, photo_deserialize, Photo
+from cloudalbum.util.file_control import email_normalize, delete, save
+from cloudalbum.database.model_ddb import photo_deserialize, Photo
 from cloudalbum.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
 from pynamodb.exceptions import GetError
 import os, uuid
@@ -176,11 +176,11 @@ class OnePhoto(Resource):
 
         except FileNotFoundError as e:
             app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
-            return m_response(False, {'photo_id': photo_id}, 404)
+            return err_response(False, 'not exist photo_id:{}'.format(photo_id), 404)
         except Exception as e:
             app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
             app.logger.error(e)
-            return m_response(False, {'photo_id': photo_id}, 500)
+            return m_response(False, "ERROR:photo delete failed: photo_id:{}".format(photo_id), 500)
 
     @api.doc(
         responses=
@@ -224,4 +224,4 @@ class OnePhoto(Resource):
         except Exception as e:
             app.logger.error('ERROR:get photo failed:photo_id:{}'.format(photo_id))
             app.logger.error(e)
-            return m_response(False, {'msg':'not exist photo_id'}, 404)
+            return err_response(False,'not exist photo_id', 404)
