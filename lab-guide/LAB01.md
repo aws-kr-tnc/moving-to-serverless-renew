@@ -75,24 +75,24 @@ aws ec2 describe-instances
 
 
 ```console
-which python3
+$ which python3
 ```
 * You can check python3 version.
 ```console
-python3 --version
+$ python3 --version
 ```
 * Then you can setup `virtualenv`
 ```console
-python3 -m venv venv
-source venv/bin/activate
+$ python3 -m venv venv
+$ source venv/bin/activate
 ```
 * However, in the Cloud9 terminal environment, `python` command is aliased, so `python --version` or `which python` will show 'python27'. So, we need to run `unalias python`. Now you can see right version and right path like below.
 
 * For later use, run following command.
 ```console
-unalias python
-echo "unalias python" >> ~/.bash_profile
-echo "source ~/environment/venv/bin/activate" >> ~/.bash_profile
+$ unalias python
+$ echo "unalias python" >> ~/.bash_profile
+$ echo "source ~/environment/venv/bin/activate" >> ~/.bash_profile
 ```
 * Check your Cloud9 environment python alias linked to the venv python
 ```console
@@ -111,10 +111,9 @@ python --version
 pip install boto3
 ```
 
-12. At the terminal, type **python** and press ENTER.
+12. At the terminal, type **python** and press ENTER. Python REPL will be launced.
 
-13. For the confirmination, try the Python Boto 3 APIs by executing these commands:
-
+13. To confirm installation, try the Python Boto 3 APIs by executing these commands in your Python REPL:
 
 ```python
 import boto3
@@ -151,14 +150,14 @@ git clone https://github.com/aws-kr-tnc/moving-to-serverless-renew --depth 1
 17. Install the requirements for the project by executing the command below in your AWS Cloud9 terminal.
 
 ```console
-cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum
-npm install -g vue-cli
-npm install
+$ cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum
+$ npm install -g vue-cli
+$ npm install
 ```
 
 18. Frontend application do api call, so we have to define destination backend address. You can check this `.env` file below.
 ```console
-~environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env
+$ ~environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env
 ```
 * It contains below default properties.
 ```console
@@ -181,7 +180,7 @@ VUE_APP_API=http://127.0.0.1:5000
 20. Install the requirements for the project by executing the command below in your AWS Cloud9 terminal.
 
 ```console
-pip install -r ~/environment/moving-to-serverless-renew/LAB01/backend/requirements.txt
+$ pip install -r ~/environment/moving-to-serverless-renew/LAB01/backend/requirements.txt
 ```
 
 21. Check the **config.py** Open this file in **Cloud9 IDE editor**. (`~/environment/moving-to-serverless-renew/LAB01/backend/cloudalbum/config.py`)
@@ -241,16 +240,16 @@ class ProductionConfig(BaseConfig):
 
 * First, set up environment variables.
 ```console
-export FLASK_ENV=development
-export APP_SETTINGS=cloudalbum.config.DevelopmentConfig
-export UPLOAD_FOLDER=/tmp
+$ export FLASK_ENV=development
+$ export APP_SETTINGS=cloudalbum.config.DevelopmentConfig
+$ export UPLOAD_FOLDER=/tmp
 ```
 * Or, `source shell.env`
 
 * Then, run following command.
 ```
-cd ~/environment/moving-to-serverless-renew/LAB01/backend
-python manage.py run -h 0.0.0.0 -p 5000
+$ cd ~/environment/moving-to-serverless-renew/LAB01/backend
+$ python manage.py run -h 0.0.0.0 -p 5000
 ```
 
 * And now, you can see the following messages on your terminal.
@@ -275,7 +274,7 @@ UPLOAD_FOLDER: /tmp
 23. Let's call a simple api to check if the back-end application ran successfully. We'll use httpie to test it.
 
 ```console
-http localhost:5000/users/ping
+$ http localhost:5000/users/ping
 ```
 * Now you can see similar messages below.
 
@@ -301,7 +300,7 @@ Server: Werkzeug/0.15.5 Python/3.6.8
 24. Now, let's run front-end application server. To run the front-end application we need to run front-end application server.
 
 ```console
-npm run serve
+$ npm run serve
 ```
 
 * And then you can see similar messages below.
@@ -334,7 +333,7 @@ for convenience, we will use **SSH tunnel** to access our application in Cloud9 
 * In your MAC/Linux terminal, type the command below to get the public portion from **your existing any key pair .pem** file. Make sure to replace YOUR_KEY with the name of the key pair .pem file
 
 ```console
-ssh-keygen -f <YOUR_KEY.pem> -y
+$ ssh-keygen -f <YOUR_KEY.pem> -y
 ```
 
 * The output looks like the example below. Copy the output of your command.
@@ -364,7 +363,7 @@ ASDASDASDASDAyc2EAAAADAQABAAABAQDWGRZsPraV6v4UqfZTFKAXK9bhjWVkONEKyAA1CeOkxSN+9W
 **NOTE:** You also can paste it using cli command like below. (Paste public key then press CTRL+D for EOF)
 
 ```console
-cat >> ~/.ssh/authorized_keys
+$ cat >> ~/.ssh/authorized_keys
 ssh-rsa CXCAAB3Nzaxxyc2EAAAADAQABAAABAQDThHERqJJMcZqitA5DZ35j41UFE0zIO5XxVqElCHNHUXYnmffqFNyTFkfpkHAWsR5zGMnR5I46eZazu4sWNcg3LZx937/STOfN4TCzps/uuooHx/p3whGXIFqsz25Xq1RzI/LsFiSRm3+/I1E482pss3OgCXALR/rF9g7Mud1frt9POq82Zg0R1YHB5hCK6Ldx3U3AnFxdViKHVnDgVijAYO+ua1MFtaSn+FqYoXbMniFiQpOJz2ZTvM/ZhwvfAYJkJPYwQ+7T99pIEb0L/pLecaFkxUcbAiwzW6L79bKAQYwA7vEzI4ndqhyLKwIzadVJnog1hRs0ItiUqDOSLYLN sungshik@8c85904c36cf.ant.amazon.com
 
 ```
@@ -382,13 +381,13 @@ ssh-rsa CXCAAB3Nzaxxyc2EAAAADAQABAAABAQDThHERqJJMcZqitA5DZ35j41UFE0zIO5XxVqElCHN
 
 * Run, below command. To add new ingress Security Group rule for SSH connection.
 ```console
-SG_NAME=`curl -s http://169.254.169.254/latest/meta-data/security-groups`
-SG_ID=`aws ec2 describe-security-groups --group-names $SG_NAME --query 'SecurityGroups[*].[GroupId]' --output text`
+$ SG_NAME=`curl -s http://169.254.169.254/latest/meta-data/security-groups`
+$ SG_ID=`aws ec2 describe-security-groups --group-names $SG_NAME --query 'SecurityGroups[*].[GroupId]' --output text`
 ```
 
 * Before run below command, you should replace  `<YOUR_IP>` like `61.79.225.xxx`.
 ```console
-aws ec2 authorize-security-group-ingress \
+$ aws ec2 authorize-security-group-ingress \
 --group-id $SG_ID \
 --protocol tcp \
 --port 22 \
@@ -398,20 +397,21 @@ aws ec2 authorize-security-group-ingress \
 
 * You can check the result via below command. (61.79.xxx.xxx/32)
 ```console
-aws ec2 describe-security-groups --group-ids $SG_ID --query "SecurityGroups[].IpPermissions[].IpRanges"
-[
-    [
-        {
-            "CidrIp": "13.250.xxx.xxx/27"
-        }, 
-        {
-            "CidrIp": "13.250.xxx.xxx/27"
-        }, 
-        {
-            "CidrIp": "61.79.xxx.xxx/32"
-        }
-    ]
-]
+$ aws ec2 describe-security-groups --group-ids $SG_ID --query "SecurityGroups[].IpPermissions[].IpRanges"
+
+> [
+>     [
+>        {
+>            "CidrIp": "13.250.xxx.xxx/27"
+>        }, 
+>        {
+>            "CidrIp": "13.250.xxx.xxx/27"
+>        }, 
+>        {
+>            "CidrIp": "61.79.xxx.xxx/32"
+>        }
+>    ]
+> ]
 ```
 
 
@@ -420,8 +420,8 @@ aws ec2 describe-security-groups --group-ids $SG_ID --query "SecurityGroups[].Ip
 * Let's get public IP of Cloud9. Try below command 
 in your Cloud9 terminal and keep the IP. 
 ```console
-ec2-metadata -v
-public-ipv4: 54.169.xxx.xxx
+$ ec2-metadata -v
+> public-ipv4: 54.169.xxx.xxx
 ```
 
 * Try to SSH tunneling like this
@@ -429,7 +429,7 @@ public-ipv4: 54.169.xxx.xxx
 * **NOTE:** Make sure **your Cloud9 instance Security group port 22** is opened for SSH tunneling.
 
 ```console
-ssh -i <YOUR_KEY.pem> -L 8080:localhost:8080 -L 5000:localhost:5000 ec2-user@<CLOUD9 PUBLIC-IP>
+> ssh -i <YOUR_KEY.pem> -L 8080:localhost:8080 -L 5000:localhost:5000 ec2-user@<CLOUD9 PUBLIC-IP>
 ```
 
 
