@@ -200,14 +200,16 @@ In this TASK, we will introduce DynamoDB for CloudAlbum application. We also int
   <img src=./images/lab03-task1-modeling.png width=600>
 
 1. Install required Python packaged:
+
+* We already made `venv` and activated.
+
 ```console
-sudo pip install -r ~/environment/moving-to-serverless-workshop-renew/LAB03/01-DDB/requirements.txt
+pip install -r ~/environment/moving-to-serverless-renew/LAB03/01-DDB/backend/requirements.txt
 ```
 
 
-2. Open the **model_ddb.py** which located in  '**LAB03/01-DDB**/backend/cloudalbum/database/model_ddb.py'.
 
-3. Review the data model definition via **SQLAlchemy**. **User** table and **Photo** table are inherited from SQLAlchemy's **db.Model** and are represented in **Python classes**.
+2. Review the data model definition via **SQLAlchemy**. **User** table and **Photo** table are inherited from SQLAlchemy's **db.Model** and are represented in **Python classes**.
 
 ```python
 from flask_login import UserMixin
@@ -259,7 +261,9 @@ class Photo(db.Model):
 
 ```
 
-4. Open the **models_ddb.py** which located in  **LAB03/01-DDB/backend/cloudalbum/database/models_ddb.py**.
+* SQLAlchemy is a very popular Data Mapper in the Python world.
+
+2. Open the **models_ddb.py** which located in  **LAB03/01-DDB/backend/cloudalbum/database/models_ddb.py**.
 <img src=./images/lab03-task1-models_ddb-2.png width=300>
 
 
