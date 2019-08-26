@@ -1,15 +1,15 @@
-from flask import Blueprint, request, make_response
+from flask import Blueprint, request
 from flask_restplus import Api, Resource, fields
 
-from cloudalbum.util.response import m_response
+from cloudalbum.util.response import m_response, err_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
 
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from cloudalbum.util.file_control import delete_s3, save_s3, create_photo_info, presigned_url
-from cloudalbum.database.model_ddb import User, Photo, photo_deserialize
+from cloudalbum.util.file_control import delete_s3, save_s3, presigned_url
+from cloudalbum.database.model_ddb import Photo
 from cloudalbum.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
 import uuid
 
@@ -91,8 +91,7 @@ class FileUpload(Resource):
 
             if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
                 app.logger.error('ERROR:file format is not supported:{0}'.format(filename_orig))
-                return m_response(False, {'filename': filename_orig,
-                                          'msg': 'not supported file format:{}'.format(extension)}, 400)
+                return err_response(False, 'not supported file format:{}'.format(extension), 400)
 
             current_user = get_jwt_identity()
 
@@ -103,11 +102,11 @@ class FileUpload(Resource):
 
             solution_put_photo_info_ddb(user_id, filename, form, filesize)
 
-            return make_response(True,{"photo_id": filename}, 200)
+            return m_response(True,{"photo_id": filename}, 200)
         except Exception as e:
             app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
-            return make_response(False, {'user_id': get_jwt_identity()['user_id']}, 500)
+            return err_response(False, 'ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']), 500)
 
 
 
@@ -142,7 +141,7 @@ class List(Resource):
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
             app.logger.error(e)
-            return m_response(False, data, 500)
+            return err_response(False,e , 500)
 
 
 @api.route('/<photo_id>')
@@ -172,11 +171,12 @@ class OnePhoto(Resource):
 
         except FileNotFoundError as e:
             app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
-            return m_response(False, {'photo_id': photo_id}, 404)
+            app.logger.error(e)
+            return err_response(False, 'ERROR:not exist photo_id:{}'.format(photo_id), 404)
         except Exception as e:
             app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
             app.logger.error(e)
-            return m_response(False, {'photo_id': photo_id}, 500)
+            return err_response(False, "ERROR:photo delete failed: photo_id:{}".format(photo_id), 500)
 
     @api.doc(
         responses=
