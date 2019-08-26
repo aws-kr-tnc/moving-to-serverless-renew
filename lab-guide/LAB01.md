@@ -94,25 +94,34 @@ unalias python
 echo "unalias python" >> ~/.bash_profile
 echo "source ~/environment/venv/bin/activate" >> ~/.bash_profile
 ```
-
-
+* Check your Cloud9 environment python alias linked to the venv python
 ```console
 which python
+```
+
+* output
+```console
 ~/environment/venv/bin/python
+```
+* Now your Python version should be changed to 3.x version.
+```console
 python --version
+```
+
+* output
+```console
 Python 3.6.8
 ```
 
-Now, you can see `(venv) $ ` prompt then install `boto3` library.
+Now, you can see `(venv) $ ` prompt then install `boto3` library. Copy and Paste commands.
 ```console
 python --version
 pip install boto3
 ```
 
-12. At the terminal, type **python** and press ENTER.
+12. At the terminal, type **python** and press ENTER. Python REPL will be launced.
 
-13. For the confirmination, try the Python Boto 3 APIs by executing these commands:
-
+13. To confirm installation, try the Python Boto 3 APIs by executing these commands in your Python REPL:
 
 ```python
 import boto3
@@ -243,7 +252,7 @@ export FLASK_ENV=development
 export APP_SETTINGS=cloudalbum.config.DevelopmentConfig
 export UPLOAD_FOLDER=/tmp
 ```
-* Or, `source shell.env`
+* Or, `source ~/environment/moving_to-serverless-renew/LAB01/backend/shell.env`
 
 * Then, run following command.
 ```
@@ -296,9 +305,10 @@ Server: Werkzeug/0.15.5 Python/3.6.8
 ```
 
 
-24. Now, let's run front-end application server. To run the front-end application we need to run front-end application server.
+24. Now, let's run front-end application server. To run the front-end application we need to run front-end application server. Please **open new terminal tab while backend server is running**, and input command.
 
 ```console
+cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum
 npm run serve
 ```
 
@@ -397,8 +407,12 @@ aws ec2 authorize-security-group-ingress \
 * You can check the result via below command. (61.79.xxx.xxx/32)
 ```console
 aws ec2 describe-security-groups --group-ids $SG_ID --query "SecurityGroups[].IpPermissions[].IpRanges"
+```
+
+* output
+```console
 [
-    [
+     [
         {
             "CidrIp": "13.250.xxx.xxx/27"
         }, 
@@ -409,9 +423,8 @@ aws ec2 describe-security-groups --group-ids $SG_ID --query "SecurityGroups[].Ip
             "CidrIp": "61.79.xxx.xxx/32"
         }
     ]
-]
-```
-
+ ]
+ ```
 
 27. Make a SSH connection with tunneling.
 
@@ -419,6 +432,9 @@ aws ec2 describe-security-groups --group-ids $SG_ID --query "SecurityGroups[].Ip
 in your Cloud9 terminal and keep the IP. 
 ```console
 ec2-metadata -v
+```
+* output 
+```console
 public-ipv4: 54.169.xxx.xxx
 ```
 

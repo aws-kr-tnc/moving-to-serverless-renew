@@ -95,6 +95,7 @@ tree -a .
 * output: 
 ```
 <username>:~/environment/moving-to-serverless-workshop-1d/LAB04/01-Chalice (master) $ tree -a .
+
 .
 └── myapp
     ├── app.py
@@ -735,10 +736,8 @@ def upload():
 
 24. Let's run CloudAlbum backend developed with AWS Chalice.
 ```console
-cd ~environment/moving-to-serverless-renew/LAB04/02-CloudAlbum-Chalice/cloudalbum
-
+cd ~/environment/moving-to-serverless-renew/LAB04/02-CloudAlbum-Chalice/cloudalbum
 pip install -r requirements.txt
-
 chalice local --port 5000
 ```
 * And then, request Sign-up API via HTTPie. 
@@ -769,7 +768,6 @@ echo '{ "email": "super@mario.com", "password": "Super2019!"}' | http POST http:
 ```
 * Output
 ```console
-echo '{ "email": "super@mario.com", "password": "Super2019!"}' | http POST http://localhost:5000/users/signin
 HTTP/1.1 200 OK
 Access-Control-Allow-Credentials: true
 Access-Control-Allow-Headers: *,Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key

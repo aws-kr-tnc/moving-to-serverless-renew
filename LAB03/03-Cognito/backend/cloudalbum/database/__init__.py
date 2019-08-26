@@ -1,8 +1,8 @@
-from cloudalbum.util.config import conf
+from flask import current_app as app
 from cloudalbum.database.model_ddb import Photo
 
 if not Photo.exists():
-    Photo.create_table(read_capacity_units=conf['DDB_RCU'], write_capacity_units=conf['DDB_WCU'], wait=True)
+    Photo.create_table(read_capacity_units=app.config['DDB_RCU'], write_capacity_units=app.config['DDB_WCU'], wait=True)
     print('DynamoDB Photo table created!')
 
 def create_table():
