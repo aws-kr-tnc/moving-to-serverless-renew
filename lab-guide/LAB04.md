@@ -577,8 +577,10 @@ aws ssm get-parameters --names "/cloudalbum/DDB_RCU" --with-decryption
 * You can also check the **System Manager - Parameter Store console**.
 <img src="./images/lab04-task3-ps-console.png" width="600">
 
+### TODO 10
 
-20. Review ***config.py*** file located in '**LAB04/02-CloudAlbum-Chalice/cloudalbum/chalicelib/config.py**'.
+20. Find ***config.py*** file located in '**LAB04/02-CloudAlbum-Chalice/cloudalbum/chalicelib/config.py**' and please implement your own code instead of following solution function which name is **solution\_get\_parameter\_from\_parameter\_store** to put get your parameter which is stored in AWS Parameter store.
+
 
 ```python
 import boto3
@@ -607,13 +609,9 @@ def get_param(param_name):
     temporary credentials which can be used to access the parameter.
     The parameter's value is returned.
     """
-    # Create the SSM Client
-    ssm = boto3.client('ssm')
 
-    # Get the requested parameter
-    response = ssm.get_parameters(
-        Names=[param_name, ], WithDecryption=True
-    )
+	# TODO 10 Implement following solution code to get parameter from AWS Parameter Store.
+    response = solution_get_parameter_from_parameter_store(param_name)
 
     # Store the credentials in a variable
     result = response['Parameters'][0]['Value']
@@ -628,6 +626,20 @@ cors_config = CORSConfig(
     allow_credentials=True
 )
 
+```
+
+* Inside of solution code, you can understand how to get your parameter with Boto3 client. 
+
+```python 
+
+def solution_get_parameter_from_parameter_store(param_name):
+    ssm = boto3.client('ssm')
+
+    # Get the requested parameter
+    response = ssm.get_parameters(
+        Names=[param_name, ], WithDecryption=True
+    )
+    return response
 
 ```
 

@@ -10,7 +10,7 @@
 import boto3
 from chalice import CORSConfig
 from aws_parameter_store import AwsParameterStore
-
+from chalicelib.solution import solution_get_parameter_from_parameter_store
 
 def get_param_path(param_path):
     """
@@ -21,6 +21,8 @@ def get_param_path(param_path):
     region = boto3.session.Session().region_name
     store = AwsParameterStore(region)
     return store.get_parameters_dict(param_path)
+
+
 
 # store configuration values for Cloudalbum
 conf = get_param_path('/cloudalbum/')
@@ -33,13 +35,8 @@ def get_param(param_name):
     temporary credentials which can be used to access the parameter.
     The parameter's value is returned.
     """
-    # Create the SSM Client
-    ssm = boto3.client('ssm')
-
-    # Get the requested parameter
-    response = ssm.get_parameters(
-        Names=[param_name, ], WithDecryption=True
-    )
+    # TODO 10 Implement following solution code to get parameter from AWS Parameter Store.
+    response = solution_get_parameter_from_parameter_store(param_name)
 
     # Store the credentials in a variable
     result = response['Parameters'][0]['Value']
