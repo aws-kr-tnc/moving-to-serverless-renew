@@ -25,20 +25,27 @@ class HealthCheck(Resource):
     def get(self):
         status = True
         try:
+            # DB health
             res = db.engine.execute('SELECT 1')
             if res is None:
                 app.logger.debug("db not answered!")
                 status = False
 
+            # Disk health
             total, used, free = shutil.disk_usage("/")
 
             if used / total * 100 >= 90:
                 app.logger.debug("free disk size under 10%")
                 status = False
 
+            #health check result
+            if status is False:
+                return m_response(False, {'msg':'healthcheck failed'},500)
+
             app.logger.debug("success:db alive!")
             app.logger.debug("success:health check!")
-            return m_response({'msg':'health_check success'}, 200)
+            return m_response(True, {'msg':'health_check success'}, 200)
         except Exception as e:
             app.logger.error(e)
             app.logger.error("db not answerd")
+            return m_response(False, {'msg': 'healthcheck failed'}, 500)
