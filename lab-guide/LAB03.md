@@ -866,7 +866,7 @@ def user_signup_confirm(id):
 	user = get_jwt_identity()
 	add_token_to_set(get_raw_jwt())
 ```
-* There was a set to store expired-or blacklisted- token of sign-out user's. However, after using Cognito, you don't need to save blacklisted token at server-side anymore. All you need to do is bring Boto3 client and let the Cognito know which token is expired.
+* There was a **set to store expired-or blacklisted- token** of sign-out user's into your application memory. However, after using Cognito, you don't need to save blacklisted token at server-side anymore. All you need to do is bring Boto3 client and let the Cognito know which token is expired.
 
 *After using Cognito: **LAB03/03-Cognito/backend/cloudalbum/api/users.py**
 ```python
