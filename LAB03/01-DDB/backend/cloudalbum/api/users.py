@@ -147,19 +147,22 @@ class Signup(Resource):
                 }
 
                 app.logger.debug('success:user_signup: {0}'.format(user))
-                return m_response(True, user, 201)
+                # return m_response(True, user, 201)
+
             else:
                 app.logger.error('ERROR:exist user: {0}'.format(user_data))
-                return m_response(False, user_data, 409)
+                # return m_response(False, user_data, 409)
+                return make_response({'ok': False, 'Message': 'exist user'}, 400)
         except ValidationError as e:
             app.logger.error('ERROR:invalid signup data format:{0}'.format(req_data))
             app.logger.error(e)
-            return m_response(False, req_data,400)
+            # return m_response(False, req_data,400)
+            return make_response({'ok': False, 'Message': e.message}, 400)
         except Exception as e:
             app.logger.error('ERROR:unexpected signup error:{}'.format(req_data))
             app.logger.error(e)
-            return m_response(False, req_data, 500)
-
+            # return m_response(False, req_data, 500)
+            return make_response({'ok': False, 'Message': e}, 500)
 
 @api.route('/signin')
 class Signin(Resource):
@@ -179,7 +182,8 @@ class Signin(Resource):
             db_user = solution_get_user_data_with_idx(signin_data)
 
             if db_user is None:
-                return m_response(False, {'msg':'not exist email', 'user':signin_data}, 400)
+                # return m_response(False, {'msg':'not exist email', 'user':signin_data}, 400)
+                return make_response({'ok': False, 'Message': 'not exist email'}, 400)
 
             token_data = {'user_id': db_user.id, 'username':db_user.username, 'email':db_user.email}
 
@@ -192,17 +196,20 @@ class Signin(Resource):
                 return make_response(res, 200)
             else:
                 app.logger.error('ERROR:user signin failed:password unmatched or invalid user: {0}'.format(signin_data))
-                return m_response(False, {'msg':'password unmatched or invalid user',
-                                          'user': signin_data}, 400)
+                # return m_response(False, {'msg':'password unmatched or invalid user',
+                #                           'user': signin_data}, 400)
+                return make_response({'ok': False, 'Message': 'password unmatched or invalid user'}, 400)
 
         except ValidationError as e:
             app.logger.error('ERROR:invalid data format:{0}'.format(req_data))
             app.logger.error(e)
-            return m_response(False, {'msg':e.message, 'user':req_data} ,400)
+            # return m_response(False, {'msg':e.message, 'user':req_data} ,400)
+            return make_response({'ok': False, 'Message': e.message}, 400)
         except Exception as e:
             app.logger.error('ERROR:unexpected error:{0}'.format(req_data))
             app.logger.error(e)
-            return m_response(False, req_data, 500)
+            # return m_response(False, req_data, 500)
+            return make_response({'ok': False, 'Message': e}, 400)
 
 
 @api.route('/signout')
@@ -224,5 +231,7 @@ class Signout(Resource):
         except Exception as e:
             app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_jwt_identity()))
             app.logger.error(e)
-            return m_response(False, get_jwt_identity(), 500)
+            # return m_response(False, get_jwt_identity(), 500)
+            return make_response({'ok': False, 'Message': e}, 500)
+
 

@@ -20,7 +20,9 @@ const buildImgSrc = async (id, mode) => {
 };
 
 const getAllPhotoList = async (store) => {
+  console.log('==========================');
   console.log(`process.env.VUE_APP_S3_PRESIGNED_URL: ${process.env.VUE_APP_S3_PRESIGNED_URL}`);
+  console.log('==========================');
 
   try {
     setIsLoading(store, true);
@@ -32,6 +34,8 @@ const getAllPhotoList = async (store) => {
     if (process.env.VUE_APP_S3_PRESIGNED_URL === 'true') {
       photoList = resp.data.photos;
     } else {
+
+      console.log(resp.data);
       photoList = await Promise.all(resp.data.photos.map(async (obj) => {
         const thumbnailBlobUrl = await buildImgSrc(obj.id, 'thumbnail');
         return { ...obj, thumbSrc: thumbnailBlobUrl };
