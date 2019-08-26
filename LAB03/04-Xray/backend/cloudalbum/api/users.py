@@ -1,17 +1,13 @@
 import hashlib
-import uuid
-
 import boto3, hmac, base64
-
 from flask import Blueprint, request
 from flask import current_app as app
 from flask import jsonify, make_response
 from flask_restplus import Api, Resource, fields
 from jsonschema import ValidationError
-
 from cloudalbum.schemas import validate_user
 from cloudalbum.solution import solution_signup_cognito
-from cloudalbum.util.response import m_response
+from cloudalbum.util.response import m_response, err_response
 from cloudalbum.util.jwt_helper import add_token_to_set, get_token_from_header, get_cognito_user, cog_jwt_required
 
 
@@ -44,7 +40,7 @@ class Ping(Resource):
     def get(self):
         """Ping api"""
         app.logger.debug("success:ping pong!")
-        return m_response(True, {'msg':'pong!'}, 200)
+        return m_response( {'msg':'pong!'}, 200)
 
 
 @api.route('/')
@@ -80,12 +76,12 @@ class UsersList(Resource):
                 data.append(one_user)
 
             app.logger.debug("success:users_list:%s" % data)
-            return m_response(True, data, 200)
+            return m_response( data, 200)
 
         except Exception as e:
             app.logger.error("users list failed")
             app.logger.error(e)
-            return m_response(False, None, 500)
+            return err_response("users list failed", 500)
 
 
 @api.route('/<user_id>')
@@ -114,21 +110,21 @@ class Users(Resource):
             app.logger.debug('success: get Cognito user data: {}'.format(user_data))
 
 
-            return m_response(True, user_data, 200)
+            return m_response( user_data, 200)
         except ValueError as e:
             app.logger.error("ERROR:user_get_by_id:{}".format(user_id))
             app.logger.error(e)
-            return m_response(False, {'user_id':user_id}, 500)
+            return err_response("ERROR:user_get_by_id:{}".format(user_id), 500)
         except Exception as e:
             app.logger.error("ERROR:user_get_by_id:{}".format(user_id))
             app.logger.error(e)
-            return m_response(False, {'user_id': user_id}, 500)
+            return err_response("ERROR:user_get_by_id:{}".format(user_id), 500)
 
 def cognito_signup(signup_user):
     user = signup_user;
     msg = '{0}{1}'.format(user['email'], app.config['COGNITO_CLIENT_ID'])
 
-    dig = hmac.new(conf['COGNITO_CLIENT_SECRET'].encode('utf-8'),
+    dig = hmac.new(app.config['COGNITO_CLIENT_SECRET'].encode('utf-8'),
                    msg=msg.encode('utf-8'),
                    digestmod=hashlib.sha256).digest()
     try:
@@ -156,18 +152,15 @@ class Signup(Resource):
             user = cognito_signup(user_data)
             app.logger.debug("success: enroll user into Cognito user pool:{}".format(user))
 
-            return m_response(True, user, 201)
-            # else:
-            #     app.logger.error('ERROR:exist user: {0}'.format(user_data))
-            #     return m_response(False, user_data, 409)
+            return m_response( user, 201)
         except ValidationError as e:
             app.logger.error('ERROR:invalid signup data format:{0}'.format(req_data))
             app.logger.error(e)
-            return m_response(False, req_data,400)
+            return err_response('ERROR:invalid signup data format:{0}'.format(req_data), 400)
         except Exception as e:
             app.logger.error('ERROR:unexpected signup error:{}'.format(req_data))
             app.logger.error(e)
-            return m_response(False, req_data, 500)
+            return err_response('ERROR:unexpected signup error:{}'.format(req_data), 500)
 
 
 def cognito_signin(user):
@@ -218,17 +211,16 @@ class Signin(Resource):
         except client.exceptions.NotAuthorizedException as e:
             app.logger.error('ERROR:user signin failed:password unmatched or invalid user: {0}'.format(signin_data))
             app.logger.error(e)
-            return m_response(False, {'msg':'password unmatched or invalid user',
-                                      'user': signin_data}, 400)
+            return err_response('ERROR:user signin failed:password unmatched or invalid user: {0}'.format(signin_data), 400)
 
         except ValidationError as e:
             app.logger.error('ERROR:invalid data format:{0}'.format(req_data))
             app.logger.error(e)
-            return m_response(False, {'msg':e.message, 'user':req_data} ,400)
+            return err_response('ERROR:invalid data format:{0}'.format(req_data), 400)
         except Exception as e:
             app.logger.error('ERROR:unexpected error:{0}'.format(req_data))
             app.logger.error(e)
-            return m_response(False, req_data, 500)
+            return err_response('ERROR:unexpected error:{0}'.format(req_data), 500)
 
 
 @api.route('/signout')
@@ -248,10 +240,10 @@ class Signout(Resource):
             add_token_to_set(token)
 
             app.logger.debug("user token signout: {}".format(user))
-            return m_response(True, {'user':user, 'msg':'logged out'}, 200)
+            return m_response( {'user':user, 'msg':'logged out'}, 200)
 
         except Exception as e:
             app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_cognito_user(token)))
             app.logger.error(e)
-            return m_response(False, get_cognito_user(token), 500)
+            return err_response('ERROR:Sign-out:unknown issue:user:{}'.format(get_cognito_user(token)), 500)
 
