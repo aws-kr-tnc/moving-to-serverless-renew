@@ -490,7 +490,7 @@ class BaseConfig:
 ```
 13. Run your application!
 
-* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](LAB_make_Connection.md)
+* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](https://github.com/aws-kr-tnc/moving-to-serverless-renew/blob/master/lab-guide/LAB_make_connection.md)
 
 
 14. Then look into AWS DynamoDB console.
@@ -598,7 +598,7 @@ generate_presigned_url(ClientMethod, Params=None, ExpiresIn=3600, HttpMethod=Non
 
 21. Run your application!
 
-* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](LAB_make_Connection.md)
+* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](https://github.com/aws-kr-tnc/moving-to-serverless-renew/blob/master/lab-guide/LAB_make_connection.md)
 
 22. Perform application test.
 <img src=./images/lab01-02.png width=700>
@@ -842,7 +842,7 @@ def user_signup_confirm(id):
 
 61. Run your backend/frontend application!
 
-* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](LAB_make_Connection.md)
+* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](https://github.com/aws-kr-tnc/moving-to-serverless-renew/blob/master/lab-guide/LAB_make_connection.md)
 
 
 62. Perform application test.
@@ -996,7 +996,7 @@ class BaseConfig:
 
 72. Run your backend/frontend application!
 
-* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](LAB_make_Connection.md)
+* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](https://github.com/aws-kr-tnc/moving-to-serverless-renew/blob/master/lab-guide/LAB_make_connection.md)
 
 73. Enjoy your CloudAlbum service!
 
