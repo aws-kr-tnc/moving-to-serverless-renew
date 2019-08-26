@@ -390,8 +390,8 @@ option_settings:
 * However, you can make a zip file using following command.
   
 ```console
-mkidr ~/environment/deploy
-cd ~environment/moving-to-serverless-renew/LAB02/backend/
+mkdir ~/environment/deploy
+cd ~/environment/moving-to-serverless-renew/LAB02/backend/
 zip -r ~/environment/deploy/cloudalbum-v1.0.zip .
 ```
 
@@ -411,7 +411,7 @@ zip -r ~/environment/deploy/cloudalbum-v1.0.zip .
 
 * Before, build we need to modify `.env` file to change backend server end point. We will use ElasticBeastalk URL as a backend server end point.
 
-* open `~environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env` and modify it like below.
+* open `~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env` and modify it like below.
 ```console
 // AXIOS api request time-out
 VUE_APP_TIMEOUT=15000
