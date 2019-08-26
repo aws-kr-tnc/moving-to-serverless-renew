@@ -1,10 +1,75 @@
 from datetime import datetime
-from flask import current_app as app
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute, ListAttribute, MapAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
-
 from tzlocal import get_localzone
+import boto3
+
+
+AWS_REGION = boto3.session.Session().region_name
+
+
+class EmailIndex(GlobalSecondaryIndex):
+    """
+    This class represents a global secondary index
+    """
+
+    class Meta:
+        index_name = 'user-email-index'
+        read_capacity_units = 5
+        write_capacity_units = 5
+        projection = IncludeProjection(['password'])
+
+    # This attribute is the hash key for the index
+    # Note that this attribute must also exist
+    # in the model
+    email = UnicodeAttribute(hash_key=True)
+
+
+class User(Model):
+    """
+    User table for DynamoDB
+    """
+
+    class Meta:
+        table_name = 'User'
+        region = AWS_REGION
+
+    id = UnicodeAttribute(hash_key=True)
+    email_index = EmailIndex()
+    email = UnicodeAttribute(null=False)
+    username = UnicodeAttribute(null=False)
+    password = UnicodeAttribute(null=False)
+
+
+class Photo(Model):
+    """
+    Photo table for DynamoDB
+    """
+
+    class Meta:
+        table_name = 'Photo'
+        region = AWS_REGION
+
+    user_id = UnicodeAttribute(hash_key=True)
+    id = UnicodeAttribute(range_key=True)
+    tags = UnicodeAttribute(null=True)
+    desc = UnicodeAttribute(null=True)
+    filename_orig = UnicodeAttribute(null=True)
+    filename = UnicodeAttribute(null=True)
+    filesize = NumberAttribute(null=True)
+    geotag_lat = UnicodeAttribute(null=True)
+    geotag_lng = UnicodeAttribute(null=True)
+    upload_date = UTCDateTimeAttribute(default=datetime.now(get_localzone()))
+    taken_date = UTCDateTimeAttribute(null=True)
+    make = UnicodeAttribute(null=True)
+    model = UnicodeAttribute(null=True)
+    width = UnicodeAttribute(null=True)
+    height = UnicodeAttribute(null=True)
+    city = UnicodeAttribute(null=True)
+    nation = UnicodeAttribute(null=True)
+    address = UnicodeAttribute(null=True)
+
 
 def photo_deserialize(photo):
     photo_json = {}
@@ -27,63 +92,3 @@ def photo_deserialize(photo):
     photo_json['address'] = photo.address
     return photo_json
 
-class EmailIndex(GlobalSecondaryIndex):
-    """
-    This class represents a global secondary index
-    """
-
-    class Meta:
-        index_name = 'user-email-index'
-        read_capacity_units = 2
-        write_capacity_units = 1
-        projection = IncludeProjection(['password'])
-
-    # This attribute is the hash key for the index
-    # Note that this attribute must also exist
-    # in the model
-    email = UnicodeAttribute(hash_key=True)
-
-
-class User(Model):
-    """
-    User table for DynamoDB
-    """
-
-    class Meta:
-        table_name = 'User'
-        region = app.config['AWS_REGION']
-
-    id = UnicodeAttribute(hash_key=True)
-    email_index = EmailIndex()
-    email = UnicodeAttribute(null=False)
-    username = UnicodeAttribute(null=False)
-    password = UnicodeAttribute(null=False)
-
-
-class Photo(Model):
-    """
-    Photo table for DynamoDB
-    """
-
-    class Meta:
-        table_name = 'Photo'
-        region = app.config['AWS_REGION']
-
-    user_id = UnicodeAttribute(hash_key=True)
-    id = UnicodeAttribute(range_key=True)
-    tags = UnicodeAttribute(null=True)
-    desc = UnicodeAttribute(null=True)
-    filename_orig = UnicodeAttribute(null=True)
-    filename = UnicodeAttribute(null=True)
-    filesize = NumberAttribute(null=True)
-    geotag_lat = UnicodeAttribute(null=True)
-    geotag_lng = UnicodeAttribute(null=True)
-    upload_date = UTCDateTimeAttribute(default=datetime.now(get_localzone()))
-    taken_date = UTCDateTimeAttribute(null=True)
-    make = UnicodeAttribute(null=True)
-    model = UnicodeAttribute(null=True)
-    width = UnicodeAttribute(null=True)
-    height = UnicodeAttribute(null=True)
-    city = UnicodeAttribute(null=True)
-    nation = UnicodeAttribute(null=True)
-    address = UnicodeAttribute(null=True)

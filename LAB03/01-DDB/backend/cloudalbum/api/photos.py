@@ -131,14 +131,12 @@ class List(Resource):
             'photos': []
         }
         try:
-            user = get_jwt_identity()
-            photos = Photo.query(user['user_id'])
-
+            photos = Photo.query(get_jwt_identity()['user_id'])
             for photo in photos:
                 data['photos'].append(photo_deserialize(photo))
 
             app.logger.debug("success:photos_list:{}".format(data))
-            return m_response(True, data, 200)
+            return m_response(True, data['photos'], 200)
         except GetError as e:
             app.logger.debug("success:user have no photos:{}".format(data))
             app.logger.debug(e)
@@ -204,7 +202,7 @@ class OnePhoto(Resource):
             mode = request.args.get('mode')
             user = get_jwt_identity()
             email = user['email']
-            path = os.path.join(app.config['UPLOAD_DIR'], email_normalize(email))
+            path = os.path.join(app.config['UPLOAD_FOLDER'], email_normalize(email))
             full_path = Path(path)
 
             photo = Photo.get(user['user_id'], range_key=photo_id)

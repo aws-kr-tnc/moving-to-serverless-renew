@@ -12,9 +12,6 @@ from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
 
-from cloudalbum.util.jwt_helper import is_blacklisted_token_set
-
-
 class JSONEncoder(json.JSONEncoder):
     ''' extend json-encoder class'''
 
@@ -73,6 +70,7 @@ def create_app(script_info=None):
 
     @jwt.token_in_blacklist_loader
     def check_if_token_in_blacklist_DB(decrypted_token):
+        from cloudalbum.util.jwt_helper import is_blacklisted_token_set
         try:
             return is_blacklisted_token_set(decrypted_token)
         except Exception as e:

@@ -261,14 +261,14 @@ class Photo(db.Model):
 
 ```
 
-* SQLAlchemy is a very popular Data Mapper in the Python world.
+* SQLAlchemy is a very popular Data Mapper in the Python world. It is simplifying database workflows, providing an ORM, and integrating into other major Python libraries.
 
 2. Open the **models_ddb.py** which located in  **LAB03/01-DDB/backend/cloudalbum/database/models_ddb.py**.
 <img src=./images/lab03-task1-models_ddb-2.png width=300>
 
 
 
-5. Review the data model definition via **PynamoDB**. This will show how DynamoDB tables and GSI are defined in PynamoDB. They are all expressed in **Python Class.**
+3. Review the data model definition via **PynamoDB**. This will show how DynamoDB tables and GSI are defined in PynamoDB. They are all expressed in **Python Class.**
 
 ```python
 from datetime import datetime
@@ -998,7 +998,7 @@ class BaseConfig:
 
 * If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](LAB_make_Connection.md)
 
-73. Perform application test.
+73. Enjoy your CloudAlbum service!
 
 <img src=images/lab01-02.png width=700>
 
