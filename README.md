@@ -10,6 +10,7 @@ This workshop content will handle the server based Python Flask web application 
 #### Written by
  * Sungshik Jou (AWS Technical Trainer)
  * Dayungle Jung (AWS Technical Trainer)
+ * YoungSeon.Ahn (https://github.com/LoveMeWithoutAll)
 
 ##### Underconstruction 
  * Re-design sample application
