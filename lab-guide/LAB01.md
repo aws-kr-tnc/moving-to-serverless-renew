@@ -97,12 +97,20 @@ echo "source ~/environment/venv/bin/activate" >> ~/.bash_profile
 * Check your Cloud9 environment python alias linked to the venv python
 ```console
 which python
-> ~/environment/venv/bin/python
+```
+
+* output
+```console
+~/environment/venv/bin/python
 ```
 * Now your Python version should be changed to 3.x version.
 ```console
 python --version
-> Python 3.6.8
+```
+
+* output
+```console
+Python 3.6.8
 ```
 
 Now, you can see `(venv) $ ` prompt then install `boto3` library. Copy and Paste commands.
@@ -399,22 +407,24 @@ aws ec2 authorize-security-group-ingress \
 * You can check the result via below command. (61.79.xxx.xxx/32)
 ```console
 aws ec2 describe-security-groups --group-ids $SG_ID --query "SecurityGroups[].IpPermissions[].IpRanges"
-
-> [
->     [
->        {
->            "CidrIp": "13.250.xxx.xxx/27"
->        }, 
->        {
->            "CidrIp": "13.250.xxx.xxx/27"
->        }, 
->        {
->            "CidrIp": "61.79.xxx.xxx/32"
->        }
->    ]
-> ]
 ```
 
+* output
+```console
+[
+     [
+        {
+            "CidrIp": "13.250.xxx.xxx/27"
+        }, 
+        {
+            "CidrIp": "13.250.xxx.xxx/27"
+        }, 
+        {
+            "CidrIp": "61.79.xxx.xxx/32"
+        }
+    ]
+ ]
+ ```
 
 27. Make a SSH connection with tunneling.
 
@@ -422,7 +432,10 @@ aws ec2 describe-security-groups --group-ids $SG_ID --query "SecurityGroups[].Ip
 in your Cloud9 terminal and keep the IP. 
 ```console
 ec2-metadata -v
-> public-ipv4: 54.169.xxx.xxx
+```
+* output 
+```console
+public-ipv4: 54.169.xxx.xxx
 ```
 
 * Try to SSH tunneling like this
@@ -430,7 +443,7 @@ ec2-metadata -v
 * **NOTE:** Make sure **your Cloud9 instance Security group port 22** is opened for SSH tunneling.
 
 ```console
-> ssh -i <YOUR_KEY.pem> -L 8080:localhost:8080 -L 5000:localhost:5000 ec2-user@<CLOUD9 PUBLIC-IP>
+ssh -i <YOUR_KEY.pem> -L 8080:localhost:8080 -L 5000:localhost:5000 ec2-user@<CLOUD9 PUBLIC-IP>
 ```
 
 
