@@ -609,6 +609,9 @@ generate_presigned_url(ClientMethod, Params=None, ExpiresIn=3600, HttpMethod=Non
 
         The presigned url
 ```
+* Why don't we download byte stream as previous lab?
+	* Anyone who receives the presigned URL can then access the object. It helps Single Page Application to fetch images without any auth token control which should be sent in ```Authorization``` header. Furthermore, images(or other static assets) behind authentication is quite difficult to implement. Also, presigned URL support your server side application off-load to browser. It helps to distributed environment between browser and server application. Once the browser get the image url, it can request image to the S3 by self without any server-side auth token. 
+	* visit: https://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html
 
 
 21. Run your application!
@@ -852,6 +855,25 @@ def user_signup_confirm(id):
 	        key = 'user_id'
 	    val = attr['Value']
 	    user_data[key] = val
+```
+
+
+* Review  **LAB03/03-Cognito/backend/cloudalbum/api/users.py**, and compare to the previous lab:   **LAB03/03-S3/backend/cloudalbum/api/users.py**. 
+
+* Before using Cognito: **LAB03/03-S3/backend/cloudalbum/api/users.py**
+```python 
+	user = get_jwt_identity()
+	add_token_to_set(get_raw_jwt())
+```
+* There was a set to store expired-or blacklisted- token of sign-out user's. However, after using Cognito, you don't need to save blacklisted token at server-side anymore. All you need to do is bring Boto3 client and let the Cognito know which token is expired.
+
+*After using Cognito: **LAB03/03-Cognito/backend/cloudalbum/api/users.py**
+```python
+	try:
+	    client = boto3.client('cognito-idp')
+	    response = client.global_sign_out(
+	        AccessToken=token
+	    )
 ```
 
 
