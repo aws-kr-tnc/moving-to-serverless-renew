@@ -3,7 +3,7 @@ import unittest
 
 from flask.cli import FlaskGroup
 from cloudalbum import create_app
-from cloudalbum.database import create_table
+# from cloudalbum.database import create_table
 
 app = create_app()
 cli = FlaskGroup(create_app=create_app)
@@ -11,8 +11,8 @@ cli = FlaskGroup(create_app=create_app)
 @cli.command('recreate_db')
 def recreate_db():
     # delete_table()
-    create_table()
-
+    # create_table()
+    pass
 
 @cli.command()
 def test():

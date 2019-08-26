@@ -1,6 +1,5 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
-from pynamodb.exceptions import GetError
 
 from cloudalbum.util.response import m_response
 from werkzeug.datastructures import FileStorage

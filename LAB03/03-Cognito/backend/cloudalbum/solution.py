@@ -2,14 +2,6 @@ import base64
 
 import boto3
 from flask import current_app as app
-from werkzeug.security import generate_password_hash
-
-from cloudalbum.database.model_ddb import Photo
-from cloudalbum.util.config import conf
-
-
-
-
 
 def solution_put_photo_info_ddb(user_id, new_photo):
     try:
@@ -23,7 +15,7 @@ def solution_put_photo_info_ddb(user_id, new_photo):
 def solution_put_object_to_s3(s3_client, key, upload_file_stream):
     try:
         s3_client.put_object(
-            Bucket=conf['S3_PHOTO_BUCKET'],
+            Bucket=app.config['S3_PHOTO_BUCKET'],
             Key=key,
             Body=upload_file_stream,
             ContentType='image/jpeg',
@@ -40,7 +32,7 @@ def solution_put_object_to_s3(s3_client, key, upload_file_stream):
 def solution_generate_s3_presigned_url(s3_client, key):
     url = s3_client.generate_presigned_url(
         'get_object',
-        Params={'Bucket': conf['S3_PHOTO_BUCKET'],
+        Params={'Bucket': app.config['S3_PHOTO_BUCKET'],
                 'Key': key})
     return url
 
@@ -49,7 +41,7 @@ def user_signup_confirm(id):
     client = boto3.client('cognito-idp')
     try:
         client.admin_confirm_sign_up(
-            UserPoolId=conf['COGNITO_POOL_ID'],
+            UserPoolId=app.config['COGNITO_POOL_ID'],
             Username=id
         )
         app.logger.debug('success: user confirm automatically:user id:{}'.format(id))
@@ -66,7 +58,7 @@ def solution_signup_cognito(user, dig):
     client = boto3.client('cognito-idp')
     try:
         response = client.sign_up(
-            ClientId=conf['COGNITO_CLIENT_ID'],
+            ClientId=app.config['COGNITO_CLIENT_ID'],
             SecretHash=base64.b64encode(dig).decode(),
             Username=user['email'],
             Password=user['password'],
