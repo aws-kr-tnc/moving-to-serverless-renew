@@ -300,6 +300,7 @@ Server: Werkzeug/0.15.5 Python/3.6.8
 24. Now, let's run front-end application server. To run the front-end application we need to run front-end application server. Please **open new terminal tab while backend server is running**, and input command.
 
 ```console
+$ cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum
 $ npm run serve
 ```
 
