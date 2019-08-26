@@ -94,16 +94,18 @@ unalias python
 echo "unalias python" >> ~/.bash_profile
 echo "source ~/environment/venv/bin/activate" >> ~/.bash_profile
 ```
-
-
+* Check your Cloud9 environment python alias linked to the venv python
 ```console
-which python
-~/environment/venv/bin/python
-python --version
-Python 3.6.8
+$ which python
+> ~/environment/venv/bin/python
+```
+* Now your Python version should be changed to 3.x version.
+```console
+$ python --version
+> Python 3.6.8
 ```
 
-Now, you can see `(venv) $ ` prompt then install `boto3` library.
+Now, you can see `(venv) $ ` prompt then install `boto3` library. Copy and Paste commands.
 ```console
 python --version
 pip install boto3
