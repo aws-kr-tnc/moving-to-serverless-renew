@@ -235,16 +235,15 @@ class Signout(Resource):
         """user signout"""
         token = get_token_from_header(request)
         try:
-            user = get_cognito_user(token)
-            del user['email_verified']
-            del user['user_id']
-            add_token_to_set(token)
+            client = boto3.client('cognito-idp')
+            response = client.global_sign_out(
+                AccessToken=token
+            )
 
-            app.logger.debug("user token signout: {}".format(user))
-            return m_response( {'user':user, 'msg':'logged out'}, 200)
+            app.logger.debug("Access token expired: {}".format(token))
+            return m_response({'accessToken':token}, 200)
 
         except Exception as e:
-            app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_cognito_user(token)))
+            app.logger.error('ERROR:Sign-out:unknown issue:token:{}'.format(token))
             app.logger.error(e)
-            return err_response(e, 400)
-
+            return err_response(e, 500)

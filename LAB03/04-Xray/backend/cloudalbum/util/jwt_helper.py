@@ -80,7 +80,7 @@ def cog_jwt_required(f):
         if not 'Authorization' in request.headers:
             return make_response(jsonify({'msg':'no token'}), 400)
 
-        token = request.headers['Authorization']
+        token = request.headers['Authorization'].replace('Bearer ', '')
 
         try:
             if token_decoder(token.rsplit(' ', 1)[1]) is not None:
@@ -97,4 +97,4 @@ def get_cognito_user(access_token):
 
 
 def get_token_from_header(request):
-    return request.headers['Authorization'].rsplit(' ', 1)[1]
+    return request.headers['Authorization'].replace('Bearer ', '')
