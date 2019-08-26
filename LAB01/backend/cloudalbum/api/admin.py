@@ -1,3 +1,5 @@
+import socket
+
 from flask import Blueprint
 from flask import current_app as app
 from flask_restplus import Api, Resource
@@ -42,10 +44,16 @@ class HealthCheck(Resource):
             if status is False:
                 return m_response(False, {'msg':'healthcheck failed'},500)
 
+
+
             app.logger.debug("success:db alive!")
             app.logger.debug("success:health check!")
-            return m_response(True, {'msg':'health_check success'}, 200)
+            return m_response(True, {'msg':'health_check success', "hostname": get_ip_addr()}, 200)
         except Exception as e:
             app.logger.error(e)
             app.logger.error("db not answerd")
-            return m_response(False, {'msg': 'healthcheck failed'}, 500)
+            return m_response(False, {'msg': 'healthcheck failed', "hostname": get_ip_addr()}, 500)
+
+
+def get_ip_addr():
+    return '{0}'.format(socket.gethostname())
