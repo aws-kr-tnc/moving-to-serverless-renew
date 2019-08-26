@@ -859,9 +859,9 @@ def user_signup_confirm(id):
 ```
 
 
-* Review  **LAB03/03-Cognito/backend/cloudalbum/api/users.py**, and compare to the previous lab:   **LAB03/03-S3/backend/cloudalbum/api/users.py**. 
+* Review  **LAB03/03-Cognito/backend/cloudalbum/api/users.py**, and compare to the previous lab:   **LAB03/02-S3/backend/cloudalbum/api/users.py**. 
 
-* Before using Cognito: **LAB03/03-S3/backend/cloudalbum/api/users.py**
+* Before using Cognito: **LAB03/02-S3/backend/cloudalbum/api/users.py**
 ```python 
 	user = get_jwt_identity()
 	add_token_to_set(get_raw_jwt())
