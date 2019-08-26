@@ -1,15 +1,6 @@
 import base64
-
 import boto3
 from flask import current_app as app
-from werkzeug.security import generate_password_hash
-
-from cloudalbum.database.model_ddb import Photo
-from cloudalbum.util.config import conf
-
-
-
-
 
 def solution_put_photo_info_ddb(user_id, new_photo):
     try:

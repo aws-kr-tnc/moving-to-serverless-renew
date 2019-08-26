@@ -4,7 +4,7 @@ import sys
 import json
 import datetime
 
-from aws_xray_sdk.core import xray_recorder, patch_all
+from aws_xray_sdk.core import xray_recorder, patch_all, patch
 from aws_xray_sdk.ext.flask.middleware import XRayMiddleware
 from bson.objectid import ObjectId
 from flask import Flask, jsonify, make_response  # new

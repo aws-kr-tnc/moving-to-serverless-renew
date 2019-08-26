@@ -11,10 +11,7 @@ from jose.utils import base64url_decode
 from flask import current_app as app
 
 from cloudalbum.solution import solution_get_cognito_user_data
-from cloudalbum.util.config import conf
 
-POOL_URL = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(conf['AWS_REGION'],
-                                                                                      conf['COGNITO_POOL_ID'])
 POOL_KEYS = None
 blacklist_set = set()
 
@@ -43,7 +40,10 @@ def is_blacklisted_token_set(decoded_token):
 
 def set_cognito_data_global():
     global POOL_KEYS
+    POOL_URL = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(app.config['AWS_REGION'],
+                                                                                      app.config['COGNITO_POOL_ID'])
     if POOL_KEYS is None:
+
         aws_data = requests.get(POOL_URL)
         POOL_KEYS = json.loads(aws_data.text)['keys']
         app.logger.debug("COGNITO POOL_KEYS SET DONE!")

@@ -4,7 +4,6 @@ from PIL import Image
 from pathlib import Path
 
 from cloudalbum.solution import solution_put_object_to_s3, solution_generate_s3_presigned_url
-from cloudalbum.util.config import conf
 from cloudalbum.database.model_ddb import Photo, photo_deserialize
 
 import os
@@ -46,7 +45,7 @@ def make_thumbnails_s3(file_p):
     try:
         im = Image.open(file_p)
         im = im.convert('RGB')
-        im.thumbnail((conf['THUMBNAIL_WIDTH'], conf['THUMBNAIL_HEIGHT'], Image.ANTIALIAS))
+        im.thumbnail((app.config['THUMBNAIL_WIDTH'], app.config['THUMBNAIL_HEIGHT'], Image.ANTIALIAS))
         im.save(result_bytes_stream, 'JPEG')
     except Exception as e:
         app.logger.debug(e)
@@ -64,7 +63,7 @@ def delete(filename, email):
     :return: Boolean
     """
     try:
-        base_path = Path(conf['UPLOAD_DIR']) / email_normalize(email)
+        base_path = Path(app.config['UPLOAD_DIR']) / email_normalize(email)
         thumbnail_file_location = base_path / 'thumbnails' / filename
         original_file_location = base_path / filename
 
@@ -97,8 +96,8 @@ def delete_s3(filename, email):
 
     s3_client = boto3.client('s3')
     try:
-        s3_client.delete_object(Bucket=conf['S3_PHOTO_BUCKET'], Key=key)
-        s3_client.delete_object(Bucket=conf['S3_PHOTO_BUCKET'], Key=key_thumb)
+        s3_client.delete_object(Bucket=app.config['S3_PHOTO_BUCKET'], Key=key)
+        s3_client.delete_object(Bucket=app.config['S3_PHOTO_BUCKET'], Key=key_thumb)
         app.logger.debug("success:s3 file delete done:{}".format(filename))
         return True
     except Exception as e:
@@ -116,7 +115,7 @@ def save(upload_file, filename, email):
     :param app: Flask.application
     :return: file size (byte)
     """
-    path = Path(conf['UPLOAD_DIR']) / email_normalize(email)
+    path = Path(app.config['UPLOAD_DIR']) / email_normalize(email)
 
     try:
         if not path.exists():
@@ -150,13 +149,13 @@ def save_s3(upload_file_stream, filename, email):
     try:
         solution_put_object_to_s3(s3_client, key, original_bytes)
 
-        app.logger.debug('success: s3://{0}/{1} uploaded'.format(conf['S3_PHOTO_BUCKET'], key))
+        app.logger.debug('success: s3://{0}/{1} uploaded'.format(app.config['S3_PHOTO_BUCKET'], key))
 
         # Save thumbnail file
         upload_file_stream.stream.seek(0)
         solution_put_object_to_s3(s3_client, key_thumb, make_thumbnails_s3(upload_file_stream))
 
-        app.logger.debug('s3://{0}/{1} uploaded'.format(conf['S3_PHOTO_BUCKET'], key_thumb))
+        app.logger.debug('s3://{0}/{1} uploaded'.format(app.config['S3_PHOTO_BUCKET'], key_thumb))
 
         return len(original_bytes)
     except Exception as e:

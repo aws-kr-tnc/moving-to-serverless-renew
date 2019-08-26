@@ -8,7 +8,6 @@ import boto3
 
 AWS_REGION = boto3.session.Session().region_name
 
-
 class EmailIndex(GlobalSecondaryIndex):
     """
     This class represents a global secondary index

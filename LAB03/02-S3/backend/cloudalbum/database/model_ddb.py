@@ -3,29 +3,11 @@ from flask import current_app as app
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute, ListAttribute, MapAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
-
 from tzlocal import get_localzone
+import boto3
 
-def photo_deserialize(photo):
-    photo_json = {}
-    photo_json['id'] = photo.id
-    photo_json['filename'] = photo.filename
-    photo_json['filename_orig'] = photo.filename_orig
-    photo_json['filesize'] = photo.filesize
-    photo_json['upload_date'] = photo.upload_date
-    photo_json['tags'] = photo.tags
-    photo_json['desc'] = photo.desc
-    photo_json['geotag_lat'] = photo.geotag_lat
-    photo_json['geotag_lng'] = photo.geotag_lng
-    photo_json['taken_date'] = photo.taken_date
-    photo_json['make'] = photo.make
-    photo_json['model'] = photo.model
-    photo_json['width'] = photo.width
-    photo_json['height'] = photo.height
-    photo_json['city'] = photo.city
-    photo_json['nation'] = photo.nation
-    photo_json['address'] = photo.address
-    return photo_json
+
+AWS_REGION = boto3.session.Session().region_name
 
 class EmailIndex(GlobalSecondaryIndex):
     """
@@ -51,7 +33,7 @@ class User(Model):
 
     class Meta:
         table_name = 'User'
-        region = app.config['AWS_REGION']
+        region = AWS_REGION
 
     id = UnicodeAttribute(hash_key=True)
     email_index = EmailIndex()
@@ -67,7 +49,7 @@ class Photo(Model):
 
     class Meta:
         table_name = 'Photo'
-        region = app.config['AWS_REGION']
+        region = AWS_REGION
 
     user_id = UnicodeAttribute(hash_key=True)
     id = UnicodeAttribute(range_key=True)
@@ -87,3 +69,24 @@ class Photo(Model):
     city = UnicodeAttribute(null=True)
     nation = UnicodeAttribute(null=True)
     address = UnicodeAttribute(null=True)
+
+def photo_deserialize(photo):
+    photo_json = {}
+    photo_json['id'] = photo.id
+    photo_json['filename'] = photo.filename
+    photo_json['filename_orig'] = photo.filename_orig
+    photo_json['filesize'] = photo.filesize
+    photo_json['upload_date'] = photo.upload_date
+    photo_json['tags'] = photo.tags
+    photo_json['desc'] = photo.desc
+    photo_json['geotag_lat'] = photo.geotag_lat
+    photo_json['geotag_lng'] = photo.geotag_lng
+    photo_json['taken_date'] = photo.taken_date
+    photo_json['make'] = photo.make
+    photo_json['model'] = photo.model
+    photo_json['width'] = photo.width
+    photo_json['height'] = photo.height
+    photo_json['city'] = photo.city
+    photo_json['nation'] = photo.nation
+    photo_json['address'] = photo.address
+    return photo_json
