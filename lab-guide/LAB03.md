@@ -610,7 +610,9 @@ generate_presigned_url(ClientMethod, Params=None, ExpiresIn=3600, HttpMethod=Non
         The presigned url
 ```
 * Why get **Presigned URL** instead of byte-stream as previous lab?
-	* **Anyone who receives the presigned URL can access the object**. First, it helps **Single Page Application to fetch images without any auth token** which should be sent in ```Authorization``` header. Furthermore, images(or other static assets) behind authentication is quite difficult to implement. Second, presigned URL support your **server side application to off-load it's role to send a static data to browser**. It helps to distributed environment between client and server application. Once the browser get the image url, it can request image to the S3 by self without any server-side authentication.
+	* **Anyone who receives the presigned URL can access the object**. 
+	* First, it helps **Single Page Application to fetch images without any auth token** which should be sent in ```Authorization``` header. Furthermore, images(or other static assets) behind authentication is quite difficult to implement. 
+	* Second, presigned URL support your **server side application to off-load it's role to send a static data to browser**. It helps to distributed environment between client and server application. Once the browser get the image url, it can request image to the S3 by self without any server-side authentication.
 	* visit: https://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html
 
 21. Run your application!
