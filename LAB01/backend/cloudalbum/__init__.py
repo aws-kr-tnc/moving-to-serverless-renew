@@ -69,6 +69,9 @@ def create_app(script_info=None):
     from cloudalbum.api.photos import photos_blueprint
     app.register_blueprint(photos_blueprint, url_prefix='/photos')
 
+    from cloudalbum.api.admin import admin_blueprint
+    app.register_blueprint(admin_blueprint, url_prefix='/admin')
+
     # Setup models for DB operations
     with app.app_context():
         try:
