@@ -29,10 +29,11 @@ class BaseConfig:
     S3_PRESIGNED_URL_EXPIRE_TIME = os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', 3600)
 
     # Cognito
-    COGNITO_POOL_ID = os.getenv('COGNITO_POOL_ID', '<input-your-cognito-pool-id>'),
-    COGNITO_CLIENT_ID = os.getenv('COGNITO_CLIENT_ID', '<input-your-cognito-client-id>'),
-    COGNITO_CLIENT_SECRET = os.getenv('COGNITO_CLIENT_SECRET', '<input-your-cognito-client-secret>'),
-    COGNITO_DOMAIN = os.getenv('COGNITO_DOMAIN', '<input-your-cognito-domain>'),
+    COGNITO_POOL_ID = os.getenv('COGNITO_POOL_ID', '<YOUR_POOL_ID>')
+    COGNITO_CLIENT_ID = os.getenv('COGNITO_CLIENT_ID', '<YOUR_CLIENT_ID>')
+    COGNITO_CLIENT_SECRET = os.getenv('COGNITO_CLIENT_SECRET', '<YOUR_CLIENT_SECRET>')
+    COGNITO_DOMAIN = os.getenv('COGNITO_DOMAIN', '<YOUR_COGNITO_DOMAIN>')
+
 
 
 class DevelopmentConfig(BaseConfig):
