@@ -29,11 +29,10 @@ class BaseConfig:
     S3_PRESIGNED_URL_EXPIRE_TIME = os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', 3600)
 
     # Cognito
-    COGNITO_POOL_ID = os.getenv('COGNITO_POOL_ID', 'ap-northeast-2_1ZYNsRQKc'),
-    COGNITO_CLIENT_ID = os.getenv('COGNITO_CLIENT_ID', '3euucaib97ui39pdtu1e18spaa'),
-    COGNITO_CLIENT_SECRET = os.getenv('COGNITO_CLIENT_SECRET', '1hg3jnk19cf0svnt2jkk1tr0gj6gj7is9sh1sekultgfhnh6i4qj'),
-    COGNITO_DOMAIN = os.getenv('COGNITO_DOMAIN', 'cloudalbum-123k.auth.ap-northeast-2.amazoncognito.com'),
-    BASE_URL = os.getenv('BASE_URL', 'localhost:5000')
+    COGNITO_POOL_ID = os.getenv('COGNITO_POOL_ID', '<input-your-cognito-pool-id>'),
+    COGNITO_CLIENT_ID = os.getenv('COGNITO_CLIENT_ID', '<input-your-cognito-client-id>'),
+    COGNITO_CLIENT_SECRET = os.getenv('COGNITO_CLIENT_SECRET', '<input-your-cognito-client-secret>'),
+    COGNITO_DOMAIN = os.getenv('COGNITO_DOMAIN', '<input-your-cognito-domain>'),
 
 
 class DevelopmentConfig(BaseConfig):
