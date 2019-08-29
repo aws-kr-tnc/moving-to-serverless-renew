@@ -154,6 +154,7 @@
   </v-container>
 </template>
 <script>
+// eslint-disable-next-line import/extensions
 import PictureInput from 'vue-picture-input';
 import EXIF from 'exif-js';
 import * as esri from 'esri-leaflet-geocoder';
@@ -219,6 +220,7 @@ export default {
       try {
         if (!this.$refs.pictureInput.file) throw new Error('Old browser. No support for Filereader API');
 
+        // eslint-disable-next-line func-names
         EXIF.getData(this.$refs.pictureInput.file, function () {
           self.exifObj = this.exifdata;
           self.filename_orig = this.name;
@@ -238,6 +240,7 @@ export default {
     removeImage() {
       this.$refs.pictureInput.removeImage();
     },
+    // eslint-disable-next-line
     async attemptUpload() {
       if (!this.isValide()) return false;
       console.log('Attempting uploading..');
@@ -245,8 +248,6 @@ export default {
       try {
         const resp = await photoApi.fileUpload(this.$refs.pictureInput.file, 'file', params);
         console.log(resp);
-        // console.log(resp.data.ok);
-        // if (resp.data.ok !== true) throw new Error(resp);
         console.log('Image uploaded successfully ✨');
         this.$swal(
           {
@@ -299,7 +300,7 @@ export default {
         this.noLatLng();
       }
     },
-    makeParam() {
+    makeParam() { /* eslint-disable */
       const param = {};
       param.make = this.exifObj.Make;
       param.model = this.exifObj.Model;

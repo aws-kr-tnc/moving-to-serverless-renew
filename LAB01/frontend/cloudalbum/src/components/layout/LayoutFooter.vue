@@ -8,9 +8,9 @@
 </template>
 
 <script>
-	export default {
-		name: "LayoutFooter"
-	}
+export default {
+  name: 'LayoutFooter',
+};
 </script>
 
 <style scoped>

@@ -101,22 +101,23 @@ export default {
       inputUsername: '',
       inputEmail: '',
       inputPassword: '',
-	    passwordConfirm: '',
+      passwordConfirm: '',
       requiredRule: [v => !!v || 'Required!'],
     };
   },
   computed: {
-  	passwordConfirmationRules() {
-  		return [
+    passwordConfirmationRules() {
+      return [
         () => (this.inputPassword === this.passwordConfirm) || 'Password must match',
-  		  v => !!v || 'Confirmation password is required',
-	  ];
+        v => !!v || 'Confirmation password is required',
+      ];
     },
   },
   methods: {
     async userSignUp() {
-	    if (!this.isValide()) return false;
+      if (!this.isValide()) return false;
       try {
+        // eslint-disable-next-line max-len
         const resp = await service.Auth.signUp(this.inputEmail, this.inputUsername, this.inputPassword);
         console.log(resp);
         this.$swal(
@@ -145,14 +146,14 @@ export default {
     moveToSignin() {
       this.$router.push({ name: 'signin' });
     },
-	  isValide() {
-		  if (this.$refs.form.validate()) return true;
-		  this.$swal({
-			  title: 'Please check your input value.',
-			  type: 'warning',
-		  });
-		  return false;
-	  },
+    isValide() {
+      if (this.$refs.form.validate()) return true;
+      this.$swal({
+        title: 'Please check your input value.',
+        type: 'warning',
+      });
+      return false;
+    },
   },
 };
 </script>
