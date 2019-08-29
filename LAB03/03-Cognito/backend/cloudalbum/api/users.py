@@ -40,7 +40,7 @@ class Ping(Resource):
     def get(self):
         """Ping api"""
         app.logger.debug("success:ping pong!")
-        return m_response({'msg':'pong!'}, 200)
+        return make_response({'msg':'pong!'}, 200)
 
 
 @api.route('/')

@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
 
 from cloudalbum.util.response import m_response, err_response
@@ -136,7 +136,7 @@ class List(Resource):
                 data['photos'].append(url)
 
             app.logger.debug("success:photos_list:{}".format(data))
-            return m_response(data, 200)
+            return make_response({'ok':True, 'photos':data['photos']}, 200)
 
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
@@ -165,7 +165,7 @@ class OnePhoto(Resource):
 
             if file_deleted:
                 app.logger.debug("success:photo deleted: user_id:{}, photo_id:{}".format(user['user_id'], photo_id))
-                return m_response({'photo_id': photo_id}, 200)
+                return make_response({'photo_id': photo_id}, 200)
             else:
                 raise FileNotFoundError
 
