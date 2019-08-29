@@ -215,11 +215,11 @@ class Signin(Resource):
         except ValidationError as e:
             app.logger.error('ERROR:invalid data format:{0}'.format(req_data))
             app.logger.error(e)
-            return err_response(e.message,400)
+            return err_response(e,400)
         except Exception as e:
             app.logger.error('ERROR:unexpected error:{0}'.format(req_data))
             app.logger.error(e)
-            return err_response(e, 500)
+            return err_response('ERROR:unexpected error:{0}'.format(req_data), 500)
 
 
 @api.route('/signout')
@@ -239,7 +239,7 @@ class Signout(Resource):
             )
 
             app.logger.debug("Access token expired: {}".format(token))
-            return m_response({'accessToken':token}, 200)
+            return make_response({'ok': True}, 200)
 
         except Exception as e:
             app.logger.error('ERROR:Sign-out:unknown issue:token:{}'.format(token))
