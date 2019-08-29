@@ -83,7 +83,7 @@ def cog_jwt_required(f):
         token = request.headers['Authorization'].replace('Bearer ', '')
 
         try:
-            if token_decoder(token.rsplit(' ', 1)[1]) is not None:
+            if token_decoder(token) is not None:
                 return f(*args, **kwargs)
         except Exception as e:
             print(e)
