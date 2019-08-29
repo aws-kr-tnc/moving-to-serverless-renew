@@ -140,7 +140,7 @@ class List(Resource):
                 data['photos'].append(url)
 
             app.logger.debug("success:photos_list:%s" % data)
-            return m_response(data, 200)
+            return m_response(data['photos'], 200)
 
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
