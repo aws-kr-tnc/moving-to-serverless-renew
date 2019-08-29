@@ -205,3 +205,60 @@ def presigned_url(filename, email, Thumbnail=True):
         app.logger.error('ERROR:creating presigned url failed:{0}'.format(e))
         raise e
 
+
+def presigned_url_both(filename, email):
+    """
+    Return presigned urls both original image url and thumbnail image url
+    :param filename:
+    :param email:
+    :return:
+    """
+    prefix = "photos/{0}/".format(email_normalize(email))
+    prefix_thumb = "photos/{0}/thumbnails/".format(email_normalize(email))
+    key_thumb = "{0}{1}".format(prefix_thumb, filename)
+    key_origin = "{0}{1}".format(prefix, filename)
+    try:
+        s3_client = boto3.client('s3')
+        thumb_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': app.config['S3_PHOTO_BUCKET'], 'Key': key_thumb},
+            ExpiresIn=app.config['S3_PRESIGNED_URL_EXPIRE_TIME'])
+        origin_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': app.config['S3_PHOTO_BUCKET'], 'Key': key_origin},
+            ExpiresIn=app.config['S3_PRESIGNED_URL_EXPIRE_TIME'])
+    except Exception as e:
+        raise e
+    return thumb_url, origin_url
+
+
+def with_presigned_url(current_user, photo):
+    """
+    Append additional attributes for presigned URL access.
+    :param current_user:
+    :param photo:
+    :return:
+    """
+    thumbSrc, originalSrc = presigned_url_both(photo.filename, current_user['email'])
+    temp = {}
+    temp['address'] = photo.address
+    temp['city'] = photo.city
+    temp['desc'] = photo.desc
+    temp['filename'] = photo.filename
+    temp['filename_orig'] = photo.filename_orig
+    temp['filesize'] = photo.filesize
+    temp['geotag_lat'] = float(photo.geotag_lat)
+    temp['geotag_lng'] = float(photo.geotag_lng)
+    temp['height'] = photo.height
+    temp['id'] = photo.id
+    temp['make'] = photo.make
+    temp['model'] = photo.model
+    temp['nation'] = photo.nation
+    temp['tags'] = photo.tags
+    temp['taken_date'] = photo.taken_date
+    temp['upload_date'] = photo.upload_date
+    temp['user_id'] = photo.user_id
+    temp['width'] = photo.width
+    temp['thumbSrc'] = thumbSrc
+    temp['originalSrc'] = originalSrc
+    return temp
