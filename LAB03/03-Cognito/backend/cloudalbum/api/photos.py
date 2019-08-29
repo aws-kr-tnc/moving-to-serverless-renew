@@ -7,7 +7,7 @@ from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
 
-from cloudalbum.util.file_control import delete_s3, save_s3, create_photo_info, presigned_url
+from cloudalbum.util.file_control import delete_s3, save_s3, create_photo_info, with_presigned_url
 from cloudalbum.database.model_ddb import Photo
 from cloudalbum.solution import solution_put_photo_info_ddb
 import uuid
@@ -129,18 +129,12 @@ class List(Resource):
             user = get_cognito_user(token)
             photos = Photo.query(user['user_id'])
 
-            data = {
-                'photos': []
-            }
+            data = {'photos': []}
+            [data['photos'].append(with_presigned_url(user, photo)) for photo in photos]
 
-            for photo in photos:
-                url = presigned_url(photo.id, user['email'], False)
-                data['photos'].append(url)
+            app.logger.debug("success:photos_list:{}".format(data))
 
-            app.logger.debug("success:photos_list:%s" % data)
             return m_response(data['photos'], 200)
-
-
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
             app.logger.error(e)

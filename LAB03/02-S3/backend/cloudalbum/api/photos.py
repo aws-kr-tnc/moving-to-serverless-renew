@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from cloudalbum.util.file_control import delete_s3, save_s3, presigned_url
+from cloudalbum.util.file_control import delete_s3, save_s3, presigned_url, with_presigned_url
 from cloudalbum.database.model_ddb import Photo
 from cloudalbum.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
 import uuid
@@ -124,19 +124,16 @@ class List(Resource):
     def get(self):
         """Get all photos as list"""
 
-        data = {
-            'photos': []
-        }
         try:
             user = get_jwt_identity()
             photos = Photo.query(user['user_id'])
 
-            for photo in photos:
-                url = presigned_url(photo.id, user['email'], False)
-                data['photos'].append(url)
+            data = {'photos': []}
+            [data['photos'].append(with_presigned_url(user, photo)) for photo in photos]
 
             app.logger.debug("success:photos_list:{}".format(data))
-            return make_response({'ok':True, 'photos':data['photos']}, 200)
+
+            return m_response(data['photos'], 200)
 
         except Exception as e:
             app.logger.error("ERROR:photos list failed")

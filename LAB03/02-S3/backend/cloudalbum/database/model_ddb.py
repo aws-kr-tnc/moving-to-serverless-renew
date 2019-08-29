@@ -1,7 +1,7 @@
 from datetime import datetime
-from flask import current_app as app
+
 from pynamodb.models import Model
-from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute, ListAttribute, MapAttribute
+from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
 from tzlocal import get_localzone
 import boto3
@@ -90,3 +90,4 @@ def photo_deserialize(photo):
     photo_json['nation'] = photo.nation
     photo_json['address'] = photo.address
     return photo_json
+
