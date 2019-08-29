@@ -27,7 +27,7 @@ class BaseConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = os.getenv('SQLALCHEMY_ECHO', True)
 
-    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'upload'))
+    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join(os.getcwd(), '/tmp'))
     THUMBNAIL_WIDTH = os.getenv('THUMBNAIL_WIDTH', 300)
     THUMBNAIL_HEIGHT = os.getenv('THUMBNAIL_HEIGHT', 200)
 

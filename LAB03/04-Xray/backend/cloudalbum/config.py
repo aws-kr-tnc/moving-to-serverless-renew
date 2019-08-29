@@ -14,7 +14,7 @@ class BaseConfig:
     JWT_BLACKLIST_ENABLED = os.getenv('JWT_BLACKLIST_ENABLED', True)
     JWT_BLACKLIST_TOKEN_CHECKS = ['access']
 
-    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'upload'))
+    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join(os.getcwd(), '/tmp'))
     THUMBNAIL_WIDTH = os.getenv('THUMBNAIL_WIDTH', 300)
     THUMBNAIL_HEIGHT = os.getenv('THUMBNAIL_HEIGHT', 200)
 
