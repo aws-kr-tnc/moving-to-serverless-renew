@@ -5,9 +5,9 @@
 </template>
 
 <script>
-	export default {
-		name: "LayoutBody"
-	}
+export default {
+  name: 'LayoutBody',
+};
 </script>
 
 <style scoped>

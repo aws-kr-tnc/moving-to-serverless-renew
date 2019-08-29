@@ -14,9 +14,10 @@ Vue.component('l-tile-layer', LTileLayer);
 Vue.component('l-marker', LMarker);
 
 // this part resolve an issue where the markers would not appear
+// eslint-disable-next-line no-underscore-dangle
 delete Icon.Default.prototype._getIconUrl;
 
-Icon.Default.mergeOptions({
+Icon.Default.mergeOptions({ /* eslint-disable global-require */
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
   iconUrl: require('leaflet/dist/images/marker-icon.png'),
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),

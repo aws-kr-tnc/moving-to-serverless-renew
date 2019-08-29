@@ -1,15 +1,14 @@
-
 const gpsConverter = (gpsSource, gpsRef) => {
-  let tempArray = '';
+  let tempArray;
   tempArray = gpsSource.toString();
   tempArray = tempArray.split(',');
 
-  let deg = tempArray[0];
-  let min = tempArray[1];
-  let sec = tempArray[2];
-  let ref = gpsRef;
+  const deg = parseFloat(tempArray[0]);
+  const min = parseFloat(tempArray[1]);
+  const sec = parseFloat(tempArray[2]);
+  const ref = gpsRef;
 
-  let dd = parseFloat(deg) + parseFloat(min / 60) + parseFloat(sec / (60 * 60));
+  let dd = deg + (min / 60) + (sec / (60 * 60));
 
   if (ref === 'S' || ref === 'W') {
     dd *= -1;
@@ -17,6 +16,5 @@ const gpsConverter = (gpsSource, gpsRef) => {
 
   return dd;
 };
-
 
 export default gpsConverter;

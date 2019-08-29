@@ -22,7 +22,6 @@ const fileUpload = (file, name = 'file', param) => {
   console.log(formData.keys());
 
 
-
   const config = {
     headers: {
       'content-type': 'multipart/form-data',

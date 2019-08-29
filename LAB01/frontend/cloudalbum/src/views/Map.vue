@@ -67,7 +67,10 @@
               colored-border
               icon="mdi-information"
             >
-              <strong>No data! Pleas upload your photos. (Click <v-icon>mdi-cloud-upload</v-icon> icon above)</strong>
+              <strong>No data! Pleas upload your photos. (Click </strong>
+              <strong>
+                <v-icon>mdi-cloud-upload</v-icon> icon above)
+              </strong>
             </v-alert>
           </v-flex>
         </v-layout>
