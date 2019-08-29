@@ -8,7 +8,7 @@
     :license: MIT, see LICENSE for more details.
 """
 import os, uuid
-from flask import current_app as app
+from flask import current_app as app, make_response
 from flask import Blueprint, request
 from flask_restplus import Api, Resource, fields
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -115,11 +115,11 @@ class FileUpload(Resource):
                                               filename=filename,
                                               filename_orig=filename_orig).first()
 
-            return m_response(True, {"photo_id": committed.id}, 200)
+            return make_response({'ok': True, "photo_id": committed.id}, 200)
         except Exception as e:
             app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
-            return m_response(False, {'user_id': get_jwt_identity()['user_id']}, 500)
+            return  make_response({'ok': False, 'data': {'user_id': get_jwt_identity()['user_id']}}, 500)
 
 
 @api.route('/<photo_id>/info')
@@ -190,9 +190,9 @@ class List(Resource):
             data = {
                 'photos': photos
             }
-            app.logger.debug("success:photos_list:%s" % data)
-            return m_response(True, data['photos'], 200)
 
+            app.logger.debug("success:photos_list:%s" % data)
+            return  make_response({'ok':True, 'photos':photos}, 200)
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
             app.logger.error(e)
