@@ -17,11 +17,12 @@ from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 from pathlib import Path
 from jsonschema.exceptions import ValidationError
-from cloudalbum.util.response import m_response
 from cloudalbum import db
 from cloudalbum.database.models import Photo
 from cloudalbum.schemas import validate_photo_info
 from cloudalbum.util.file_control import email_normalize, delete, save, insert_basic_info
+from werkzeug.exceptions import BadRequest, InternalServerError
+
 
 authorizations = {
     'Bearer Auth': {
@@ -85,7 +86,7 @@ class Ping(Resource):
     @jwt_required
     def get(self):
         app.logger.debug('success:pong!')
-        return m_response(True, {'msg': 'pong!'}, 200)
+        return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
 @api.route('/file')
@@ -93,33 +94,26 @@ class Ping(Resource):
 class FileUpload(Resource):
     @jwt_required
     def post(self):
+        form = file_upload_parser.parse_args()
+        filename_orig = form['file'].filename
+        extension = (filename_orig.rsplit('.', 1)[1]).lower()
+        current_user = get_jwt_identity()
+
+        if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
+            app.logger.error('File format is not supported:{0}'.format(filename_orig))
+            raise BadRequest('File format is not supported:{0}'.format(filename_orig))
+
         try:
-            app.logger.debug(dir(file_upload_parser))
-            form = file_upload_parser.parse_args()
-            filename_orig = form['file'].filename
-
-            extension = (filename_orig.rsplit('.', 1)[1]).lower()
-            if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
-                app.logger.error('ERROR:file format is not supported:{0}'.format(filename_orig))
-                return m_response(False, {'filename': filename_orig,
-                                          'msg': 'not supported file format:{}'.format(extension)}, 400)
-
-            current_user = get_jwt_identity()
             filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
             filesize = save(form['file'], filename, current_user['email'])
-
-            user_id = current_user['user_id']
-            insert_basic_info(user_id, filename, filename_orig, filesize, form)
-
-            committed = Photo.query.filter_by(user_id=user_id,
+            insert_basic_info(current_user['user_id'], filename, filename_orig, filesize, form)
+            committed = Photo.query.filter_by(user_id=current_user['user_id'],
                                               filename=filename,
                                               filename_orig=filename_orig).first()
-
             return make_response({'ok': True, "photo_id": committed.id}, 200)
         except Exception as e:
-            app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
-            app.logger.error(e)
-            return  make_response({'ok': False, 'data': {'user_id': get_jwt_identity()['user_id']}}, 500)
+            app.logger.error('File upload failed:user_id:{0}: {1}'.format(get_jwt_identity()['user_id'], e))
+            raise InternalServerError('File upload failed: {0}'.format(e))
 
 
 @api.route('/<photo_id>/info')
@@ -136,7 +130,6 @@ class InfoUpload(Resource):
         body = request.get_json()
         try:
             valid_data = validate_photo_info(body)['data']
-
             photo = Photo.query.filter_by(id=photo_id).first()
 
             for key in infos_column:
@@ -144,7 +137,6 @@ class InfoUpload(Resource):
                     valid_data[key] = None
 
             photo.taken_date = datetime.strptime(valid_data['taken_date'], "%Y:%m:%d %H:%M:%S")
-
             photo.id = photo_id
             photo.tags = valid_data['tags']
             photo.desc = valid_data['desc']
@@ -157,19 +149,18 @@ class InfoUpload(Resource):
             photo.city = valid_data['city']
             photo.nation = valid_data['nation']
             photo.address = valid_data['address']
-
             db.session.add(photo)
             db.session.commit()
             app.logger.debug('success:photo info update:{}'.format(valid_data))
-            return m_response(True, {'photo_id': photo_id, 'infos': valid_data}, 200)
+            return make_response({'ok': True, 'photos': photo.to_json()}, 200)
         except ValidationError as e:
-            app.logger.error('ERROR:wrong photo information format :{}'.format(body))
+            app.logger.error('Photo information format is wrong: {}'.format(body))
             app.logger.error(e)
-            return m_response(False, {'photo_id': photo_id, 'msg': 'information format wrong', 'body': body}, 500)
+            raise BadRequest('Photo information format is wrong')
         except Exception as e:
-            app.logger.error('ERROR:photo info update failed:{}'.format(body))
+            app.logger.error('Photo information update failed:{}'.format(body))
             app.logger.error(e)
-            return m_response(False, {'photo_id': photo_id, 'msg': e, 'body': body}, 500)
+            raise InternalServerError('Photo information update failed: {0}'.format(e))
 
 
 @api.route('/')
@@ -187,16 +178,12 @@ class List(Resource):
         try:
             current_user = get_jwt_identity()['user_id']
             photos = [photo.to_json() for photo in Photo.query.filter_by(user_id=current_user)]
-            data = {
-                'photos': photos
-            }
-
-            app.logger.debug("success:photos_list:%s" % data)
-            return  make_response({'ok':True, 'photos':photos}, 200)
+            app.logger.debug('success:photos_list: {0}'.format(photos))
+            return make_response({'ok': True, 'photos': photos}, 200)
         except Exception as e:
-            app.logger.error("ERROR:photos list failed")
+            app.logger.error('Photos list retrieving failed')
             app.logger.error(e)
-            return m_response(False, None, 500)
+            raise InternalServerError('Photos list retrieving failed')
 
 
 @api.route('/<photo_id>')
@@ -212,30 +199,29 @@ class OnePhoto(Resource):
     @jwt_required
     def delete(self, photo_id):
         """one photo delete"""
+        user = get_jwt_identity()
+
         try:
             db_photo = Photo.query.filter_by(id=photo_id).first()
-
             if db_photo is None:
-                app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
-                return m_response(False, {'photo_id': photo_id}, 404)
-
+                app.logger.error('Not exist photo_id: {}'.format(photo_id))
+                raise BadRequest('Not exist photo_id')
             filename = db_photo.filename
-
             db.session.delete(db_photo)
             db.session.commit()
-
-            user = get_jwt_identity()
             file_deleted = delete(filename, user['email'])
 
             if file_deleted:
                 app.logger.debug("success:photo deleted: photo_id:{}".format(photo_id))
-                return m_response(True, {'photo_id': photo_id}, 200)
+                return make_response({'ok': True, 'photos': {'photo_id': photo_id}}, 200)
             else:
-                raise FileNotFoundError
+                raise FileNotFoundError('File not found error')
+        except BadRequest as e:
+            raise BadRequest(e)
+        except FileNotFoundError as e:
+            raise InternalServerError(e)
         except Exception as e:
-            app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
-            app.logger.error(e)
-            return m_response(False, {'photo_id': photo_id}, 500)
+            raise InternalServerError(e)
 
     @api.doc(
         responses=

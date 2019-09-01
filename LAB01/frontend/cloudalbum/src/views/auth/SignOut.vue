@@ -50,13 +50,16 @@ export default {
               text: 'Your account has been signed out successfully.',
               type: 'success',
               onClose: () => {
+                this.$store.state.accessToken = null;
                 this.$router.push({ name: 'signin' });
               },
             },
           );
         }
       } catch (error) {
-        console.error(error);
+        console.log(error.response);
+        this.$store.state.accessToken = null;
+        this.$router.push({ name: 'signin' });
       }
     },
   },
@@ -72,15 +75,16 @@ export default {
       confirmButtonText: 'Yes, sign-out!',
     }).then((result) => {
       if (result.value) {
-        this.$swal({
-          title: 'Success!',
-          text: 'Your account has been signed out successfully.',
-          type: 'success',
-          onClose: () => {
-            this.signOut();
-            // this.$router.push({ name: 'signin' });
-          },
-        });
+        this.signOut();
+        // this.$swal({
+        //   title: 'Success!',
+        //   text: 'Your account has been signed out successfully.',
+        //   type: 'success',
+        //   onClose: () => {
+        //     this.signOut();
+        //     // this.$router.push({ name: 'signin' });
+        //   },
+        // });
       } else {
         this.$router.push({ name: 'photolist' });
       }

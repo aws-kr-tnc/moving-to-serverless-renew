@@ -105,8 +105,11 @@ export default {
     },
     popupAlert(resp) {
       let msg = '';
-      if (!resp.response) msg = `${resp} (${process.env.VUE_APP_API})`;
-      else msg = resp.response.data.Message;
+      if (typeof resp !== 'undefined') {
+        if (!resp.response) msg = `${resp} (${process.env.VUE_APP_API})`;
+        // eslint-disable-next-line max-len
+        else msg = resp.response.data.Message ? resp.response.data.Message : resp.response.data.message;
+      } else msg = this.$store.state.errorMessage;
 
       this.$swal(
         {

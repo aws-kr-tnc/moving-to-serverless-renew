@@ -21,14 +21,18 @@ const getTokens = async (store, { email, password }) => {
     const resp = await services.Auth.signIn(email, password);
     setAccessToken(store, resp.data.accessToken);
     setRefreshToken(store, resp.data.refreshToken);
-    console.log('==========');
     console.log(resp);
     return resp;
   } catch (error) {
-    let msg = '';
-    if (!error.response) msg = error.response.data.Message;
-    console.log(error.response);
-    setErrorMessage(store, msg);
+    // let msg = '';
+    // if (error.response) {
+    //   msg = error.response.data.Message ? error.response.data.Message : error.response.data.message;
+    //   console.log(`0:setErrorMessage: ${msg}`);
+    // }
+    // console.log(error.response);
+    // console.log(`setErrorMessage: ${msg}`);
+    // setErrorMessage(store, msg);
+    return error;
   }
 };
 

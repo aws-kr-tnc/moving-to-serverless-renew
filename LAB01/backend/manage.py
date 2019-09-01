@@ -11,6 +11,7 @@
 import sys
 import unittest
 from flask.cli import FlaskGroup
+from werkzeug.security import generate_password_hash
 from cloudalbum import create_app, db
 from cloudalbum.database.models import User
 
@@ -51,8 +52,8 @@ def seed_db():
     Insert seeds database
     :return:
     """
-    db.session.add(User(username='mario', email='super@mario.com', password='asdfg'))
-    db.session.add(User(username='luigi', email='super@luigi.com', password='asdfg'))
+    db.session.add(User(username='mario', email='super@mario.com', password=generate_password_hash('asdfg')))
+    db.session.add(User(username='luigi', email='super@luigi.com', password=generate_password_hash('asdfg')))
     db.session.commit()
 
 
