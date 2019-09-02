@@ -1,9 +1,9 @@
 import socket
 
-from flask import Blueprint
+from flask import Blueprint, make_response
 from flask import current_app as app
 from flask_restplus import Api, Resource
-from cloudalbum.util.response import m_response
+from werkzeug.exceptions import InternalServerError
 from cloudalbum import db
 import shutil
 
@@ -18,8 +18,7 @@ class Ping(Resource):
     def get(self):
         """Ping api"""
         app.logger.debug("success:ping pong!")
-        return m_response(True, {'msg':'pong!'}, 200)
-
+        return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
 @api.route('/health_check')
@@ -35,10 +34,10 @@ class HealthCheck(Resource):
                 raise Exception("free disk size under 10%")
             # 3. Something else..
             # TODO: health check something
-            return m_response(True, {'msg':'health_check success', "hostname": get_ip_addr()}, 200)
+            return make_response({'ok': True, 'Message': 'Healthcheck success: {0}'.format(get_ip_addr())}, 200)
         except Exception as e:
             app.logger.error(e)
-            return m_response(False, {'msg': 'healthcheck failed', "hostname": get_ip_addr()}, 500)
+            raise InternalServerError('Healthcheck failed: {0}: {1}'.format(get_ip_addr(), e))
 
 
 def get_ip_addr():
