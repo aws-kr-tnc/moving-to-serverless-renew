@@ -131,8 +131,9 @@ export default {
         );
       } catch (err) {
         let errMsg = '';
-        if (!err.response) errMsg = 'Error: Network Connection Error!';
-        else errMsg = err.response.data.Message;
+        const res = err.response;
+        if (!res) errMsg = 'Error: Network Connection Error!';
+        else errMsg = res.data.Message ? res.data.Message : res.data.message;
         this.$swal(
           {
             type: 'error',

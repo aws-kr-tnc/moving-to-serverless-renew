@@ -8,11 +8,6 @@
     :license: MIT, see LICENSE for more details.
 """
 import copy
-from flask import make_response
-
-
-def m_response(bool, data, code):
-    return make_response({'ok': bool, 'photos': data}, code)
 
 
 dic_default_response = {
