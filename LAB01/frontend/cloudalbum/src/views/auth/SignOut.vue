@@ -13,7 +13,6 @@
           sm8
           md4
         >
-
         </v-flex>
       </v-layout>
     </v-container>
@@ -21,43 +20,31 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapMutations } from 'vuex';
+import { mapMutations } from 'vuex';
 import { SET_ACCESS_TOKEN, SET_REFRESH_TOKEN } from '@/vuex/mutation-types';
 import service from '@/service';
 
 export default {
   name: 'SignOut',
-
-  data() {
-    return {
-    };
-  },
-  computed: {
-    ...mapGetters('Auth', [
-      'isAuthenticated',
-    ]),
-  },
   methods: {
-    ...mapActions('Auth', ['getTokens']),
     ...mapMutations('Auth', [SET_ACCESS_TOKEN, SET_REFRESH_TOKEN]),
     async signOut() {
       try {
         const resp = await service.Auth.signOut();
-        if (resp.data.ok === true) {
-          console.log('Signout successfully ✨');
-          this[SET_ACCESS_TOKEN](null);
-          this[SET_REFRESH_TOKEN](null);
-          this.$swal(
-            {
-              title: 'Success!',
-              text: 'Your account has been signed out successfully.',
-              type: 'success',
-              onClose: () => {
-                this.$router.push({ name: 'signin' });
-              },
+        if (!resp.data.ok) return;
+        console.log('Signout successfully ✨');
+        this[SET_ACCESS_TOKEN](null);
+        this[SET_REFRESH_TOKEN](null);
+        this.$swal(
+          {
+            title: 'Success!',
+            text: 'Your account has been signed out successfully.',
+            type: 'success',
+            onClose: () => {
+              this.$router.push({ name: 'signin' });
             },
-          );
-        }
+          },
+        );
       } catch (error) {
         console.log(error.response);
         this[SET_ACCESS_TOKEN](null);
@@ -79,15 +66,6 @@ export default {
     }).then((result) => {
       if (result.value) {
         this.signOut();
-        // this.$swal({
-        //   title: 'Success!',
-        //   text: 'Your account has been signed out successfully.',
-        //   type: 'success',
-        //   onClose: () => {
-        //     this.signOut();
-        //     // this.$router.push({ name: 'signin' });
-        //   },
-        // });
       } else {
         this.$router.push({ name: 'photolist' });
       }
@@ -95,7 +73,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-
-</style>
