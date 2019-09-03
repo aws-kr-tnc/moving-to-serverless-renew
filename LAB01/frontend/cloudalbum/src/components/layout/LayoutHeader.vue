@@ -48,8 +48,15 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
+
 export default {
   name: 'LayoutHeader',
+  computed: {
+    ...mapGetters('Auth', [
+      'isAuthenticated',
+    ]),
+  },
   methods: {
     moveToUpload() {
       this.$router.push({ name: 'upload' })
@@ -88,6 +95,7 @@ export default {
         });
     },
     signOut() {
+      if (!this.isAuthenticated) return;
       this.$router.push({ name: 'signout' })
         .catch((err) => {
           if (err.name === 'NavigationDuplicated') {
