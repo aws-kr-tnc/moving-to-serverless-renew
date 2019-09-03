@@ -21,7 +21,8 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex';
+import { mapActions, mapGetters, mapMutations } from 'vuex';
+import { SET_ACCESS_TOKEN, SET_REFRESH_TOKEN } from '@/vuex/mutation-types';
 import service from '@/service';
 
 export default {
@@ -38,19 +39,20 @@ export default {
   },
   methods: {
     ...mapActions('Auth', ['getTokens']),
-
+    ...mapMutations('Auth', [SET_ACCESS_TOKEN, SET_REFRESH_TOKEN]),
     async signOut() {
       try {
         const resp = await service.Auth.signOut();
         if (resp.data.ok === true) {
           console.log('Signout successfully ✨');
+          this[SET_ACCESS_TOKEN](null);
+          this[SET_REFRESH_TOKEN](null);
           this.$swal(
             {
               title: 'Success!',
               text: 'Your account has been signed out successfully.',
               type: 'success',
               onClose: () => {
-                this.$store.state.accessToken = null;
                 this.$router.push({ name: 'signin' });
               },
             },
@@ -58,7 +60,8 @@ export default {
         }
       } catch (error) {
         console.log(error.response);
-        this.$store.state.accessToken = null;
+        this[SET_ACCESS_TOKEN](null);
+        this[SET_REFRESH_TOKEN](null);
         this.$router.push({ name: 'signin' });
       }
     },
