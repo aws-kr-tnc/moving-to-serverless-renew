@@ -1,25 +1,17 @@
-"""
-    cloudalbum/api/photos.py
-    ~~~~~~~~~~~~~~~~~~~~~~~
-    REST API for photos
-
-    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
-    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
-    :license: MIT, see LICENSE for more details.
-"""
-import os
-import uuid
-from pathlib import Path
 from flask import Blueprint, request, make_response
+from flask_restplus import Api, Resource, fields
 from flask import current_app as app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from flask_restplus import Api, Resource, fields
-from werkzeug.datastructures import FileStorage
 from werkzeug.exceptions import BadRequest, InternalServerError
+from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
-from cloudalbum.database.model_ddb import Photo, photo_deserialize
-from cloudalbum.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
+from pathlib import Path
 from cloudalbum.util.file_control import email_normalize, delete, save
+from cloudalbum.database.model_ddb import photo_deserialize, Photo
+from cloudalbum.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
+import os
+import uuid
+
 
 authorizations = {
     'Bearer Auth': {
@@ -108,10 +100,11 @@ class FileUpload(Resource):
             # TODO 3: Implement following solution code to put item into Photo table of DynamoDB
             solution_put_photo_info_ddb(user_id, filename, form, filesize)
 
-            return make_response({'ok': True}, 200)
+            return make_response({'ok': True, "photo_id": filename}, 200)
         except Exception as e:
-            app.logger.error('File upload failed:user_id:{0}: {1}'.format(get_jwt_identity()['user_id'], e))
-            raise InternalServerError('File upload failed: {0}'.format(e))
+            app.logger.error('File upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
+            app.logger.error(e)
+            raise InternalServerError('File upload failed')
 
 
 @api.route('/')
@@ -127,14 +120,15 @@ class List(Resource):
     def get(self):
         """Get all photos as list"""
         try:
-            photos = [photo_deserialize(photo) for photo in Photo.query(get_jwt_identity()['user_id'])]
-            app.logger.debug("success:photos_list:{}".format(photos))
-            return make_response({'ok': True, 'photos': photos}, 200)
-
+            photos = Photo.query(get_jwt_identity()['user_id'])
+            data = {'ok': True, 'photos': []}
+            [data['photos'].append(photo_deserialize(photo) for photo in photos)]
+            app.logger.debug("success:photos_list:{}".format(data))
+            return make_response(data, 200)
         except Exception as e:
-            app.logger.error('Photos list retrieving failed')
+            app.logger.error("ERROR:photos list failed")
             app.logger.error(e)
-            raise InternalServerError('Photos list retrieving failed')
+            return InternalServerError('ERROR:photos list failed')
 
 
 @api.route('/<photo_id>')
@@ -161,13 +155,16 @@ class OnePhoto(Resource):
                 app.logger.debug("success:photo deleted: photo_id:{}".format(photo_id))
                 return make_response({'ok': True, 'photos': {'photo_id': photo_id}}, 200)
             else:
-                raise FileNotFoundError('File not found error')
-        except BadRequest as e:
-            raise BadRequest(e)
+                raise FileNotFoundError
+
         except FileNotFoundError as e:
-            raise InternalServerError(e)
+            app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
+            app.logger.error(e)
+            raise InternalServerError('ERROR:not exist photo_id:{}'.format(photo_id))
         except Exception as e:
-            raise InternalServerError(e)
+            app.logger.error('ERROR:photo delete failed: photo_id:{}'.format(photo_id))
+            app.logger.error(e)
+            raise InternalServerError('ERROR:photo delete failed: photo_id:{}'.format(photo_id))
 
 
     @api.doc(
@@ -192,6 +189,7 @@ class OnePhoto(Resource):
             email = user['email']
             path = os.path.join(app.config['UPLOAD_FOLDER'], email_normalize(email))
             full_path = Path(path)
+
             photo = Photo.get(user['user_id'], range_key=photo_id)
 
             if photo.id == photo_id:

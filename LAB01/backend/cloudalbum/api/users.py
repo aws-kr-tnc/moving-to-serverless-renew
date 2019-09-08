@@ -1,12 +1,3 @@
-"""
-    cloudalbum/api/users.py
-    ~~~~~~~~~~~~~~~~~~~~~~~
-    REST API for users
-
-    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
-    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
-    :license: MIT, see LICENSE for more details.
-"""
 from flask import Blueprint, request, make_response
 from flask import current_app as app
 from flask import jsonify

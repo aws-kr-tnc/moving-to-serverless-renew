@@ -1,12 +1,3 @@
-"""
-    cloudalbum/api/photos.py
-    ~~~~~~~~~~~~~~~~~~~~~~~
-    REST API for users
-
-    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
-    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
-    :license: MIT, see LICENSE for more details.
-"""
 import uuid
 import json
 from flask import Blueprint, request
@@ -78,6 +69,7 @@ class UsersList(Resource):
                 data.append(one_user)
             app.logger.debug("success:users_list:%s" % data)
             return make_response({'ok': True, 'users': data}, 200)
+
         except Exception as e:
             app.logger.error('Retrieve user list failed')
             app.logger.error(e)
@@ -140,10 +132,11 @@ class Signup(Resource):
                 app.logger.debug('success:user_signup: {0}'.format(user))
                 return make_response({'ok': True, 'users': user}, 201)
             else:
-                app.logger.error('ERROR: Existed user: {0}'.format(user_data))
+                app.logger.error('ERROR:exist user: {0}'.format(user_data))
                 raise Conflict('ERROR: Existed user!')
         except ValidationError as e:
-            app.logger.error('ERROR: {0}\n{1}'.format(e.message, req_data))
+            app.logger.error('ERROR:invalid signup data format:{0}'.format(req_data))
+            app.logger.error(e)
             raise BadRequest(e.message)
         except PynamoDBException as e:
             app.logger.error('ERROR:unexpected signup error:{}'.format(req_data))
@@ -178,7 +171,7 @@ class Signin(Resource):
                     app.logger.debug('success:user signin:{}'.format(token_data))
                     return make_response(res, 200)
                 else:
-                    app.logger.error('Password is mismatched or invalid user: {0}'.format(signin_data))
+                    app.logger.error('Password is mismatched or invalid user {0}'.format(signin_data))
                     raise BadRequest('Password is mismatched or invalid user')
 
         except ValidationError as e:
@@ -207,5 +200,6 @@ class Signout(Resource):
             return make_response({'ok': True, 'users': user, 'Message': 'logged out'}, 200)
 
         except Exception as e:
-            app.logger.error('Sign-out:unknown issue:user:{0}: {1}'.format(get_jwt_identity(), e))
+            app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_jwt_identity()))
+            app.logger.error(e)
             raise BadRequest(e)

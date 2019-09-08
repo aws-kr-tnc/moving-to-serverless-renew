@@ -1,17 +1,9 @@
-"""
-    cloudalbum/tests/test_users.py
-    ~~~~~~~~~~~~~~~~~~~~~~~
-    Test cases for users REST API
 
-    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
-    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
-    :license: MIT, see LICENSE for more details.
-"""
 import json
 import unittest
 import random
-from cloudalbum.tests.base import BaseTestCase
 
+from cloudalbum.tests.base import BaseTestCase
 
 def auto_signup(self):
     """Signup tool for test user """
@@ -29,7 +21,6 @@ def auto_signup(self):
             content_type='application/json',
         )
         return response, dic_user
-
 
 def auto_signin(self, test_user):
     with self.client:

@@ -1,27 +1,16 @@
-"""
-    manage.py
-    ~~~~~~~~~~~~~~~~~~~~~~~
-    CLI tool for manage application.
-
-    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
-    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
-    :license: MIT, see LICENSE for more details.
-"""
 import sys
 import unittest
+
 from flask.cli import FlaskGroup
 from cloudalbum import create_app
-from cloudalbum.database import delete_table
-from cloudalbum.database.model_ddb import User
-from werkzeug.security import generate_password_hash
+from cloudalbum.database import create_table
 
 app = create_app()
 cli = FlaskGroup(create_app=create_app)
 
-
-@cli.command('delete_db')
-def delete_db():
-    delete_table()
+@cli.command('recreate_db')
+def recreate_db():
+    create_table()
 
 
 @cli.command()
@@ -37,14 +26,9 @@ def test():
 @cli.command('seed_db')
 def seed_db():
     """Seeds the database."""
-    try:
-        user = User('test_user_id')
-        user.email = 'user@user.com'
-        user.password = generate_password_hash('Password1!')
-        user.username = 'user'
-        user.save()
-    except Exception as e:
-        app.logger.error(e)
+    # database.session.add(User(username='mario', email='super@mario.com', password='asdf'))
+    # database.session.add(User(username='luigi', email='super@luigi.com', password='asdf'))
+    # database.session.commit()
 
 
 if __name__ == '__main__':
