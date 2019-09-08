@@ -1,5 +1,14 @@
-from datetime import datetime
+"""
+    cloudalbum/solution.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Hands-on lab solution file.
 
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+
+from datetime import datetime
 from flask import current_app as app
 from werkzeug.security import generate_password_hash
 from cloudalbum.database.model_ddb import User, Photo

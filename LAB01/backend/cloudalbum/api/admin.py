@@ -1,5 +1,13 @@
-import socket
+"""
+    cloudalbum/api/admin.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    REST API for site administrator.
 
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+import socket
 from flask import Blueprint, make_response
 from flask import current_app as app
 from flask_restplus import Api, Resource

@@ -1,8 +1,14 @@
-# services/users/cloudalbum/tests/base.py
+"""
+    cloudalbum/tests/base.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Base test cases
 
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 
 from flask_testing import TestCase
-
 from cloudalbum import create_app
 
 app = create_app()

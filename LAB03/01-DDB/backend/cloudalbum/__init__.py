@@ -1,9 +1,18 @@
+"""
+    cloudalbum/__init__.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Environment configuration how to run application.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+
 import os
 import logging
 import sys
 import json
 import datetime
-
 from bson.objectid import ObjectId
 from flask import Flask, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
@@ -11,6 +20,8 @@ from flask_cors import CORS
 from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
+from cloudalbum.database import create_table
+
 
 class JSONEncoder(json.JSONEncoder):
     ''' extend json-encoder class'''
@@ -44,7 +55,6 @@ def create_app(script_info=None):
     flask_bcrypt = Bcrypt(app)
     jwt = JWTManager(app)
 
-
     app.json_encoder = JSONEncoder
 
     # enable CORS
@@ -58,8 +68,9 @@ def create_app(script_info=None):
     app.logger.addHandler(logging.StreamHandler(sys.stdout))
     app.logger.setLevel(logging.DEBUG)
 
-    # set up extensions
-    # database.init_app(application)
+    # Create database table, if it is not exists
+    with app.app_context():
+        create_table()
 
     # register blueprints
     from cloudalbum.api.users import users_blueprint
