@@ -1,6 +1,17 @@
+"""
+    cloudalbum/util/blacklist_helper.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Handling JWT token for signed out user.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 
 
 blacklist_set = set()
+
+
 def add_token_to_set(decoded_token):
     """
     Adds a new token to the set. It is not revoked when it is added.

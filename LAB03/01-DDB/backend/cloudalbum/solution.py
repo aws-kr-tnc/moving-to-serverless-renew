@@ -1,3 +1,13 @@
+"""
+    cloudalbum/solution.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Hands-on lab solution file.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+
 from datetime import datetime
 from flask import current_app as app
 from werkzeug.security import generate_password_hash
@@ -21,11 +31,10 @@ def solution_get_user_data_with_idx(signin_data):
     app.logger.info("Get user data with email which is Global Secondary Index")
     app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
 
-    user = User.email_index.query(signin_data['email'])
-    if user.total_count == 0:
-        return None
-    return user
-
+    for user_email in User.email_index.query(signin_data['email']):
+        if user_email is None:
+            return None
+        return user_email
 
 def solution_put_photo_info_ddb(user_id, filename, form, filesize):
     app.logger.info("RUNNING TODO#3 SOLUTION CODE:")
