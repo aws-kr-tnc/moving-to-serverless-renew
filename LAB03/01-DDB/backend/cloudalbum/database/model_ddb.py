@@ -12,6 +12,7 @@ from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute, ListAttribute, MapAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
 from tzlocal import get_localzone
+import json
 import boto3
 
 
@@ -77,6 +78,15 @@ class Photo(Model):
     city = UnicodeAttribute(null=True)
     nation = UnicodeAttribute(null=True)
     address = UnicodeAttribute(null=True)
+
+
+class ModelEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if hasattr(obj, 'attribute_values'):
+            return obj.attribute_values
+        elif isinstance(obj, datetime):
+            return obj.isoformat()
+        return json.JSONEncoder.default(self, obj)
 
 
 def photo_deserialize(photo):

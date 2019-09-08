@@ -7,19 +7,19 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
+import os
+import uuid
+from pathlib import Path
 from flask import Blueprint, request, make_response
+from flask import current_app as app
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_restplus import Api, Resource, fields
 from werkzeug.datastructures import FileStorage
-from flask import current_app as app
-from werkzeug.utils import secure_filename
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from pathlib import Path
-from cloudalbum.util.file_control import email_normalize, delete, save
-from cloudalbum.database.model_ddb import photo_deserialize, Photo
-from cloudalbum.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
 from werkzeug.exceptions import BadRequest, InternalServerError
-import os, uuid
-
+from werkzeug.utils import secure_filename
+from cloudalbum.database.model_ddb import Photo, photo_deserialize
+from cloudalbum.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
+from cloudalbum.util.file_control import email_normalize, delete, save
 
 authorizations = {
     'Bearer Auth': {
@@ -91,30 +91,27 @@ class Ping(Resource):
 class FileUpload(Resource):
     @jwt_required
     def post(self):
+        form = file_upload_parser.parse_args()
+        filename_orig = form['file'].filename
+        extension = (filename_orig.rsplit('.', 1)[1]).lower()
+        current_user = get_jwt_identity()
+
+        if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
+            app.logger.error('File format is not supported:{0}'.format(filename_orig))
+            raise BadRequest('File format is not supported:{0}'.format(filename_orig))
+
         try:
-            app.logger.debug(dir(file_upload_parser))
-            form = file_upload_parser.parse_args()
-            filename_orig = form['file'].filename
-            extension = (filename_orig.rsplit('.', 1)[1]).lower()
-
-            if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
-                app.logger.error('File format is not supported:{0}'.format(filename_orig))
-                raise BadRequest('File format is not supported:{0}'.format(filename_orig))
-
-            current_user = get_jwt_identity()
-
             filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
             filesize = save(form['file'], filename, current_user['email'])
             user_id = current_user['user_id']
 
             # TODO 3: Implement following solution code to put item into Photo table of DynamoDB
             solution_put_photo_info_ddb(user_id, filename, form, filesize)
+
             return make_response({'ok': True}, 200)
         except Exception as e:
             app.logger.error('File upload failed:user_id:{0}: {1}'.format(get_jwt_identity()['user_id'], e))
             raise InternalServerError('File upload failed: {0}'.format(e))
-
-
 
 
 @api.route('/')
@@ -130,10 +127,10 @@ class List(Resource):
     def get(self):
         """Get all photos as list"""
         try:
-            # photos = Photo.query(get_jwt_identity()['user_id'])
             photos = [photo_deserialize(photo) for photo in Photo.query(get_jwt_identity()['user_id'])]
             app.logger.debug("success:photos_list:{}".format(photos))
             return make_response({'ok': True, 'photos': photos}, 200)
+
         except Exception as e:
             app.logger.error('Photos list retrieving failed')
             app.logger.error(e)
@@ -153,9 +150,9 @@ class OnePhoto(Resource):
     @jwt_required
     def delete(self, photo_id):
         """one photo delete"""
-        try:
-            user = get_jwt_identity()
+        user = get_jwt_identity()
 
+        try:
             # TODO 4: Implement following solution code to delete a photo from Photos which is a list
             filename = solution_delete_photo_from_ddb(user, photo_id)
             file_deleted = delete(filename, user['email'])
@@ -171,6 +168,7 @@ class OnePhoto(Resource):
             raise InternalServerError(e)
         except Exception as e:
             raise InternalServerError(e)
+
 
     @api.doc(
         responses=

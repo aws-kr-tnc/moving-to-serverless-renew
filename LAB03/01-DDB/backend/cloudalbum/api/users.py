@@ -8,6 +8,7 @@
     :license: MIT, see LICENSE for more details.
 """
 import uuid
+import json
 from flask import Blueprint, request
 from flask import current_app as app
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt)
@@ -16,10 +17,11 @@ from flask_restplus import Api, Resource, fields
 from jsonschema import ValidationError
 from werkzeug.security import check_password_hash
 from cloudalbum.schemas import validate_user
-from cloudalbum.database.model_ddb import User
+from cloudalbum.database.model_ddb import User, ModelEncoder
 from cloudalbum.solution import solution_put_new_user, solution_get_user_data_with_idx
 from cloudalbum.util.jwt_helper import add_token_to_set
 from werkzeug.exceptions import BadRequest, InternalServerError, Conflict
+from pynamodb.exceptions import PynamoDBException
 
 
 users_blueprint = Blueprint('users', __name__)
@@ -33,13 +35,13 @@ response = api.model('Response', {
     'data':fields.String
 })
 
-signup_user = api.model ('Signup_user',{
+signup_user = api.model ('Signup_user', {
     'email': fields.String,
     'username':fields.String,
     'password':fields.String
 })
 
-signin_user = api.model ('Signin_user',{
+signin_user = api.model ('Signin_user', {
     'email': fields.String,
     'password':fields.String
 })
@@ -74,11 +76,10 @@ class UsersList(Resource):
                     'username': user.username
                 }
                 data.append(one_user)
-
             app.logger.debug("success:users_list:%s" % data)
             return make_response({'ok': True, 'users': data}, 200)
         except Exception as e:
-            app.logger.error("users list failed")
+            app.logger.error('Retrieve user list failed')
             app.logger.error(e)
             raise InternalServerError('Retrieve user list failed')
 
@@ -96,21 +97,15 @@ class Users(Resource):
             if user is None:
                 app.logger.error('ERROR:user_id not exist:{}'.format(user_id))
                 raise BadRequest('User not exist')
-
-            data = {
-                'user': {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email
-                }
-            }
-            app.logger.debug("success:user_get_by_id:%s" % data['user'])
-            return make_response({'ok': True, 'users': data['user']}, 200)
+            app.logger.debug('success:user_get_by_id: {0}'.format(json.dumps(user, cls=ModelEncoder)))
+            return make_response({'ok': True, 'users': json.dumps(user, cls=ModelEncoder)}, 200)
         except ValueError as e:
-            app.logger.error("user_get_by_id:{0}, {1}".format(user_id, e))
-            return InternalServerError(e)
+            app.logger.error('ERROR:user_get_by_id:{}'.format(user_id))
+            app.logger.error(e)
+            return InternalServerError('ERROR:user_get_by_id:{}'.format(user_id))
         except Exception as e:
-            app.logger.error("Unexpected Error: {0}, {1}".format(user_id, e))
+            app.logger.error('ERROR:user_get_by_id:{}'.format(user_id))
+            app.logger.error(e)
             raise InternalServerError('Unexpected Error:{0}'.format(e))
 
 
@@ -128,24 +123,20 @@ class Signup(Resource):
         try:
             validated = validate_user(req_data)
             user_data = validated['data']
-            exist_user = None
             email = user_data['email']
+            user = User.email_index.query(email)
 
-            for item in User.email_index.query(email):
-                exist_user = item
+            app.logger.debug('user.total_count: {0}'.format(user.total_count))
 
-            if not exist_user:
+            if user.total_count == 0:
                 new_user_id = uuid.uuid4().hex
-
                 # TODO 1 : Implement following solution code to save user information into DynamoDB
                 solution_put_new_user(new_user_id, user_data)
-
                 user = {
                     "id": new_user_id,
                     'username': user_data['username'],
                     'email': email
                 }
-
                 app.logger.debug('success:user_signup: {0}'.format(user))
                 return make_response({'ok': True, 'users': user}, 201)
             else:
@@ -154,6 +145,10 @@ class Signup(Resource):
         except ValidationError as e:
             app.logger.error('ERROR: {0}\n{1}'.format(e.message, req_data))
             raise BadRequest(e.message)
+        except PynamoDBException as e:
+            app.logger.error('ERROR:unexpected signup error:{}'.format(req_data))
+            app.logger.error(e)
+            raise InternalServerError('ERROR:unexpected signup error:{}'.format(req_data))
 
 
 @api.route('/signin')
@@ -174,7 +169,6 @@ class Signin(Resource):
             db_user = solution_get_user_data_with_idx(signin_data)
             if db_user is None:
                 raise BadRequest('Not existed user!')
-
             else:
                 if check_password_hash(db_user.password, signin_data['password']):
                     token_data = {'user_id': db_user.id, 'username': db_user.username, 'email': db_user.email}
@@ -188,8 +182,13 @@ class Signin(Resource):
                     raise BadRequest('Password is mismatched or invalid user')
 
         except ValidationError as e:
-            app.logger.error('ERROR: {0}\n{1}'.format(e.message, req_data))
+            app.logger.error('ERROR:invalid data format:{0}'.format(req_data))
+            app.logger.error(e)
             raise BadRequest(e.message)
+        except PynamoDBException as e:
+            app.logger.error('ERROR:unexpected error:{0}'.format(req_data))
+            app.logger.error(e)
+            raise InternalServerError(e)
 
 
 @api.route('/signout')
@@ -210,4 +209,3 @@ class Signout(Resource):
         except Exception as e:
             app.logger.error('Sign-out:unknown issue:user:{0}: {1}'.format(get_jwt_identity(), e))
             raise BadRequest(e)
-

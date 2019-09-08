@@ -31,42 +31,37 @@ def solution_get_user_data_with_idx(signin_data):
     app.logger.info("Get user data with email which is Global Secondary Index")
     app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
 
-    for user_email in User.email_index.query(signin_data['email']):
-        if user_email is None:
-            return None
-        return user_email
+    user = User.email_index.query(signin_data['email'])
+    if user.total_count == 0:
+        return None
+    return user
+
 
 def solution_put_photo_info_ddb(user_id, filename, form, filesize):
     app.logger.info("RUNNING TODO#3 SOLUTION CODE:")
     app.logger.info("Update Photo information into User table!")
     app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
 
-    try:
-        new_photo = Photo(id=filename,
-              user_id=user_id,
-              filename=filename,
-              filename_orig=form['file'].filename,
-              filesize=filesize,
-              upload_date=datetime.today(),
-              tags=form['tags'],
-              desc=form['desc'],
-              geotag_lat=form['geotag_lat'],
-              geotag_lng=form['geotag_lng'],
-              taken_date=datetime.strptime(form['taken_date'], "%Y:%m:%d %H:%M:%S"),
-              make=form['make'],
-              model=form['model'],
-              width=form['width'],
-              height=form['height'],
-              city=form['city'],
-              nation=form['nation'],
-              address=form['address'])
+    new_photo = Photo(id=filename,
+          user_id=user_id,
+          filename=filename,
+          filename_orig=form['file'].filename,
+          filesize=filesize,
+          upload_date=datetime.today(),
+          tags=form['tags'],
+          desc=form['desc'],
+          geotag_lat=form['geotag_lat'],
+          geotag_lng=form['geotag_lng'],
+          taken_date=datetime.strptime(form['taken_date'], "%Y:%m:%d %H:%M:%S"),
+          make=form['make'],
+          model=form['model'],
+          width=form['width'],
+          height=form['height'],
+          city=form['city'],
+          nation=form['nation'],
+          address=form['address'])
 
-        new_photo.save()
-
-    except Exception as e:
-        app.logger.error("ERROR:failed to put item into Photo table:user_id:{}, filename:{}".format(user_id, filename))
-        app.logger.error(e)
-        raise e
+    new_photo.save()
 
 
 def solution_delete_photo_from_ddb(user, photo_id):

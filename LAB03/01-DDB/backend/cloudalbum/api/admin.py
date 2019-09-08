@@ -7,13 +7,14 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
-import socket
-import boto3
+from botocore.exceptions import ClientError
 from flask import Blueprint, make_response
 from flask import current_app as app
 from flask_restplus import Api, Resource
-import shutil
 from werkzeug.exceptions import InternalServerError
+import shutil
+import socket
+import boto3
 
 
 admin_blueprint = Blueprint('admin', __name__)
@@ -46,9 +47,12 @@ class HealthCheck(Resource):
             # 3. Something else..
             # TODO: health check something
             return make_response({'ok': True, 'Message': 'Healthcheck success: {0}'.format(get_ip_addr())}, 200)
+        except ClientError as ce:
+            app.logger.error(ce)
+            raise InternalServerError('Dynamodb healthcheck failed: hostname: {0}'.format(get_ip_addr()))
         except Exception as e:
             app.logger.error(e)
-            raise InternalServerError('Healthcheck failed: {0}: {1}'.format(get_ip_addr(), e))
+            raise InternalServerError(e)
 
 
 def get_ip_addr():
