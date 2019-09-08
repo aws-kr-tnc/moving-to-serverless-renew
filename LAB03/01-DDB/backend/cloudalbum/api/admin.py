@@ -1,12 +1,19 @@
-import socket
+"""
+    cloudalbum/api/admin.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    REST API for site administrator.
 
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+import socket
 import boto3
-from flask import Blueprint
+from flask import Blueprint, make_response
 from flask import current_app as app
 from flask_restplus import Api, Resource
-from cloudalbum.util.response import m_response, err_response
 import shutil
-from botocore.exceptions import ClientError
+from werkzeug.exceptions import InternalServerError
 
 
 admin_blueprint = Blueprint('admin', __name__)
@@ -20,8 +27,7 @@ class Ping(Resource):
     def get(self):
         """Ping api"""
         app.logger.debug("success:ping pong!")
-        return m_response(True, {'msg':'pong!'}, 200)
-
+        return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
 @api.route('/health_check')
@@ -39,13 +45,10 @@ class HealthCheck(Resource):
                 raise Exception("free disk size under 10%")
             # 3. Something else..
             # TODO: health check something
-            return m_response({'msg':'health_check success', "hostname": get_ip_addr()}, 200)
-        except ClientError as ce:
-            app.logger.error(ce)
-            return err_response({'msg': 'dynamodb healthcheck failed', "hostname": get_ip_addr()}, 500)
+            return make_response({'ok': True, 'Message': 'Healthcheck success: {0}'.format(get_ip_addr())}, 200)
         except Exception as e:
             app.logger.error(e)
-            return err_response({'msg': 'healthcheck failed', "hostname": get_ip_addr()}, 500)
+            raise InternalServerError('Healthcheck failed: {0}: {1}'.format(get_ip_addr(), e))
 
 
 def get_ip_addr():
