@@ -1,12 +1,11 @@
-import socket
-
-import boto3
-from flask import Blueprint
+from flask import Blueprint, make_response
 from flask import current_app as app
 from flask_restplus import Api, Resource
-from cloudalbum.util.response import m_response, err_response
-import shutil
+from werkzeug.exceptions import InternalServerError
 from botocore.exceptions import ClientError
+import shutil
+import socket
+import boto3
 
 
 admin_blueprint = Blueprint('admin', __name__)
@@ -20,7 +19,7 @@ class Ping(Resource):
     def get(self):
         """Ping api"""
         app.logger.debug("success:ping pong!")
-        return m_response(True, {'msg':'pong!'}, 200)
+        return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
 
@@ -39,13 +38,13 @@ class HealthCheck(Resource):
                 raise Exception("free disk size under 10%")
             # 3. Something else..
             # TODO: health check something
-            return m_response({'msg':'health_check success', "hostname": get_ip_addr()}, 200)
+            return make_response({'ok': True, 'Message': 'Healthcheck success: {0}'.format(get_ip_addr())}, 200)
         except ClientError as ce:
             app.logger.error(ce)
-            return err_response({'msg': 'dynamodb healthcheck failed', "hostname": get_ip_addr()}, 500)
+            raise InternalServerError('Dynamodb healthcheck failed: hostname: {0}'.format(get_ip_addr()))
         except Exception as e:
             app.logger.error(e)
-            return err_response({'msg': 'healthcheck failed', "hostname": get_ip_addr()}, 500)
+            raise InternalServerError(e)
 
 
 def get_ip_addr():

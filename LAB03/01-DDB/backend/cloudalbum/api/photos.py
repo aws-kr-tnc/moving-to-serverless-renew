@@ -1,19 +1,17 @@
 from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
-
-from cloudalbum.util.response import m_response, err_response
-from werkzeug.datastructures import FileStorage
 from flask import current_app as app
-from werkzeug.utils import secure_filename
-
 from flask_jwt_extended import jwt_required, get_jwt_identity
-
+from werkzeug.exceptions import BadRequest, InternalServerError
+from werkzeug.datastructures import FileStorage
+from werkzeug.utils import secure_filename
 from pathlib import Path
 from cloudalbum.util.file_control import email_normalize, delete, save
 from cloudalbum.database.model_ddb import photo_deserialize, Photo
 from cloudalbum.solution import solution_put_photo_info_ddb, solution_delete_photo_from_ddb
-from pynamodb.exceptions import GetError
-import os, uuid
+import os
+import uuid
+
 
 authorizations = {
     'Bearer Auth': {
@@ -77,7 +75,7 @@ class Ping(Resource):
     @jwt_required
     def get(self):
         app.logger.debug('success:pong!')
-        return m_response({'msg': 'pong!'}, 200)
+        return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
 @api.route('/file')
@@ -85,18 +83,16 @@ class Ping(Resource):
 class FileUpload(Resource):
     @jwt_required
     def post(self):
+        form = file_upload_parser.parse_args()
+        filename_orig = form['file'].filename
+        extension = (filename_orig.rsplit('.', 1)[1]).lower()
+        current_user = get_jwt_identity()
+
+        if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
+            app.logger.error('File format is not supported:{0}'.format(filename_orig))
+            raise BadRequest('File format is not supported:{0}'.format(filename_orig))
+
         try:
-            app.logger.debug(dir(file_upload_parser))
-            form = file_upload_parser.parse_args()
-            filename_orig = form['file'].filename
-            extension = (filename_orig.rsplit('.', 1)[1]).lower()
-
-            if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
-                app.logger.error('ERROR:file format is not supported:{0}'.format(filename_orig))
-                return err_response('not supported file format:{}'.format(extension), 400)
-
-            current_user = get_jwt_identity()
-
             filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
             filesize = save(form['file'], filename, current_user['email'])
             user_id = current_user['user_id']
@@ -104,13 +100,11 @@ class FileUpload(Resource):
             # TODO 3: Implement following solution code to put item into Photo table of DynamoDB
             solution_put_photo_info_ddb(user_id, filename, form, filesize)
 
-            return m_response({"photo_id": filename}, 200)
+            return make_response({'ok': True, "photo_id": filename}, 200)
         except Exception as e:
-            app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
+            app.logger.error('File upload failed:user_id:{}'.format(get_jwt_identity()['user_id']))
             app.logger.error(e)
-            return err_response(e, 500)
-
-
+            raise InternalServerError('File upload failed')
 
 
 @api.route('/')
@@ -125,21 +119,16 @@ class List(Resource):
     @jwt_required
     def get(self):
         """Get all photos as list"""
-
-        data = {
-            'photos': []
-        }
         try:
             photos = Photo.query(get_jwt_identity()['user_id'])
-            for photo in photos:
-                data['photos'].append(photo_deserialize(photo))
-
+            data = {'ok': True, 'photos': []}
+            [data['photos'].append(photo_deserialize(photo) for photo in photos)]
             app.logger.debug("success:photos_list:{}".format(data))
-            return m_response(data['photos'], 200)
+            return make_response(data, 200)
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
             app.logger.error(e)
-            return err_response(e,500)
+            return InternalServerError('ERROR:photos list failed')
 
 
 @api.route('/<photo_id>')
@@ -155,27 +144,28 @@ class OnePhoto(Resource):
     @jwt_required
     def delete(self, photo_id):
         """one photo delete"""
-        try:
-            user = get_jwt_identity()
+        user = get_jwt_identity()
 
+        try:
             # TODO 4: Implement following solution code to delete a photo from Photos which is a list
             filename = solution_delete_photo_from_ddb(user, photo_id)
             file_deleted = delete(filename, user['email'])
 
             if file_deleted:
                 app.logger.debug("success:photo deleted: photo_id:{}".format(photo_id))
-                return m_response({'photo_id': photo_id}, 200)
+                return make_response({'ok': True, 'photos': {'photo_id': photo_id}}, 200)
             else:
                 raise FileNotFoundError
 
         except FileNotFoundError as e:
             app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
             app.logger.error(e)
-            return err_response('ERROR:not exist photo_id:{}'.format(photo_id), 404)
+            raise InternalServerError('ERROR:not exist photo_id:{}'.format(photo_id))
         except Exception as e:
-            app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
+            app.logger.error('ERROR:photo delete failed: photo_id:{}'.format(photo_id))
             app.logger.error(e)
-            return err_response("ERROR:photo delete failed: photo_id:{}".format(photo_id), 500)
+            raise InternalServerError('ERROR:photo delete failed: photo_id:{}'.format(photo_id))
+
 
     @api.doc(
         responses=
@@ -202,7 +192,6 @@ class OnePhoto(Resource):
 
             photo = Photo.get(user['user_id'], range_key=photo_id)
 
-
             if photo.id == photo_id:
                 if mode == "thumbnail":
                     full_path = full_path / "thumbnails" / photo.filename
@@ -219,4 +208,4 @@ class OnePhoto(Resource):
         except Exception as e:
             app.logger.error('ERROR:get photo failed:photo_id:{}'.format(photo_id))
             app.logger.error(e)
-            return err_response('not exist photo_id', 404)
+            return 'http://placehold.it/400x300'

@@ -9,7 +9,7 @@ from cloudalbum import db
 from cloudalbum.database.models import User
 from cloudalbum.schemas import validate_user
 from cloudalbum.util.jwt_helper import add_token_to_set
-from werkzeug.exceptions import BadRequest, InternalServerError
+from werkzeug.exceptions import BadRequest, InternalServerError, Conflict
 
 
 users_blueprint = Blueprint('users', __name__)
@@ -109,7 +109,7 @@ class Signup(Resource):
                 db.session.commit()
                 return make_response({'ok': True, 'users': user.to_json()}, 201)
             else:
-                raise BadRequest('ERROR: Existed user!')
+                raise Conflict('ERROR: Existed user!')
 
         except ValidationError as e:
             app.logger.error('ERROR: {0}\n{1}'.format(e.message, req_data))

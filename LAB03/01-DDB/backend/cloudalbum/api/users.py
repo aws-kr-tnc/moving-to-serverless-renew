@@ -1,4 +1,5 @@
 import uuid
+import json
 from flask import Blueprint, request
 from flask import current_app as app
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt)
@@ -7,10 +8,11 @@ from flask_restplus import Api, Resource, fields
 from jsonschema import ValidationError
 from werkzeug.security import check_password_hash
 from cloudalbum.schemas import validate_user
-from cloudalbum.database.model_ddb import User
+from cloudalbum.database.model_ddb import User, ModelEncoder
 from cloudalbum.solution import solution_put_new_user, solution_get_user_data_with_idx
-from cloudalbum.util.response import m_response, err_response
 from cloudalbum.util.jwt_helper import add_token_to_set
+from werkzeug.exceptions import BadRequest, InternalServerError, Conflict
+from pynamodb.exceptions import PynamoDBException
 
 
 users_blueprint = Blueprint('users', __name__)
@@ -24,13 +26,13 @@ response = api.model('Response', {
     'data':fields.String
 })
 
-signup_user = api.model ('Signup_user',{
+signup_user = api.model ('Signup_user', {
     'email': fields.String,
     'username':fields.String,
     'password':fields.String
 })
 
-signin_user = api.model ('Signin_user',{
+signin_user = api.model ('Signin_user', {
     'email': fields.String,
     'password':fields.String
 })
@@ -42,7 +44,7 @@ class Ping(Resource):
     def get(self):
         """Ping api"""
         app.logger.debug("success:ping pong!")
-        return m_response( {'msg':'pong!'}, 200)
+        return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
 @api.route('/')
@@ -58,7 +60,6 @@ class UsersList(Resource):
         """Get all users as list"""
         try:
             data = []
-
             for user in User.scan():
                 one_user = {
                     'id': user.id,
@@ -66,14 +67,13 @@ class UsersList(Resource):
                     'username': user.username
                 }
                 data.append(one_user)
-
             app.logger.debug("success:users_list:%s" % data)
-            return m_response( data, 200)
+            return make_response({'ok': True, 'users': data}, 200)
 
         except Exception as e:
-            app.logger.error("users list failed")
+            app.logger.error('Retrieve user list failed')
             app.logger.error(e)
-            return err_response( "users list failed", 500)
+            raise InternalServerError('Retrieve user list failed')
 
 
 @api.route('/<user_id>')
@@ -88,25 +88,17 @@ class Users(Resource):
             user = User.get(hash_key=user_id)
             if user is None:
                 app.logger.error('ERROR:user_id not exist:{}'.format(user_id))
-                return err_response( {'user_id': user_id}, 404)
-
-            data = {
-                'user': {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email
-                }
-            }
-            app.logger.debug("success:user_get_by_id:%s" % data['user'])
-            return m_response( data, 200)
+                raise BadRequest('User not exist')
+            app.logger.debug('success:user_get_by_id: {0}'.format(json.dumps(user, cls=ModelEncoder)))
+            return make_response({'ok': True, 'users': json.dumps(user, cls=ModelEncoder)}, 200)
         except ValueError as e:
-            app.logger.error("ERROR:user_get_by_id:{}".format(user_id))
+            app.logger.error('ERROR:user_get_by_id:{}'.format(user_id))
             app.logger.error(e)
-            return err_response( "ERROR:user_get_by_id:{}".format(user_id) , 500)
+            return InternalServerError('ERROR:user_get_by_id:{}'.format(user_id))
         except Exception as e:
-            app.logger.error("ERROR:user_get_by_id:{}".format(user_id))
+            app.logger.error('ERROR:user_get_by_id:{}'.format(user_id))
             app.logger.error(e)
-            return err_response( "ERROR:user_get_by_id:{}".format(user_id), 500)
+            raise InternalServerError('Unexpected Error:{0}'.format(e))
 
 
 @api.route('/signup')
@@ -123,39 +115,34 @@ class Signup(Resource):
         try:
             validated = validate_user(req_data)
             user_data = validated['data']
-
-            exist_user = None
             email = user_data['email']
+            user = User.email_index.query(email)
 
-            for item in User.email_index.query(email):
-                exist_user = item
+            app.logger.debug('user.total_count: {0}'.format(user.total_count))
 
-            if not exist_user:
+            if user.total_count == 0:
                 new_user_id = uuid.uuid4().hex
-
                 # TODO 1 : Implement following solution code to save user information into DynamoDB
                 solution_put_new_user(new_user_id, user_data)
-
                 user = {
                     "id": new_user_id,
                     'username': user_data['username'],
                     'email': email
                 }
-
                 app.logger.debug('success:user_signup: {0}'.format(user))
-                return m_response( user, 201)
-
+                return make_response({'ok': True, 'users': user}, 201)
             else:
                 app.logger.error('ERROR:exist user: {0}'.format(user_data))
-                return err_response( 'exist user', 409)
+                raise Conflict('ERROR: Existed user!')
         except ValidationError as e:
             app.logger.error('ERROR:invalid signup data format:{0}'.format(req_data))
             app.logger.error(e)
-            return err_response( e.message, 400)
-        except Exception as e:
+            raise BadRequest(e.message)
+        except PynamoDBException as e:
             app.logger.error('ERROR:unexpected signup error:{}'.format(req_data))
             app.logger.error(e)
-            return err_response( e, 500)
+            raise InternalServerError('ERROR:unexpected signup error:{}'.format(req_data))
+
 
 @api.route('/signin')
 class Signin(Resource):
@@ -173,33 +160,28 @@ class Signin(Resource):
 
             # TODO 2: Implement following solution code to get user profile with GSI
             db_user = solution_get_user_data_with_idx(signin_data)
-
             if db_user is None:
-                return err_response('not exist email', 400)
-
-            token_data = {'user_id': db_user.id, 'username':db_user.username, 'email':db_user.email}
-
-            if db_user is not None and check_password_hash(db_user.password, signin_data['password']):
-
-                access_token = create_access_token(identity=token_data)
-                refresh_token = create_refresh_token(identity=token_data)
-                res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
-                app.logger.debug('success:user signin:{}'.format(token_data))
-                return make_response(res, 200)
+                raise BadRequest('Not existed user!')
             else:
-                app.logger.error('ERROR:user signin failed:password unmatched or invalid user: {0}'.format(signin_data))
-                return err_response( 'password unmatched or invalid user', 400)
+                if check_password_hash(db_user.password, signin_data['password']):
+                    token_data = {'user_id': db_user.id, 'username': db_user.username, 'email': db_user.email}
+                    access_token = create_access_token(identity=token_data)
+                    refresh_token = create_refresh_token(identity=token_data)
+                    res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
+                    app.logger.debug('success:user signin:{}'.format(token_data))
+                    return make_response(res, 200)
+                else:
+                    app.logger.error('Password is mismatched or invalid user {0}'.format(signin_data))
+                    raise BadRequest('Password is mismatched or invalid user')
 
         except ValidationError as e:
             app.logger.error('ERROR:invalid data format:{0}'.format(req_data))
             app.logger.error(e)
-
-            return err_response( e.message, 400)
-        except Exception as e:
+            raise BadRequest(e.message)
+        except PynamoDBException as e:
             app.logger.error('ERROR:unexpected error:{0}'.format(req_data))
             app.logger.error(e)
-
-            return err_response( e, 400)
+            raise InternalServerError(e)
 
 
 @api.route('/signout')
@@ -214,14 +196,10 @@ class Signout(Resource):
         try:
             user = get_jwt_identity()
             add_token_to_set(get_raw_jwt())
-
             app.logger.debug("user token signout: {}".format(user))
-            return m_response( {'user':user, 'msg':'logged out'}, 200)
+            return make_response({'ok': True, 'users': user, 'Message': 'logged out'}, 200)
 
         except Exception as e:
             app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_jwt_identity()))
             app.logger.error(e)
-
-            return err_response( e, 500)
-
-
+            raise BadRequest(e)
