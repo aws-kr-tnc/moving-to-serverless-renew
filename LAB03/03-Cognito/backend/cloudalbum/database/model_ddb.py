@@ -1,3 +1,12 @@
+"""
+    cloudalbum/database/model_ddb.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Application data model defined here.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 from datetime import datetime
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute
@@ -6,6 +15,7 @@ import boto3
 
 
 AWS_REGION = boto3.session.Session().region_name
+
 
 class Photo(Model):
     """

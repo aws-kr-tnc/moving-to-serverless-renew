@@ -111,7 +111,7 @@ class FileUpload(Resource):
 
             return make_response({'ok': True}, 200)
         except Exception as e:
-            app.logger.error('File upload failed:user_id:{0}: {1}'.format(get_jwt_identity()['user_id'], e))
+            app.logger.error('File upload failed:user_id:{0}: {1}'.format(current_user['user_id'], e))
             raise InternalServerError('File upload failed: {0}'.format(e))
 
 

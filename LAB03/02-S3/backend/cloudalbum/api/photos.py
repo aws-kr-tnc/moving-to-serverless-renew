@@ -107,7 +107,7 @@ class FileUpload(Resource):
             solution_put_photo_info_ddb(user_id, filename, form, filesize)
             return make_response({'ok': True}, 200)
         except Exception as e:
-            app.logger.error('File upload failed:user_id:{0}: {1}'.format(get_jwt_identity()['user_id'], e))
+            app.logger.error('File upload failed:user_id:{0}: {1}'.format(current_user['user_id'], e))
             raise InternalServerError('File upload failed: {0}'.format(e))
 
 
@@ -143,9 +143,9 @@ class OnePhoto(Resource):
     @api.doc(
         responses=
         {
-            200: "Delete success",
-            404: "file not exist",
-            500: "Internal server error"
+            200: 'Delete success',
+            404: 'file not exist',
+            500: 'Internal server error'
         }
     )
     @jwt_required
