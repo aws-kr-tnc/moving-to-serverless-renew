@@ -9,13 +9,13 @@
 """
 import hashlib
 import boto3, hmac, base64
+import botocore
 from flask import Blueprint, request
 from flask import current_app as app
 from flask import jsonify, make_response
 from flask_restplus import Api, Resource, fields
 from jsonschema import ValidationError
-from pynamodb.exceptions import PynamoDBException
-from werkzeug.exceptions import InternalServerError, BadRequest
+from werkzeug.exceptions import InternalServerError, BadRequest, Conflict
 from cloudalbum.schemas import validate_user
 from cloudalbum.solution import solution_signup_cognito
 from cloudalbum.util.jwt_helper import get_token_from_header, cog_jwt_required
@@ -128,13 +128,11 @@ def cognito_signup(signup_user):
     dig = hmac.new(app.config['COGNITO_CLIENT_SECRET'].encode('utf-8'),
                    msg=msg.encode('utf-8'),
                    digestmod=hashlib.sha256).digest()
+    # TODO 7: Implement following solution code to sign up user into cognito user pool
     try:
-        # TODO 7: Implement following solution code to sign up user into cognito user pool
         return solution_signup_cognito(user, dig)
     except Exception as e:
-        app.logger.error("ERROR: failed to enroll user into Cognito user pool")
-        app.logger.error(e)
-
+        raise BadRequest(e.response['Error']['Message'])
 
 @api.route('/signup')
 class Signup(Resource):
@@ -158,9 +156,6 @@ class Signup(Resource):
             app.logger.error('ERROR:invalid signup data format:{0}'.format(req_data))
             app.logger.error(e)
             raise BadRequest(e.message)
-        except PynamoDBException as e:
-            app.logger.error('ERROR: {0}\n{1}'.format(e.msg, req_data))
-            raise InternalServerError(e.msg)
 
 
 def cognito_signin(user):
