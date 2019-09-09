@@ -15,7 +15,6 @@ import json
 import datetime
 from bson.objectid import ObjectId
 from flask import Flask, jsonify, make_response
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
@@ -36,7 +35,6 @@ class JSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 # instantiate the database
-db = SQLAlchemy()
 login = LoginManager()
 jwt = JWTManager()
 
