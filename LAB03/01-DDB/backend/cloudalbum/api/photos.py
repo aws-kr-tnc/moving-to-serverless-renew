@@ -14,6 +14,7 @@ from flask import Blueprint, request, make_response
 from flask import current_app as app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_restplus import Api, Resource, fields
+from pynamodb.exceptions import PynamoDBException
 from werkzeug.datastructures import FileStorage
 from werkzeug.exceptions import BadRequest, InternalServerError
 from werkzeug.utils import secure_filename
@@ -109,6 +110,11 @@ class FileUpload(Resource):
             solution_put_photo_info_ddb(user_id, filename, form, filesize)
 
             return make_response({'ok': True}, 200)
+        except BadRequest as e:
+            raise BadRequest(e)
+        except PynamoDBException as e:
+            app.logger.error('ERROR: {0}\n{1}'.format(e.msg))
+            raise InternalServerError(e.msg)
         except Exception as e:
             app.logger.error('File upload failed:user_id:{0}: {1}'.format(get_jwt_identity()['user_id'], e))
             raise InternalServerError('File upload failed: {0}'.format(e))
@@ -119,8 +125,8 @@ class List(Resource):
     @api.doc(
         responses=
         {
-            200: "Return the whole photos list",
-            500: "Internal server error"
+            200: 'Return the whole photos list',
+            500: 'Internal server error',
         }
     )
     @jwt_required
@@ -128,7 +134,7 @@ class List(Resource):
         """Get all photos as list"""
         try:
             photos = [photo_deserialize(photo) for photo in Photo.query(get_jwt_identity()['user_id'])]
-            app.logger.debug("success:photos_list:{}".format(photos))
+            app.logger.debug('success:photos_list: {}'.format(photos))
             return make_response({'ok': True, 'photos': photos}, 200)
 
         except Exception as e:
@@ -142,9 +148,9 @@ class OnePhoto(Resource):
     @api.doc(
         responses=
         {
-            200: "Delete success",
-            404: "file not exist",
-            500: "Internal server error"
+            200: 'Delete success',
+            404: 'file not exist',
+            500: 'Internal server error'
         }
     )
     @jwt_required
@@ -158,7 +164,7 @@ class OnePhoto(Resource):
             file_deleted = delete(filename, user['email'])
 
             if file_deleted:
-                app.logger.debug("success:photo deleted: photo_id:{}".format(photo_id))
+                app.logger.debug('success:photo deleted: photo_id: {}'.format(photo_id))
                 return make_response({'ok': True, 'photos': {'photo_id': photo_id}}, 200)
             else:
                 raise FileNotFoundError('File not found error')
@@ -173,8 +179,8 @@ class OnePhoto(Resource):
     @api.doc(
         responses=
         {
-            200: "Success",
-            500: "Internal server error"
+            200: 'Success',
+            500: 'Internal server error'
         }
     )
     @jwt_required
@@ -195,8 +201,8 @@ class OnePhoto(Resource):
             photo = Photo.get(user['user_id'], range_key=photo_id)
 
             if photo.id == photo_id:
-                if mode == "thumbnail":
-                    full_path = full_path / "thumbnails" / photo.filename
+                if mode == 'thumbnail':
+                    full_path = full_path / 'thumbnails' / photo.filename
                 else:
                     full_path = full_path / photo.filename
 
@@ -204,8 +210,8 @@ class OnePhoto(Resource):
                 contents = f.read()
                 resp = make_response(contents)
 
-            app.logger.debug("filepath:{}".format(str(full_path)))
-            resp.content_type = "image/jpeg"
+            app.logger.debug('filepath: {}'.format(str(full_path)))
+            resp.content_type = 'image/jpeg'
             return resp
         except Exception as e:
             app.logger.error('ERROR:get photo failed:photo_id:{}'.format(photo_id))

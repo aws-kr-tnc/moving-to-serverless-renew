@@ -11,8 +11,8 @@ from flask import current_app as app
 from PIL import Image
 from pathlib import Path
 from cloudalbum.database.model_ddb import Photo, photo_deserialize
-import os
 from datetime import datetime
+import os
 
 
 def email_normalize(email):
