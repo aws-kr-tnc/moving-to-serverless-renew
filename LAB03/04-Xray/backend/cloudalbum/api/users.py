@@ -5,10 +5,11 @@ from flask import current_app as app
 from flask import jsonify, make_response
 from flask_restplus import Api, Resource, fields
 from jsonschema import ValidationError
+from werkzeug.exceptions import InternalServerError, BadRequest
+
 from cloudalbum.schemas import validate_user
 from cloudalbum.solution import solution_signup_cognito
-from cloudalbum.util.response import m_response, err_response
-from cloudalbum.util.jwt_helper import add_token_to_set, get_token_from_header, get_cognito_user, cog_jwt_required
+from cloudalbum.util.jwt_helper import get_token_from_header, cog_jwt_required
 
 
 users_blueprint = Blueprint('users', __name__)
@@ -40,7 +41,7 @@ class Ping(Resource):
     def get(self):
         """Ping api"""
         app.logger.debug("success:ping pong!")
-        return m_response( {'msg':'pong!'}, 200)
+        return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
 @api.route('/')
@@ -75,13 +76,12 @@ class UsersList(Resource):
                     one_user[key] = attr['Value']
                 data.append(one_user)
 
-            app.logger.debug("success:users_list:%s" % data)
-            return m_response( data, 200)
+            app.logger.debug('success:users_list: {0}'.format(data))
+            return make_response({'ok': True, 'users': data}, 200)
 
         except Exception as e:
-            app.logger.error("users list failed")
-            app.logger.error(e)
-            return err_response("users list failed", 500)
+            app.logger.error('Retrieve user list failed: {0}'.format(e))
+            raise InternalServerError('Retrieve user list failed')
 
 
 @api.route('/<user_id>')
@@ -109,16 +109,15 @@ class Users(Resource):
                 user_data[key] = val
             app.logger.debug('success: get Cognito user data: {}'.format(user_data))
 
-
-            return m_response( user_data, 200)
+            return make_response({'ok': True, 'users': user_data}, 200)
         except ValueError as e:
             app.logger.error("ERROR:user_get_by_id:{}".format(user_id))
             app.logger.error(e)
-            return err_response("ERROR:user_get_by_id:{}".format(user_id), 500)
+            return InternalServerError(e)
         except Exception as e:
             app.logger.error("ERROR:user_get_by_id:{}".format(user_id))
             app.logger.error(e)
-            return err_response("ERROR:user_get_by_id:{}".format(user_id), 500)
+            return InternalServerError(e)
 
 def cognito_signup(signup_user):
     user = signup_user;
@@ -132,7 +131,6 @@ def cognito_signup(signup_user):
         return solution_signup_cognito(user, dig)
 
     except Exception as e:
-        app.logger.error("ERROR: failed to enroll user into Cognito user pool")
         app.logger.error(e)
 
 @api.route('/signup')
@@ -152,15 +150,15 @@ class Signup(Resource):
             user = cognito_signup(user_data)
             app.logger.debug("success: enroll user into Cognito user pool:{}".format(user))
 
-            return m_response( user, 201)
+            return make_response({'ok': True, 'users': user.to_json()}, 201)
         except ValidationError as e:
             app.logger.error('ERROR:invalid signup data format:{0}'.format(req_data))
             app.logger.error(e)
-            return err_response(e.message, 400)
+            return InternalServerError(e)
         except Exception as e:
             app.logger.error('ERROR:unexpected signup error:{}'.format(req_data))
             app.logger.error(e)
-            return err_response(e, 500)
+            return InternalServerError(e)
 
 
 def cognito_signin(user):
@@ -211,16 +209,15 @@ class Signin(Resource):
         except client.exceptions.NotAuthorizedException as e:
             app.logger.error('ERROR:user signin failed:password unmatched or invalid user: {0}'.format(signin_data))
             app.logger.error(e)
-            return err_response('ERROR:user signin failed:password unmatched or invalid user: {0}'.format(signin_data), 400)
-
+            return BadRequest(e)
         except ValidationError as e:
             app.logger.error('ERROR:invalid data format:{0}'.format(req_data))
             app.logger.error(e)
-            return err_response(e.message, 400)
+            return InternalServerError(e)
         except Exception as e:
             app.logger.error('ERROR:unexpected error:{0}'.format(req_data))
             app.logger.error(e)
-            return err_response(e, 400)
+            return InternalServerError(e)
 
 
 
@@ -241,9 +238,9 @@ class Signout(Resource):
             )
 
             app.logger.debug("Access token expired: {}".format(token))
-            return m_response({'accessToken':token}, 200)
+            return make_response({'ok': True, 'token': token, 'Message': 'logged out'}, 200)
 
         except Exception as e:
             app.logger.error('ERROR:Sign-out:unknown issue:token:{}'.format(token))
             app.logger.error(e)
-            return err_response(e, 500)
+            return BadRequest(e)

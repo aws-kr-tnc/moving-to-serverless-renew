@@ -1,8 +1,17 @@
-from flask import Blueprint, request
+"""
+    cloudalbum/api/photos.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    REST API for photos
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+from flask import Blueprint, request, make_response
 from flask_restplus import Api, Resource, fields
+from werkzeug.exceptions import BadRequest, InternalServerError
 
 from cloudalbum.util.jwt_helper import cog_jwt_required, get_token_from_header, get_cognito_user
-from cloudalbum.util.response import m_response, err_response
 from werkzeug.datastructures import FileStorage
 from flask import current_app as app
 from werkzeug.utils import secure_filename
@@ -73,10 +82,8 @@ class Ping(Resource):
     @api.doc(responses={200: 'pong success'})
     @cog_jwt_required
     def get(self):
-
         app.logger.debug('success:pong!')
-        return m_response({'msg': 'pong!'}, 200)
-
+        return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 @api.route('/file')
 @api.expect(file_upload_parser)
@@ -92,26 +99,18 @@ class FileUpload(Resource):
 
             if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
                 app.logger.error('ERROR:file format is not supported:{0}'.format(filename_orig))
-                return err_response('ERROR:file format is not supported:{0}'.format(filename_orig),  400)
+                raise BadRequest('Not supported file format:{0}'.format(filename_orig))
 
             current_user = get_cognito_user(token)
-
             filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
             filesize = save_s3(form['file'], filename, current_user['email'])
-
             user_id = current_user['user_id']
-
             new_photo = create_photo_info(user_id, filename, filesize, form)
-
             solution_put_photo_info_ddb(user_id, new_photo)
-
-            return m_response({"photo_id": filename}, 200)
+            return make_response({'ok': True, "photo_id": filename}, 200)
         except Exception as e:
-            app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_cognito_user(token)['user_id']))
-            app.logger.error(e)
-            return err_response(e, 500)
-
-
+            app.logger.error('File upload failed:user_id:{0}: {1}'.format(get_cognito_user(token)['user_id'], e))
+            raise InternalServerError('File upload failed: {0}'.format(e))
 
 
 @api.route('/')
@@ -130,17 +129,14 @@ class List(Resource):
         try:
             user = get_cognito_user(token)
             photos = Photo.query(user['user_id'])
-
             data = {'photos': []}
             [data['photos'].append(with_presigned_url(user, photo)) for photo in photos]
-
             app.logger.debug("success:photos_list:{}".format(data))
-
-            return m_response(data['photos'], 200)
+            return make_response({'ok': True, 'photos': photos}, 200)
         except Exception as e:
             app.logger.error("ERROR:photos list failed")
             app.logger.error(e)
-            return err_response(e, 500)
+            raise InternalServerError('Photos list retrieving failed')
 
 
 @api.route('/<photo_id>')
@@ -166,17 +162,16 @@ class OnePhoto(Resource):
 
             if file_deleted:
                 app.logger.debug("success:photo deleted: user_id:{}, photo_id:{}".format(user['user_id'], photo_id))
-                return m_response({'photo_id': photo_id}, 200)
+                return make_response({'ok': True, 'photos': {'photo_id': photo_id}}, 200)
             else:
-                raise FileNotFoundError
+                raise FileNotFoundError('File not found error')
 
+        except BadRequest as e:
+            raise BadRequest(e)
         except FileNotFoundError as e:
-            app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
-            return err_response('ERROR:not exist photo_id:{}'.format(photo_id), 404)
+            raise InternalServerError(e)
         except Exception as e:
-            app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
-            app.logger.error(e)
-            return err_response("ERROR:photo delete failed: photo_id:{}".format(photo_id), 500)
+            raise InternalServerError(e)
 
     @api.doc(
         responses=

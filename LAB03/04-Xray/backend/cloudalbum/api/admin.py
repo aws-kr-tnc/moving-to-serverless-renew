@@ -5,8 +5,6 @@ from flask import Blueprint, make_response
 from flask import current_app as app
 from flask_restplus import Api, Resource
 from werkzeug.exceptions import InternalServerError
-
-from cloudalbum.util.response import m_response, err_response
 import shutil
 from botocore.exceptions import ClientError
 
