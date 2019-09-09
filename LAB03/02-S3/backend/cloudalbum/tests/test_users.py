@@ -18,7 +18,7 @@ def auto_signup(self):
     random_int = random.randint(0, 1000000)
     dic_user = {
         "username": "user" + str(random_int),
-        "email":"%s@mario.com" % random_int,
+        "email": "%s@mario.com" % random_int,
         'password': '%s_password' % random_int
     }
 

@@ -75,11 +75,11 @@ class UsersList(Resource):
                 }
                 data.append(one_user)
 
-            app.logger.debug("success:users_list:%s" % data)
+            app.logger.debug('success:users_list: {0}'.format(data))
             return make_response({'ok': True, 'users': data}, 200)
 
         except Exception as e:
-            app.logger.error("users list failed")
+            app.logger.error('users list failed')
             app.logger.error(e)
             raise InternalServerError('Retrieve user list failed')
 

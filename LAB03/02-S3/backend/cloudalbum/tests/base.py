@@ -9,7 +9,6 @@
 """
 
 from flask_testing import TestCase
-
 from cloudalbum import create_app
 
 app = create_app()

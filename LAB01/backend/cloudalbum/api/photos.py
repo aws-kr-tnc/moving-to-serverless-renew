@@ -110,9 +110,9 @@ class FileUpload(Resource):
             committed = Photo.query.filter_by(user_id=current_user['user_id'],
                                               filename=filename,
                                               filename_orig=filename_orig).first()
-            return make_response({'ok': True, "photo_id": committed.id}, 200)
+            return make_response({'ok': True, 'photo_id': committed.id}, 200)
         except Exception as e:
-            app.logger.error('File upload failed:user_id:{0}: {1}'.format(get_jwt_identity()['user_id'], e))
+            app.logger.error('File upload failed:user_id:{0}: {1}'.format(current_user['user_id'], e))
             raise InternalServerError('File upload failed: {0}'.format(e))
 
 
@@ -168,8 +168,8 @@ class List(Resource):
     @api.doc(
         responses=
         {
-            200: "Return the whole photos list",
-            500: "Internal server error"
+            200: 'Return the whole photos list',
+            500: 'Internal server error'
         }
     )
     @jwt_required
@@ -191,9 +191,9 @@ class OnePhoto(Resource):
     @api.doc(
         responses=
         {
-            200: "Delete success",
-            404: "file not exist",
-            500: "Internal server error"
+            200: 'Delete success',
+            404: 'file not exist',
+            500: 'Internal server error'
         }
     )
     @jwt_required
@@ -212,7 +212,7 @@ class OnePhoto(Resource):
             file_deleted = delete(filename, user['email'])
 
             if file_deleted:
-                app.logger.debug("success:photo deleted: photo_id:{}".format(photo_id))
+                app.logger.debug('success:photo deleted: photo_id: {}'.format(photo_id))
                 return make_response({'ok': True, 'photos': {'photo_id': photo_id}}, 200)
             else:
                 raise FileNotFoundError('File not found error')
@@ -226,8 +226,8 @@ class OnePhoto(Resource):
     @api.doc(
         responses=
         {
-            200: "Success",
-            500: "Internal server error"
+            200: 'Success',
+            500: 'Internal server error'
         }
     )
     @jwt_required
@@ -247,8 +247,8 @@ class OnePhoto(Resource):
 
             photo = db.session.query(Photo).filter_by(id=photo_id).first()
 
-            if mode == "thumbnail":
-                full_path = full_path / "thumbnails" / photo.filename
+            if mode == 'thumbnail':
+                full_path = full_path / 'thumbnails' / photo.filename
             else:
                 full_path = full_path / photo.filename
 
@@ -256,8 +256,8 @@ class OnePhoto(Resource):
                 contents = f.read()
                 resp = make_response(contents)
 
-            app.logger.debug("filepath:{}".format(str(full_path)))
-            resp.content_type = "image/jpeg"
+            app.logger.debug('filepath: {}'.format(str(full_path)))
+            resp.content_type = 'image/jpeg'
             return resp
         except Exception as e:
             app.logger.error('ERROR:get photo failed:photo_id:{}'.format(photo_id))
