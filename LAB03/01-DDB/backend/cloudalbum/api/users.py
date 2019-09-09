@@ -14,6 +14,7 @@ from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_r
 from flask import jsonify, make_response
 from flask_restplus import Api, Resource, fields
 from jsonschema import ValidationError
+from pynamodb.exceptions import PynamoDBException
 from werkzeug.security import check_password_hash
 from cloudalbum.schemas import validate_user
 from cloudalbum.database.model_ddb import User
@@ -50,7 +51,7 @@ class Ping(Resource):
     @api.doc(responses={200: 'pong!'})
     def get(self):
         """Ping api"""
-        app.logger.debug("success:ping pong!")
+        app.logger.debug('success:ping pong!')
         return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
@@ -59,8 +60,8 @@ class UsersList(Resource):
     @api.doc(
         responses=
             {
-                200:"Return the whole users list",
-                500: "Internal server error"
+                200: 'Return the whole users list',
+                500: 'Internal server error'
             }
         )
     def get(self):
@@ -75,7 +76,7 @@ class UsersList(Resource):
                 }
                 data.append(one_user)
 
-            app.logger.debug("success:users_list:%s" % data)
+            app.logger.debug('success:users_list: {0}'.format(data))
             return make_response({'ok': True, 'users': data}, 200)
         except Exception as e:
             app.logger.error("users list failed")
@@ -86,8 +87,8 @@ class UsersList(Resource):
 @api.route('/<user_id>')
 class Users(Resource):
     @api.doc(responses={
-                200: "Return a user data",
-                500: "Internal server error"
+                200: 'Return a user data',
+                500: 'Internal server error'
             })
     def get(self, user_id):
         """Get a single user details"""
@@ -97,29 +98,27 @@ class Users(Resource):
                 app.logger.error('ERROR:user_id not exist:{}'.format(user_id))
                 raise BadRequest('User not exist')
 
-            data = {
-                'user': {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email
-                }
+            user = {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email
             }
-            app.logger.debug("success:user_get_by_id:%s" % data['user'])
-            return make_response({'ok': True, 'users': data['user']}, 200)
+            app.logger.debug('success:user_get_by_id: {0}'.format(user))
+            return make_response({'ok': True, 'users': user}, 200)
         except ValueError as e:
-            app.logger.error("user_get_by_id:{0}, {1}".format(user_id, e))
-            return InternalServerError(e)
+            app.logger.error('user_get_by_id:{0}, {1}'.format(user_id, e))
+            raise InternalServerError(e)
         except Exception as e:
-            app.logger.error("Unexpected Error: {0}, {1}".format(user_id, e))
+            app.logger.error('Unexpected Error: {0}, {1}'.format(user_id, e))
             raise InternalServerError('Unexpected Error:{0}'.format(e))
 
 
 @api.route('/signup')
 class Signup(Resource):
     @api.doc(responses={
-        201: "Return a user data",
-        400: "Invalidate email/password",
-        500: "Internal server error"
+        201: 'Return a user data',
+        400: 'Invalidate email/password',
+        500: 'Internal server error'
     })
     @api.expect(signup_user)
     def post(self):
@@ -129,9 +128,7 @@ class Signup(Resource):
             validated = validate_user(req_data)
             user_data = validated['data']
             exist_user = None
-            email = user_data['email']
-
-            for item in User.email_index.query(email):
+            for item in User.email_index.query(user_data['email']):
                 exist_user = item
 
             if not exist_user:
@@ -143,7 +140,7 @@ class Signup(Resource):
                 user = {
                     "id": new_user_id,
                     'username': user_data['username'],
-                    'email': email
+                    'email': user_data['email']
                 }
 
                 app.logger.debug('success:user_signup: {0}'.format(user))
@@ -154,6 +151,9 @@ class Signup(Resource):
         except ValidationError as e:
             app.logger.error('ERROR: {0}\n{1}'.format(e.message, req_data))
             raise BadRequest(e.message)
+        except PynamoDBException as e:
+            app.logger.error('ERROR: {0}\n{1}'.format(e.msg, req_data))
+            raise InternalServerError(e.msg)
 
 
 @api.route('/signin')
@@ -181,7 +181,7 @@ class Signin(Resource):
                     access_token = create_access_token(identity=token_data)
                     refresh_token = create_refresh_token(identity=token_data)
                     res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
-                    app.logger.debug('success:user signin:{}'.format(token_data))
+                    app.logger.debug('success:user signin:{0}'.format(token_data))
                     return make_response(res, 200)
                 else:
                     app.logger.error('Password is mismatched or invalid user: {0}'.format(signin_data))
@@ -196,20 +196,18 @@ class Signin(Resource):
 class Signout(Resource):
     @jwt_required
     @api.doc(responses={
-        200:'signout success',
-        500:'login required'
+        200: 'signout success',
+        500: 'login required'
     })
     def post(self):
         """user signout"""
         try:
             user = get_jwt_identity()
             add_token_to_set(get_raw_jwt())
-            app.logger.debug("user token signout: {}".format(user))
+            app.logger.debug('user token signout: {0}'.format(user))
             return make_response({'ok': True, 'users': user, 'Message': 'logged out'}, 200)
 
         except Exception as e:
             app.logger.error('ERROR:Sign-out:unknown issue:user:{}'.format(get_jwt_identity()))
             app.logger.error(e)
             raise BadRequest(e)
-
-

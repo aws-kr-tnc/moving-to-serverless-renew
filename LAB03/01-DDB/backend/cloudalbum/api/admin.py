@@ -57,4 +57,3 @@ class HealthCheck(Resource):
 
 def get_ip_addr():
     return '{0}'.format(socket.gethostname())
-
