@@ -110,11 +110,6 @@ class FileUpload(Resource):
             solution_put_photo_info_ddb(user_id, filename, form, filesize)
 
             return make_response({'ok': True}, 200)
-        except BadRequest as e:
-            raise BadRequest(e)
-        except PynamoDBException as e:
-            app.logger.error('ERROR: {0}\n{1}'.format(e.msg))
-            raise InternalServerError(e.msg)
         except Exception as e:
             app.logger.error('File upload failed:user_id:{0}: {1}'.format(get_jwt_identity()['user_id'], e))
             raise InternalServerError('File upload failed: {0}'.format(e))

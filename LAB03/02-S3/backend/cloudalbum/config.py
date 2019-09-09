@@ -1,10 +1,6 @@
 import datetime
 import os
 
-# - FLASK_ENV=production
-# - APP_SETTINGS=cloudalbum.config.ProductionConfig
-# - DATABASE_URL=postgres://postgres:postgres@users-database:5432/users_prod
-# - DATABASE_TEST_URL=postgres://postgres:postgres@users-database:5432/users_test
 
 class BaseConfig:
     """Base configuration"""
@@ -31,10 +27,6 @@ class BaseConfig:
     # S3
     S3_PHOTO_BUCKET = os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-<your-initial>')
     S3_PRESIGNED_URL_EXPIRE_TIME = os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', 3600)
-
-
-
-
 
 
 class DevelopmentConfig(BaseConfig):

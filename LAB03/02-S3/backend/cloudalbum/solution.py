@@ -1,10 +1,16 @@
-from datetime import datetime
+"""
+    cloudalbum/solution.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Hands-on lab solution file.
 
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+from datetime import datetime
 from flask import current_app as app
 from werkzeug.security import generate_password_hash
-
 from cloudalbum.database.model_ddb import User, Photo
-
 
 
 def solution_put_new_user(new_user_id, user_data):
@@ -15,41 +21,33 @@ def solution_put_new_user(new_user_id, user_data):
     user.save()
 
 
-
 def solution_get_user_data_with_idx(signin_data):
-    for user_email in User.email_index.query(signin_data['email']):
-        if user_email is None:
-            return None
-        return user_email
+    user_email = [item for item in User.email_index.query(signin_data['email'])]
+    if not user_email:
+        return None
+    return user_email[0]
+
 
 def solution_put_photo_info_ddb(user_id, filename, form, filesize):
-
-    try:
-        new_photo = Photo(id=filename,
-              user_id=user_id,
-              filename=filename,
-              filename_orig=form['file'].filename,
-              filesize=filesize,
-              upload_date=datetime.today(),
-              tags=form['tags'],
-              desc=form['desc'],
-              geotag_lat=form['geotag_lat'],
-              geotag_lng=form['geotag_lng'],
-              taken_date=datetime.strptime(form['taken_date'], "%Y:%m:%d %H:%M:%S"),
-              make=form['make'],
-              model=form['model'],
-              width=form['width'],
-              height=form['height'],
-              city=form['city'],
-              nation=form['nation'],
-              address=form['address'])
-
-        new_photo.save()
-
-    except Exception as e:
-        app.logger.error("ERROR:failed to put item into Photo table:user_id:{}, filename:{}".format(user_id, filename))
-        app.logger.error(e)
-        raise e
+    new_photo = Photo(id=filename,
+                      user_id=user_id,
+                      filename=filename,
+                      filename_orig=form['file'].filename,
+                      filesize=filesize,
+                      upload_date=datetime.today(),
+                      tags=form['tags'],
+                      desc=form['desc'],
+                      geotag_lat=form['geotag_lat'],
+                      geotag_lng=form['geotag_lng'],
+                      taken_date=datetime.strptime(form['taken_date'], "%Y:%m:%d %H:%M:%S"),
+                      make=form['make'],
+                      model=form['model'],
+                      width=form['width'],
+                      height=form['height'],
+                      city=form['city'],
+                      nation=form['nation'],
+                      address=form['address'])
+    new_photo.save()
 
 
 def solution_delete_photo_from_ddb(user, photo_id):
@@ -68,20 +66,16 @@ def solution_put_object_to_s3(s3_client, key, upload_file_stream):
     app.logger.info("RUNNING TODO#5 SOLUTION CODE:")
     app.logger.info("Put object into S3 bucket!")
     app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
-    try:
-        s3_client.put_object(
-            Bucket=app.config['S3_PHOTO_BUCKET'],
-            Key=key,
-            Body=upload_file_stream,
-            ContentType='image/jpeg',
-            StorageClass='STANDARD'
-        )
-        app.logger.debug('success:put object into s3:key:{}'.format(key))
 
-    except Exception as e:
-        app.logger.error('ERROR:failed put object: key:{}'.format(key))
-        app.logger.error(e)
-        raise e
+    s3_client.put_object(
+        Bucket=app.config['S3_PHOTO_BUCKET'],
+        Key=key,
+        Body=upload_file_stream,
+        ContentType='image/jpeg',
+        StorageClass='STANDARD'
+    )
+
+    app.logger.debug('success:put object into s3:key:{}'.format(key))
 
 
 def solution_generate_s3_presigned_url(s3_client, key):
@@ -93,4 +87,3 @@ def solution_generate_s3_presigned_url(s3_client, key):
         Params={'Bucket': app.config['S3_PHOTO_BUCKET'],
                 'Key': key})
     return url
-

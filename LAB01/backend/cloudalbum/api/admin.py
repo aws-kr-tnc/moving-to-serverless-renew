@@ -17,7 +17,7 @@ class Ping(Resource):
     @api.doc(responses={200: 'pong!'})
     def get(self):
         """Ping api"""
-        app.logger.debug("success:ping pong!")
+        app.logger.debug('success:ping pong!')
         return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
@@ -29,9 +29,9 @@ class HealthCheck(Resource):
             # 1. Is DB is responsive?!
             db.engine.execute('SELECT 1')
             # 2. Is disk have enough free space?!
-            total, used, free = shutil.disk_usage("/")
+            total, used, free = shutil.disk_usage('/')
             if used / total * 100 >= 90:
-                raise Exception("free disk size under 10%")
+                raise Exception('free disk size under 10%')
             # 3. Something else..
             # TODO: health check something
             return make_response({'ok': True, 'Message': 'Healthcheck success: {0}'.format(get_ip_addr())}, 200)

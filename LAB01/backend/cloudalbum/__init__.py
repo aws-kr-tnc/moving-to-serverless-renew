@@ -14,11 +14,14 @@ import sys
 import json
 import datetime
 from bson.objectid import ObjectId
-from flask import Flask, jsonify, make_response
-from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from flask_login import LoginManager
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
+from werkzeug.exceptions import Conflict
+
+# instantiate the database
+db = SQLAlchemy()
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -33,16 +36,17 @@ class JSONEncoder(json.JSONEncoder):
             return str(o)
         return json.JSONEncoder.default(self, o)
 
-# instantiate the database
-db = SQLAlchemy()
-login = LoginManager()
-jwt = JWTManager()
-
 
 def create_app(script_info=None):
 
     # instantiate the application
     app = Flask(__name__)
+
+    # initiate some config value for JWT Authentication
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'my_jwt')
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
+    app.config['JWT_BLACKLIST_ENABLED'] = True
+    app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access']
 
     # initiate some config value for JWT Authentication
     jwt = JWTManager(app)
@@ -88,7 +92,7 @@ def create_app(script_info=None):
             return is_blacklisted_token_set(decrypted_token)
         except Exception as e:
             app.logger.error(e)
-            return make_response(jsonify({'msg': 'session already expired'}, 409))
+            raise Conflict('Session already expired: {0}'.format(e))
 
 
     # shell context for flask cli

@@ -1,15 +1,24 @@
+"""
+    cloudalbum/__init__.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Environment configuration how to run application.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 import os
 import logging
 import sys
 import json
 import datetime
-
 from bson.objectid import ObjectId
-from flask import Flask, jsonify, make_response  # new
+from flask import Flask
 from flask_cors import CORS
-from flask_login import LoginManager
-from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
+from flask_jwt_extended import JWTManager
+from werkzeug.exceptions import Conflict
+from cloudalbum.database import create_table
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -24,18 +33,20 @@ class JSONEncoder(json.JSONEncoder):
             return str(o)
         return json.JSONEncoder.default(self, o)
 
-login = LoginManager()
-jwt = JWTManager()
-
 
 def create_app(script_info=None):
 
     # instantiate the app
     app = Flask(__name__)
 
+    # initiate some config value for JWT Authentication
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'my_jwt')
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
+    app.config['JWT_BLACKLIST_ENABLED'] = True
+    app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access']
+
     flask_bcrypt = Bcrypt(app)
     jwt = JWTManager(app)
-
 
     app.json_encoder = JSONEncoder
 
@@ -50,6 +61,10 @@ def create_app(script_info=None):
     app.logger.addHandler(logging.StreamHandler(sys.stdout))
     app.logger.setLevel(logging.DEBUG)
 
+    # Create database table, if it is not exists
+    with app.app_context():
+        create_table()
+
     # register blueprints
     from cloudalbum.api.users import users_blueprint
     app.register_blueprint(users_blueprint, url_prefix='/users')
@@ -63,12 +78,11 @@ def create_app(script_info=None):
     @jwt.token_in_blacklist_loader
     def check_if_token_in_blacklist_DB(decrypted_token):
         from cloudalbum.util.jwt_helper import is_blacklisted_token_set
-
         try:
             return is_blacklisted_token_set(decrypted_token)
         except Exception as e:
             app.logger.error(e)
-            return make_response(jsonify({'msg': 'session already expired'}, 409))
+            raise Conflict('Session already expired: {0}'.format(e))
 
 
     # shell context for flask cli

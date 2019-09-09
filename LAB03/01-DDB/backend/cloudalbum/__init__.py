@@ -14,16 +14,17 @@ import sys
 import json
 import datetime
 from bson.objectid import ObjectId
-from flask import Flask, jsonify, make_response
+from flask import Flask
 from flask_cors import CORS
-from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
+from werkzeug.exceptions import Conflict
+
 from cloudalbum.database import create_table
 
 
 class JSONEncoder(json.JSONEncoder):
-    ''' extend json-encoder class'''
+    """ extend json-encoder class """
 
     def default(self, o):
         if isinstance(o, ObjectId):
@@ -33,10 +34,6 @@ class JSONEncoder(json.JSONEncoder):
         if isinstance(o, datetime.datetime):
             return str(o)
         return json.JSONEncoder.default(self, o)
-
-# instantiate the database
-login = LoginManager()
-jwt = JWTManager()
 
 
 def create_app(script_info=None):
@@ -87,7 +84,7 @@ def create_app(script_info=None):
             return is_blacklisted_token_set(decrypted_token)
         except Exception as e:
             app.logger.error(e)
-            return make_response(jsonify({'msg': 'session already expired'}, 409))
+            raise Conflict('Session already expired: {0}'.format(e))
 
     # shell context for flask cli
     @app.shell_context_processor

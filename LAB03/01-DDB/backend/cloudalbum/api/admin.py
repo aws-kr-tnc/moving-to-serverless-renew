@@ -46,6 +46,7 @@ class HealthCheck(Resource):
                 raise Exception("free disk size under 10%")
             # 3. Something else..
             # TODO: health check something
+            
             return make_response({'ok': True, 'Message': 'Healthcheck success: {0}'.format(get_ip_addr())}, 200)
         except ClientError as ce:
             app.logger.error(ce)

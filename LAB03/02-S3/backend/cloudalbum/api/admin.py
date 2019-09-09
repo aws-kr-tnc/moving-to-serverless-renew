@@ -1,13 +1,20 @@
-import socket
+"""
+    cloudalbum/api/admin.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    REST API for site administrator.
 
-import boto3
-from flask import Blueprint
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+from botocore.exceptions import ClientError
+from flask import Blueprint, make_response
 from flask import current_app as app
 from flask_restplus import Api, Resource
-from cloudalbum.util.response import m_response, err_response
+from werkzeug.exceptions import InternalServerError
 import shutil
-from botocore.exceptions import ClientError
-
+import socket
+import boto3
 
 admin_blueprint = Blueprint('admin', __name__)
 api = Api(admin_blueprint, doc='/swagger/', title='Admin',
@@ -19,9 +26,8 @@ class Ping(Resource):
     @api.doc(responses={200: 'pong!'})
     def get(self):
         """Ping api"""
-        app.logger.debug("success:ping pong!")
-        return m_response(True, {'msg':'pong!'}, 200)
-
+        app.logger.debug('success:ping pong!')
+        return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
 @api.route('/health_check')
@@ -34,18 +40,19 @@ class HealthCheck(Resource):
             boto3.client('dynamodb').describe_table(TableName='User')
 
             # 2. Is disk have enough free space?!
-            total, used, free = shutil.disk_usage("/")
+            total, used, free = shutil.disk_usage('/')
             if used / total * 100 >= 90:
-                raise Exception("free disk size under 10%")
+                raise Exception('free disk size under 10%')
             # 3. Something else..
             # TODO: health check something
-            return m_response({'msg':'health_check success', "hostname": get_ip_addr()}, 200)
+
+            return make_response({'ok': True, 'Message': 'Healthcheck success: {0}'.format(get_ip_addr())}, 200)
         except ClientError as ce:
             app.logger.error(ce)
-            return err_response({'msg': 'dynamodb healthcheck failed', "hostname": get_ip_addr()}, 500)
+            raise InternalServerError('Dynamodb healthcheck failed: hostname: {0}'.format(get_ip_addr()))
         except Exception as e:
             app.logger.error(e)
-            return err_response({'msg': 'healthcheck failed', "hostname": get_ip_addr()}, 500)
+            raise InternalServerError(e)
 
 
 def get_ip_addr():

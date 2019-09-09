@@ -1,5 +1,5 @@
 """
-    cloudalbum/api/photos.py
+    cloudalbum/api/users.py
     ~~~~~~~~~~~~~~~~~~~~~~~
     REST API for users
 
@@ -30,19 +30,19 @@ api = Api(users_blueprint, doc='/swagger/', title='Users',
 
 response = api.model('Response', {
     'code': fields.Integer,
-    'message':fields.String,
-    'data':fields.String
+    'message': fields.String,
+    'data': fields.String
 })
 
 signup_user = api.model ('Signup_user',{
     'email': fields.String,
-    'username':fields.String,
-    'password':fields.String
+    'username': fields.String,
+    'password': fields.String
 })
 
 signin_user = api.model ('Signin_user',{
     'email': fields.String,
-    'password':fields.String
+    'password': fields.String
 })
 
 
@@ -124,13 +124,10 @@ class Signup(Resource):
     def post(self):
         """Enroll a new user"""
         req_data = request.get_json()
+        validated = validate_user(req_data)
+        user_data = validated['data']
         try:
-            validated = validate_user(req_data)
-            user_data = validated['data']
-            exist_user = None
-            for item in User.email_index.query(user_data['email']):
-                exist_user = item
-
+            exist_user = [item for item in User.email_index.query(user_data['email'])]
             if not exist_user:
                 new_user_id = uuid.uuid4().hex
 
@@ -138,7 +135,7 @@ class Signup(Resource):
                 solution_put_new_user(new_user_id, user_data)
 
                 user = {
-                    "id": new_user_id,
+                    'id': new_user_id,
                     'username': user_data['username'],
                     'email': user_data['email']
                 }
@@ -174,7 +171,6 @@ class Signin(Resource):
             db_user = solution_get_user_data_with_idx(signin_data)
             if db_user is None:
                 raise BadRequest('Not existed user!')
-
             else:
                 if check_password_hash(db_user.password, signin_data['password']):
                     token_data = {'user_id': db_user.id, 'username': db_user.username, 'email': db_user.email}
@@ -190,6 +186,9 @@ class Signin(Resource):
         except ValidationError as e:
             app.logger.error('ERROR: {0}\n{1}'.format(e.message, req_data))
             raise BadRequest(e.message)
+        except PynamoDBException as e:
+            app.logger.error('ERROR: {0}\n{1}'.format(e.msg, req_data))
+            raise InternalServerError(e.msg)
 
 
 @api.route('/signout')
