@@ -34,7 +34,7 @@ def solution_get_user_data_with_idx(signin_data):
     user_email = [item for item in User.email_index.query(signin_data['email'])]
     if not user_email:
         return None
-    return user_email
+    return user_email[0]
 
 
 def solution_put_photo_info_ddb(user_id, filename, form, filesize):

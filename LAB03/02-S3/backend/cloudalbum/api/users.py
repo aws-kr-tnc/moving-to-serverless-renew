@@ -99,9 +99,9 @@ class Users(Resource):
                 raise BadRequest('User not exist')
 
             user = {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email
+                'id': user[0].id,
+                'username': user[0].username,
+                'email': user[0].email
             }
             app.logger.debug('success:user_get_by_id: {0}'.format(user))
             return make_response({'ok': True, 'users': user}, 200)
