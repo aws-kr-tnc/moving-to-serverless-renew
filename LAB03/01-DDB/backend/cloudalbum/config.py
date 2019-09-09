@@ -11,6 +11,7 @@
 import datetime
 import os
 
+
 class BaseConfig:
     """Base configuration"""
     TESTING = False
@@ -28,14 +29,16 @@ class BaseConfig:
     THUMBNAIL_HEIGHT = os.getenv('THUMBNAIL_HEIGHT', 200)
 
     AWS_REGION = os.getenv('AWS_REGION', 'ap-southeast-1')
+
+    # DynamoDB
     DDB_RCU = os.getenv('DDB_RCU', 10)
     DDB_WCU = os.getenv('DDB_WCU', 10)
+
 
 
 class DevelopmentConfig(BaseConfig):
     """Development configuration"""
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
-
 
 
 class TestingConfig(BaseConfig):
@@ -47,7 +50,3 @@ class TestingConfig(BaseConfig):
 class ProductionConfig(BaseConfig):
     """Production configuration"""
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
-
-
-
-

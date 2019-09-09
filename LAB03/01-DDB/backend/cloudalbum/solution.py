@@ -31,10 +31,11 @@ def solution_get_user_data_with_idx(signin_data):
     app.logger.info("Get user data with email which is Global Secondary Index")
     app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
 
-    for user_email in User.email_index.query(signin_data['email']):
-        if user_email is None:
-            return None
-        return user_email
+    user_email = [item for item in User.email_index.query(signin_data['email'])]
+    if not user_email:
+        return None
+    return user_email
+
 
 def solution_put_photo_info_ddb(user_id, filename, form, filesize):
     app.logger.info("RUNNING TODO#3 SOLUTION CODE:")
