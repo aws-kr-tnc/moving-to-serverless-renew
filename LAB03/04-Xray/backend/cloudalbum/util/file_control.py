@@ -1,14 +1,21 @@
+"""
+    cloudalbum/util/file_control.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Handling image files which uploaded by user.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 from io import BytesIO
 from flask import current_app as app
 from PIL import Image
 from pathlib import Path
 from aws_xray_sdk.core import xray_recorder
-
 from cloudalbum.solution import solution_put_object_to_s3, solution_generate_s3_presigned_url
 from cloudalbum.database.model_ddb import Photo, photo_deserialize
-
-import os
 from datetime import datetime
+import os
 import boto3
 
 
@@ -54,8 +61,6 @@ def make_thumbnails_s3(file_p):
         app.logger.debug(e)
 
     return result_bytes_stream.getvalue()
-
-
 
 
 def delete(filename, email):
@@ -139,6 +144,7 @@ def save(upload_file, filename, email):
         app.logger.error(e)
         raise e
 
+
 @xray_recorder.capture()
 def save_s3(upload_file_stream, filename, email):
     prefix = "photos/{0}/".format(email_normalize(email))
@@ -167,30 +173,6 @@ def save_s3(upload_file_stream, filename, email):
         raise e
 
 
-def create_photo_info(user_id, filename, filesize, form):
-    new_photo = Photo(user_id=user_id,
-                      id=filename,
-                      filename=filename,
-                      filename_orig=form['file'].filename,
-                      filesize=filesize,
-                      upload_date=datetime.today(),
-                      tags=form['tags'],
-                      desc=form['desc'],
-                      geotag_lat=form['geotag_lat'],
-                      geotag_lng=form['geotag_lng'],
-                      taken_date=datetime.strptime(form['taken_date'], "%Y:%m:%d %H:%M:%S"),
-                      make=form['make'],
-                      model=form['model'],
-                      width=form['width'],
-                      height=form['height'],
-                      city=form['city'],
-                      nation=form['nation'],
-                      address=form['address'])
-
-    app.logger.debug('new_photo: {0}'.format(photo_deserialize(new_photo)))
-    return new_photo
-
-
 @xray_recorder.capture()
 def presigned_url(filename, email, Thumbnail=True):
 
@@ -209,7 +191,6 @@ def presigned_url(filename, email, Thumbnail=True):
     except Exception as e:
         app.logger.error('ERROR:creating presigned url failed:{0}'.format(e))
         raise e
-
 
 
 def presigned_url_both(filename, email):

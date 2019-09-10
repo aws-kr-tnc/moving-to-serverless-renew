@@ -11,6 +11,7 @@ import boto3
 import base64
 from datetime import datetime
 from flask import current_app as app
+from werkzeug.exceptions import Unauthorized
 from cloudalbum.database.model_ddb import Photo
 
 
@@ -65,9 +66,9 @@ def user_signup_confirm(id):
 
 
 def solution_signup_cognito(user, dig):
-    app.logger.info("RUNNING TODO#7 SOLUTION CODE:")
-    app.logger.info("Enroll user into Cognito!")
-    app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
+    app.logger.info('RUNNING TODO#7 SOLUTION CODE:')
+    app.logger.info('Enroll user into Cognito!')
+    app.logger.info('Follow the steps in the lab guide to replace this method with your own implementation.')
 
     client = boto3.client('cognito-idp')
     response = client.sign_up(
@@ -98,18 +99,21 @@ def solution_signup_cognito(user, dig):
 
 
 def solution_get_cognito_user_data(access_token):
-    app.logger.info("RUNNING TODO#8 SOLUTION CODE:")
-    app.logger.info("Get user data from Cognito!")
-    app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation." )
+    app.logger.info('RUNNING TODO#8 SOLUTION CODE:')
+    app.logger.info('Get user data from Cognito!')
+    app.logger.info('Follow the steps in the lab guide to replace this method with your own implementation.')
     client = boto3.client('cognito-idp')
-    cognito_user = client.get_user(AccessToken=access_token)
 
-    user_data = {}
-    for attr in cognito_user['UserAttributes']:
-        key = attr['Name']
-        if key == 'sub':
-            key = 'user_id'
-        val = attr['Value']
-        user_data[key] = val
-    app.logger.debug('success: get Cognito user data: {}'.format(user_data))
-    return user_data
+    try:
+        cognito_user = client.get_user(AccessToken=access_token)
+        user_data = {}
+        for attr in cognito_user['UserAttributes']:
+            key = attr['Name']
+            if key == 'sub':
+                key = 'user_id'
+            val = attr['Value']
+            user_data[key] = val
+        app.logger.debug('success: get Cognito user data: {}'.format(user_data))
+        return user_data
+    except Exception as e:
+        raise Unauthorized('Invalid Access Token')

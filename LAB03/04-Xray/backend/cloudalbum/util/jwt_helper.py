@@ -1,3 +1,12 @@
+"""
+    cloudalbum/util/blacklist_helper.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Handling JWT token for signed out user.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 import json
 import time
 import requests
@@ -7,11 +16,11 @@ from sqlalchemy.orm.exc import NoResultFound
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 from flask import current_app as app
-
 from cloudalbum.solution import solution_get_cognito_user_data
 
 POOL_KEYS = None
 blacklist_set = set()
+
 
 def add_token_to_set(token):
     """
@@ -21,6 +30,7 @@ def add_token_to_set(token):
     claims= token_decoder(token)
     jti = claims['jti']
     blacklist_set.add(jti)
+
 
 def is_blacklisted_token_set(decoded_token):
     """
@@ -36,6 +46,7 @@ def is_blacklisted_token_set(decoded_token):
     except NoResultFound:
         return False
 
+
 def set_cognito_data_global():
     global POOL_KEYS
     POOL_URL = 'https://cognito-idp.{}.amazonaws.com/{}/.well-known/jwks.json'.format(app.config['AWS_REGION'],
@@ -44,6 +55,7 @@ def set_cognito_data_global():
         aws_data = requests.get(POOL_URL)
         POOL_KEYS = json.loads(aws_data.text)['keys']
         app.logger.debug("COGNITO POOL_KEYS SET DONE!")
+
 
 def token_decoder(token):
     set_cognito_data_global()

@@ -36,7 +36,7 @@ class HealthCheck(Resource):
     @api.doc(responses={200: 'system alive!'})
     def get(self):
         try:
-            # 1. Is DB is responsive?!
+            # 1. Is database available?!
             boto3.client('dynamodb').describe_table(TableName='Photo')
             boto3.client('dynamodb').describe_table(TableName='User')
 
@@ -53,7 +53,7 @@ class HealthCheck(Resource):
             raise InternalServerError('Dynamodb healthcheck failed: hostname: {0}'.format(get_ip_addr()))
         except Exception as e:
             app.logger.error(e)
-            raise InternalServerError(e)
+            raise InternalServerError('Healthcheck failed, hostname:'.format(get_ip_addr()))
 
 
 def get_ip_addr():

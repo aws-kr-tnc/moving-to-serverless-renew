@@ -26,7 +26,7 @@ class HealthCheck(Resource):
     @api.doc(responses={200: 'system alive!'})
     def get(self):
         try:
-            # 1. Is DB is responsive?!
+            # 1. Is database available?!
             db.engine.execute('SELECT 1')
             # 2. Is disk have enough free space?!
             total, used, free = shutil.disk_usage('/')

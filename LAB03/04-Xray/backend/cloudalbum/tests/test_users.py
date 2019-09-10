@@ -1,9 +1,17 @@
+"""
+    cloudalbum/tests/test_users.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Test cases for users REST API
 
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 import json
 import unittest
 import random
-
 from cloudalbum.tests.base import BaseTestCase
+
 
 def auto_signup(self):
     """Signup tool for test user """
@@ -21,6 +29,7 @@ def auto_signup(self):
             content_type='application/json',
         )
         return response, dic_user
+
 
 def auto_signin(self, test_user):
     with self.client:
@@ -66,7 +75,6 @@ class TestUserService(BaseTestCase):
             self.assertEqual({}, resp['data'])
             self.assert400(response, "response code is not 400")
 
-
     def test_add_user_invalid_json_keys(self):
         """
         Ensure error is thrown if the JSON object does not have a username key.
@@ -81,7 +89,6 @@ class TestUserService(BaseTestCase):
             resp = response.json
             self.assert400(response, "response code is not 400")
             self.assertEqual(data_invalid, resp['data'])
-
 
     def test_add_user_duplicate_email(self):
         """Ensure error is thrown if the email already exists."""
@@ -99,7 +106,6 @@ class TestUserService(BaseTestCase):
             self.assertEqual(second_response.status_code, 409)
             self.assertEqual(test_user, duplicated_resp['data'])
 
-
     def test_single_user_search(self):
         """Ensure get single user behaves correctly."""
 
@@ -115,7 +121,6 @@ class TestUserService(BaseTestCase):
 
             self.assertEqual(response.status_code, 200)
             self.assertEqual(test_user, search_result_user)
-
 
     def test_single_user_no_id(self):
         """Ensure error is thrown if an id is not provided."""

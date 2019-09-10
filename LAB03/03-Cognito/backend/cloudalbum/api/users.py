@@ -9,13 +9,12 @@
 """
 import hashlib
 import boto3, hmac, base64
-import botocore
 from flask import Blueprint, request
 from flask import current_app as app
 from flask import jsonify, make_response
 from flask_restplus import Api, Resource, fields
 from jsonschema import ValidationError
-from werkzeug.exceptions import InternalServerError, BadRequest, Conflict
+from werkzeug.exceptions import InternalServerError, BadRequest
 from cloudalbum.schemas import validate_user
 from cloudalbum.solution import solution_signup_cognito
 from cloudalbum.util.jwt_helper import get_token_from_header, cog_jwt_required
@@ -32,13 +31,13 @@ response = api.model('Response', {
     'data': fields.String
 })
 
-signup_user = api.model ('Signup_user',{
+signup_user = api.model('Signup_user', {
     'email': fields.String,
     'username': fields.String,
     'password': fields.String
 })
 
-signin_user = api.model ('Signin_user',{
+signin_user = api.model('Signin_user', {
     'email': fields.String,
     'password': fields.String
 })
@@ -115,9 +114,9 @@ class Users(Resource):
         except ValueError as e:
             app.logger.error('ERROR:user_get_by_id:{}'.format(user_id))
             app.logger.error(e)
-            raise InternalServerError(e)
+            raise BadRequest(e)
         except Exception as e:
-            app.logger.error("ERROR:user_get_by_id:{}".format(user_id))
+            app.logger.error('ERROR:user_get_by_id:{}'.format(user_id))
             app.logger.error(e)
             raise InternalServerError('Unexpected Error:{0}'.format(e))
 
@@ -134,12 +133,13 @@ def cognito_signup(signup_user):
     except Exception as e:
         raise BadRequest(e.response['Error']['Message'])
 
+
 @api.route('/signup')
 class Signup(Resource):
     @api.doc(responses={
-        201: "Return a user data",
-        400: "Invalidate email/password",
-        500: "Internal server error"
+        201: 'Return a user data',
+        400: 'Invalidate email/password',
+        500: 'Internal server error'
     })
     @api.expect(signup_user)
     def post(self):
@@ -149,7 +149,7 @@ class Signup(Resource):
             validated = validate_user(req_data)
             user_data = validated['data']
             user = cognito_signup(user_data)
-            app.logger.debug("success: enroll user into Cognito user pool:{}".format(user))
+            app.logger.debug('success: enroll user into Cognito user pool:{}'.format(user))
             return make_response({'ok': True, 'users': user}, 201)
 
         except ValidationError as e:
@@ -191,6 +191,11 @@ class Signin(Resource):
             res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
             app.logger.debug('success:user signin:access_token:{}, refresh_token:{}'.format(access_token, refresh_token))
             return make_response(res, 200)
+
+        except client.exceptions.UserNotFoundException as e:
+            app.logger.error('User does not exist: {0}'.format(signin_data))
+            app.logger.error(e)
+            raise BadRequest('User does not exist')
         except client.exceptions.NotAuthorizedException as e:
             app.logger.error('Password is mismatched or invalid user: {0}'.format(signin_data))
             app.logger.error(e)
@@ -220,7 +225,7 @@ class Signout(Resource):
             response = client.global_sign_out(
                 AccessToken=token
             )
-            app.logger.debug("Access token expired: {}".format(token))
+            app.logger.debug('Access token expired: {}'.format(token))
             return make_response({'ok': True}, 200)
         except Exception as e:
             app.logger.error('Sign-out:unknown issue:token:{}'.format(token))

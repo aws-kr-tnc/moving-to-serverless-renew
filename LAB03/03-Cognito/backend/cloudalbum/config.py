@@ -35,7 +35,7 @@ class BaseConfig:
     DDB_WCU = os.getenv('DDB_WCU', 10)
 
     # S3
-    S3_PHOTO_BUCKET = os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-<your-initial>')
+    S3_PHOTO_BUCKET = os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-<YOUR-INITIAL>')
     S3_PRESIGNED_URL_EXPIRE_TIME = os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', 3600)
 
     # Cognito
