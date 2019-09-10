@@ -46,7 +46,7 @@ photo_info = api.model('New_photo', {
     'desc': fields.String,
     'geotag_lat': fields.Float,
     'geotag_lng': fields.Float,
-    'taken_date': fields.DateTime("%Y:%m:%d %H:%M:%S"),
+    'taken_date': fields.DateTime('%Y:%m:%d %H:%M:%S'),
     'make': fields.String,
     'model': fields.String,
     'width': fields.String,
@@ -118,8 +118,8 @@ class List(Resource):
     @api.doc(
         responses=
         {
-            200: "Return the whole photos list",
-            500: "Internal server error"
+            200: 'Return the whole photos list',
+            500: 'Internal server error'
         }
     )
     @cog_jwt_required
@@ -131,11 +131,11 @@ class List(Resource):
             photos = Photo.query(user['user_id'])
             data = {'photos': []}
             [data['photos'].append(with_presigned_url(user, photo)) for photo in photos]
-            app.logger.debug("success:photos_list:{}".format(data))
+            app.logger.debug('success:photos_list: {}'.format(data))
             return make_response({'ok': True, 'photos': data['photos']}, 200)
 
         except Exception as e:
-            app.logger.error("ERROR:photos list failed")
+            app.logger.error('ERROR:photos list failed')
             app.logger.error(e)
             raise InternalServerError('Photos list retrieving failed')
 
@@ -154,8 +154,8 @@ class OnePhoto(Resource):
     def delete(self, photo_id):
         """one photo delete"""
         token = get_token_from_header(request)
+        user = get_cognito_user(token)
         try:
-            user = get_cognito_user(token)
             photo = Photo.get(user['user_id'], photo_id)
             photo.delete()
             file_deleted = delete_s3(photo.filename, user['email'])
@@ -165,8 +165,6 @@ class OnePhoto(Resource):
                 return make_response({'ok': True, 'photos': {'photo_id': photo_id}}, 200)
             else:
                 raise FileNotFoundError
-        except BadRequest as e:
-            raise BadRequest(e)
         except FileNotFoundError as e:
             raise InternalServerError(e)
         except Exception as e:

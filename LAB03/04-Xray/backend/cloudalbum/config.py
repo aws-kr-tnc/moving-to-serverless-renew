@@ -1,5 +1,15 @@
+"""
+    cloudalbum/config.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Environment configuration how to run application.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 import datetime
 import os
+
 
 class BaseConfig:
     """Base configuration"""
@@ -25,7 +35,7 @@ class BaseConfig:
     DDB_WCU = os.getenv('DDB_WCU', 10)
 
     # S3
-    S3_PHOTO_BUCKET = os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-<your-initial>')
+    S3_PHOTO_BUCKET = os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-<YOUR-INITIAL>')
     S3_PRESIGNED_URL_EXPIRE_TIME = os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', 3600)
 
     # Cognito
@@ -38,7 +48,6 @@ class BaseConfig:
 class DevelopmentConfig(BaseConfig):
     """Development configuration"""
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
-
 
 
 class TestingConfig(BaseConfig):

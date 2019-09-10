@@ -27,7 +27,7 @@ class Ping(Resource):
     @api.doc(responses={200: 'pong!'})
     def get(self):
         """Ping api"""
-        app.logger.debug("success:ping pong!")
+        app.logger.debug('success:ping pong!')
         return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
@@ -36,7 +36,7 @@ class HealthCheck(Resource):
     @api.doc(responses={200: 'system alive!'})
     def get(self):
         try:
-            # 1. Is DB is responsive?!
+            # 1. Is database available?!
             boto3.client('dynamodb').describe_table(TableName='Photo')
             boto3.client('dynamodb').describe_table(TableName='User')
 
@@ -46,14 +46,14 @@ class HealthCheck(Resource):
                 raise Exception("free disk size under 10%")
             # 3. Something else..
             # TODO: health check something
-            
+
             return make_response({'ok': True, 'Message': 'Healthcheck success: {0}'.format(get_ip_addr())}, 200)
         except ClientError as ce:
             app.logger.error(ce)
             raise InternalServerError('Dynamodb healthcheck failed: hostname: {0}'.format(get_ip_addr()))
         except Exception as e:
             app.logger.error(e)
-            raise InternalServerError(e)
+            raise InternalServerError('Healthcheck failed, hostname:'.format(get_ip_addr()))
 
 
 def get_ip_addr():

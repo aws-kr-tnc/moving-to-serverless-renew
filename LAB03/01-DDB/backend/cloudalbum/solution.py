@@ -15,9 +15,9 @@ from cloudalbum.database.model_ddb import User, Photo
 
 
 def solution_put_new_user(new_user_id, user_data):
-    app.logger.info("RUNNING TODO#1 SOLUTION CODE:")
-    app.logger.info("Put new signup user information!")
-    app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
+    app.logger.info('RUNNING TODO#1 SOLUTION CODE:')
+    app.logger.info('Put new signup user information!')
+    app.logger.info('Follow the steps in the lab guide to replace this method with your own implementation.')
 
     user = User(new_user_id)
     user.email = user_data['email']
@@ -27,9 +27,9 @@ def solution_put_new_user(new_user_id, user_data):
 
 
 def solution_get_user_data_with_idx(signin_data):
-    app.logger.info("RUNNING TODO#2 SOLUTION CODE:")
-    app.logger.info("Get user data with email which is Global Secondary Index")
-    app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
+    app.logger.info('RUNNING TODO#2 SOLUTION CODE:')
+    app.logger.info('Get user data with email which is Global Secondary Index')
+    app.logger.info('Follow the steps in the lab guide to replace this method with your own implementation.')
 
     user_email = [item for item in User.email_index.query(signin_data['email'])]
     if not user_email:
@@ -38,9 +38,9 @@ def solution_get_user_data_with_idx(signin_data):
 
 
 def solution_put_photo_info_ddb(user_id, filename, form, filesize):
-    app.logger.info("RUNNING TODO#3 SOLUTION CODE:")
-    app.logger.info("Update Photo information into User table!")
-    app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
+    app.logger.info('RUNNING TODO#3 SOLUTION CODE:')
+    app.logger.info('Update Photo information into User table!')
+    app.logger.info('Follow the steps in the lab guide to replace this method with your own implementation.')
 
     new_photo = Photo(id=filename,
           user_id=user_id,
@@ -65,9 +65,9 @@ def solution_put_photo_info_ddb(user_id, filename, form, filesize):
 
 
 def solution_delete_photo_from_ddb(user, photo_id):
-    app.logger.info("RUNNING TODO#4 SOLUTION CODE:")
-    app.logger.info("Delete a photo from photos list, and update!")
-    app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
+    app.logger.info('RUNNING TODO#4 SOLUTION CODE:')
+    app.logger.info('Delete a photo from photos list, and update!')
+    app.logger.info('Follow the steps in the lab guide to replace this method with your own implementation.')
 
     photo = Photo.get(user['user_id'], photo_id)
     photo.delete()

@@ -34,13 +34,13 @@ response = api.model('Response', {
     'data': fields.String
 })
 
-signup_user = api.model ('Signup_user',{
+signup_user = api.model ('Signup_user', {
     'email': fields.String,
     'username': fields.String,
     'password': fields.String
 })
 
-signin_user = api.model ('Signin_user',{
+signin_user = api.model ('Signin_user', {
     'email': fields.String,
     'password': fields.String
 })
@@ -107,7 +107,7 @@ class Users(Resource):
             return make_response({'ok': True, 'users': user}, 200)
         except ValueError as e:
             app.logger.error('user_get_by_id:{0}, {1}'.format(user_id, e))
-            raise InternalServerError(e)
+            raise BadRequest(e)
         except Exception as e:
             app.logger.error('Unexpected Error: {0}, {1}'.format(user_id, e))
             raise InternalServerError('Unexpected Error:{0}'.format(e))

@@ -19,7 +19,6 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
 from werkzeug.exceptions import Conflict
-
 from cloudalbum.database import create_table
 
 

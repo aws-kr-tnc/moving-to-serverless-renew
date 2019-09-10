@@ -80,7 +80,7 @@ class Users(Resource):
             return make_response({'ok': True, 'users': user.to_json()}, 200)
         except ValueError as e:
             app.logger.error("user_get_by_id:{0}, {1}".format(user_id, e))
-            return InternalServerError(e)
+            return BadRequest(e)
         except Exception as e:
             app.logger.error("Unexpected Error: {0}, {1}".format(user_id, e))
             raise InternalServerError('Unexpected Error:{0}'.format(e))

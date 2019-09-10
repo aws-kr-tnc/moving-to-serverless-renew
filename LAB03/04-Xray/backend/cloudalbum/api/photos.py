@@ -1,15 +1,22 @@
-from flask import Blueprint, request
-from flask_restplus import Api, Resource, fields
+"""
+    cloudalbum/api/photos.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    REST API for photos
 
-from cloudalbum.util.jwt_helper import cog_jwt_required, get_token_from_header, get_cognito_user
-from cloudalbum.util.response import m_response, err_response
-from werkzeug.datastructures import FileStorage
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+from flask import Blueprint, request, make_response
 from flask import current_app as app
+from flask_restplus import Api, Resource, fields
+from werkzeug.datastructures import FileStorage
+from werkzeug.exceptions import BadRequest, InternalServerError
 from werkzeug.utils import secure_filename
-
-from cloudalbum.util.file_control import delete_s3, save_s3, create_photo_info, presigned_url, with_presigned_url
 from cloudalbum.database.model_ddb import Photo
 from cloudalbum.solution import solution_put_photo_info_ddb
+from cloudalbum.util.jwt_helper import cog_jwt_required, get_token_from_header, get_cognito_user
+from cloudalbum.util.file_control import delete_s3, save_s3, presigned_url, with_presigned_url
 import uuid
 
 authorizations = {
@@ -19,6 +26,7 @@ authorizations = {
         'name': 'Authorization'
     }
 }
+
 
 photos_blueprint = Blueprint('photos', __name__)
 api = Api(photos_blueprint, doc='/swagger/',
@@ -38,7 +46,7 @@ photo_info = api.model('New_photo', {
     'desc': fields.String,
     'geotag_lat': fields.Float,
     'geotag_lng': fields.Float,
-    'taken_date': fields.DateTime("%Y:%m:%d %H:%M:%S"),
+    'taken_date': fields.DateTime('%Y:%m:%d %H:%M:%S'),
     'make': fields.String,
     'model': fields.String,
     'width': fields.String,
@@ -73,9 +81,8 @@ class Ping(Resource):
     @api.doc(responses={200: 'pong success'})
     @cog_jwt_required
     def get(self):
-
         app.logger.debug('success:pong!')
-        return m_response({'msg': 'pong!'}, 200)
+        return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
 @api.route('/file')
@@ -83,35 +90,26 @@ class Ping(Resource):
 class FileUpload(Resource):
     @cog_jwt_required
     def post(self):
+        form = file_upload_parser.parse_args()
+        filename_orig = form['file'].filename
         token = get_token_from_header(request)
+        extension = (filename_orig.rsplit('.', 1)[1]).lower()
+        current_user = get_cognito_user(token)
+
+        if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
+            app.logger.error('File format is not supported:{0}'.format(filename_orig))
+            raise BadRequest('File format is not supported:{0}'.format(filename_orig))
+
         try:
-            app.logger.debug(dir(file_upload_parser))
-            form = file_upload_parser.parse_args()
-            filename_orig = form['file'].filename
-            extension = (filename_orig.rsplit('.', 1)[1]).lower()
-
-            if extension.lower() not in ['jpg', 'jpeg', 'bmp', 'gif', 'png']:
-                app.logger.error('ERROR:file format is not supported:{0}'.format(filename_orig))
-                return err_response('ERROR:file format is not supported:{0}'.format(filename_orig),  400)
-
-            current_user = get_cognito_user(token)
-
             filename = secure_filename("{0}.{1}".format(uuid.uuid4(), extension))
             filesize = save_s3(form['file'], filename, current_user['email'])
-
             user_id = current_user['user_id']
-
-            new_photo = create_photo_info(user_id, filename, filesize, form)
-
-            solution_put_photo_info_ddb(user_id, new_photo)
-
-            return m_response({"photo_id": filename}, 200)
+            solution_put_photo_info_ddb(user_id, filename, form, filesize)
+            return make_response({'ok': True}, 200)
         except Exception as e:
-            app.logger.error('ERROR:file upload failed:user_id:{}'.format(get_cognito_user(token)['user_id']))
+            app.logger.error('ERROR:file upload failed:user_id:{}'.format(current_user['user_id']))
             app.logger.error(e)
-            return err_response(e, 500)
-
-
+            raise InternalServerError('File upload failed: {0}'.format(e))
 
 
 @api.route('/')
@@ -119,8 +117,8 @@ class List(Resource):
     @api.doc(
         responses=
         {
-            200: "Return the whole photos list",
-            500: "Internal server error"
+            200: 'Return the whole photos list',
+            500: 'Internal server error'
         }
     )
     @cog_jwt_required
@@ -130,17 +128,15 @@ class List(Resource):
         try:
             user = get_cognito_user(token)
             photos = Photo.query(user['user_id'])
-
             data = {'photos': []}
             [data['photos'].append(with_presigned_url(user, photo)) for photo in photos]
+            app.logger.debug('success:photos_list: {}'.format(data))
+            return make_response({'ok': True, 'photos': data['photos']}, 200)
 
-            app.logger.debug("success:photos_list:{}".format(data))
-
-            return m_response(data['photos'], 200)
         except Exception as e:
-            app.logger.error("ERROR:photos list failed")
+            app.logger.error('ERROR:photos list failed')
             app.logger.error(e)
-            return err_response(e, 500)
+            raise InternalServerError('Photos list retrieving failed')
 
 
 @api.route('/<photo_id>')
@@ -148,41 +144,36 @@ class OnePhoto(Resource):
     @api.doc(
         responses=
         {
-            200: "Delete success",
-            404: "file not exist",
-            500: "Internal server error"
+            200: 'Delete success',
+            404: 'file not exist',
+            500: 'Internal server error'
         }
     )
     @cog_jwt_required
     def delete(self, photo_id):
         """one photo delete"""
         token = get_token_from_header(request)
+        user = get_cognito_user(token)
         try:
-            user = get_cognito_user(token)
             photo = Photo.get(user['user_id'], photo_id)
             photo.delete()
-
             file_deleted = delete_s3(photo.filename, user['email'])
 
             if file_deleted:
-                app.logger.debug("success:photo deleted: user_id:{}, photo_id:{}".format(user['user_id'], photo_id))
-                return m_response({'photo_id': photo_id}, 200)
+                app.logger.debug('success:photo deleted: user_id:{}, photo_id:{}'.format(user['user_id'], photo_id))
+                return make_response({'ok': True, 'photos': {'photo_id': photo_id}}, 200)
             else:
                 raise FileNotFoundError
-
         except FileNotFoundError as e:
-            app.logger.error('ERROR:not exist photo_id:{}'.format(photo_id))
-            return err_response('ERROR:not exist photo_id:{}'.format(photo_id), 404)
+            raise InternalServerError(e)
         except Exception as e:
-            app.logger.error("ERROR:photo delete failed: photo_id:{}".format(photo_id))
-            app.logger.error(e)
-            return err_response("ERROR:photo delete failed: photo_id:{}".format(photo_id), 500)
+            raise InternalServerError(e)
 
     @api.doc(
         responses=
         {
-            200: "Success",
-            500: "Internal server error"
+            200: 'Success',
+            500: 'Internal server error'
         }
     )
     @cog_jwt_required
@@ -193,7 +184,6 @@ class OnePhoto(Resource):
             mode = request.args.get('mode')
             user = get_cognito_user(token)
             email = user['email']
-
             return presigned_url(photo_id, email, True if mode else False)
         except Exception as e:
             app.logger.error('ERROR:get photo failed:photo_id:{}'.format(photo_id))

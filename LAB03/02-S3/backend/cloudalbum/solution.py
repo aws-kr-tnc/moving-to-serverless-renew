@@ -51,9 +51,9 @@ def solution_put_photo_info_ddb(user_id, filename, form, filesize):
 
 
 def solution_delete_photo_from_ddb(user, photo_id):
-    app.logger.info("RUNNING TODO#4 SOLUTION CODE:")
-    app.logger.info("Delete a photo from photos list, and update!")
-    app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
+    app.logger.info('RUNNING TODO#4 SOLUTION CODE:')
+    app.logger.info('Delete a photo from photos list, and update!')
+    app.logger.info('Follow the steps in the lab guide to replace this method with your own implementation.')
 
     photo = Photo.get(user['user_id'], photo_id)
     photo.delete()
@@ -63,9 +63,9 @@ def solution_delete_photo_from_ddb(user, photo_id):
 
 
 def solution_put_object_to_s3(s3_client, key, upload_file_stream):
-    app.logger.info("RUNNING TODO#5 SOLUTION CODE:")
-    app.logger.info("Put object into S3 bucket!")
-    app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
+    app.logger.info('RUNNING TODO#5 SOLUTION CODE:')
+    app.logger.info('Put object into S3 bucket!')
+    app.logger.info('Follow the steps in the lab guide to replace this method with your own implementation.')
 
     s3_client.put_object(
         Bucket=app.config['S3_PHOTO_BUCKET'],
@@ -79,9 +79,9 @@ def solution_put_object_to_s3(s3_client, key, upload_file_stream):
 
 
 def solution_generate_s3_presigned_url(s3_client, key):
-    app.logger.info("RUNNING TODO#6 SOLUTION CODE:")
-    app.logger.info("Create S3 object presigned url!")
-    app.logger.info("Follow the steps in the lab guide to replace this method with your own implementation.")
+    app.logger.info('RUNNING TODO#6 SOLUTION CODE:')
+    app.logger.info('Create S3 object presigned url!')
+    app.logger.info('Follow the steps in the lab guide to replace this method with your own implementation.')
     url = s3_client.generate_presigned_url(
         'get_object',
         Params={'Bucket': app.config['S3_PHOTO_BUCKET'],

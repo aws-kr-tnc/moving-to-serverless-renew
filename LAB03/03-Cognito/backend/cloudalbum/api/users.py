@@ -31,13 +31,13 @@ response = api.model('Response', {
     'data': fields.String
 })
 
-signup_user = api.model('Signup_user',{
+signup_user = api.model('Signup_user', {
     'email': fields.String,
     'username': fields.String,
     'password': fields.String
 })
 
-signin_user = api.model('Signin_user',{
+signin_user = api.model('Signin_user', {
     'email': fields.String,
     'password': fields.String
 })
@@ -114,7 +114,7 @@ class Users(Resource):
         except ValueError as e:
             app.logger.error('ERROR:user_get_by_id:{}'.format(user_id))
             app.logger.error(e)
-            raise InternalServerError(e)
+            raise BadRequest(e)
         except Exception as e:
             app.logger.error('ERROR:user_get_by_id:{}'.format(user_id))
             app.logger.error(e)
@@ -191,6 +191,11 @@ class Signin(Resource):
             res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
             app.logger.debug('success:user signin:access_token:{}, refresh_token:{}'.format(access_token, refresh_token))
             return make_response(res, 200)
+
+        except client.exceptions.UserNotFoundException as e:
+            app.logger.error('User does not exist: {0}'.format(signin_data))
+            app.logger.error(e)
+            raise BadRequest('User does not exist')
         except client.exceptions.NotAuthorizedException as e:
             app.logger.error('Password is mismatched or invalid user: {0}'.format(signin_data))
             app.logger.error(e)

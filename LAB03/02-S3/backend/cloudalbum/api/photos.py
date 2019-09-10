@@ -46,7 +46,7 @@ photo_info = api.model('New_photo', {
     'desc': fields.String,
     'geotag_lat': fields.Float,
     'geotag_lng': fields.Float,
-    'taken_date': fields.DateTime("%Y:%m:%d %H:%M:%S"),
+    'taken_date': fields.DateTime('%Y:%m:%d %H:%M:%S'),
     'make': fields.String,
     'model': fields.String,
     'width': fields.String,

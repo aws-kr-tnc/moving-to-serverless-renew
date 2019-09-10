@@ -1,17 +1,25 @@
+"""
+    cloudalbum/__init__.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Environment configuration how to run application.
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
 import os
 import logging
 import sys
 import json
 import datetime
-
 from aws_xray_sdk.core import xray_recorder, patch_all, patch
 from aws_xray_sdk.ext.flask.middleware import XRayMiddleware
 from bson.objectid import ObjectId
-from flask import Flask, jsonify, make_response  # new
+from flask import Flask
 from flask_cors import CORS
-from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
+from cloudalbum.database import create_table
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -26,9 +34,6 @@ class JSONEncoder(json.JSONEncoder):
             return str(o)
         return json.JSONEncoder.default(self, o)
 
-login = LoginManager()
-jwt = JWTManager()
-
 
 def create_app(script_info=None):
 
@@ -37,8 +42,6 @@ def create_app(script_info=None):
 
     flask_bcrypt = Bcrypt(app)
     jwt = JWTManager(app)
-
-
     app.json_encoder = JSONEncoder
 
     # enable CORS
@@ -56,7 +59,7 @@ def create_app(script_info=None):
                             plugins=plugins,
                             context_missing='LOG_ERROR',
                             sampling=False)
-
+    xray_recorder.begin_segment('cloudalbum')
     XRayMiddleware(app, xray_recorder)
     patch(patch_modules)
 
@@ -68,6 +71,10 @@ def create_app(script_info=None):
     app.logger.addHandler(logging.StreamHandler(sys.stdout))
     app.logger.setLevel(logging.DEBUG)
 
+    # Create database table, if it is not exists
+    with app.app_context():
+        create_table()
+
     # register blueprints
     from cloudalbum.api.users import users_blueprint
     app.register_blueprint(users_blueprint, url_prefix='/users')
@@ -77,15 +84,6 @@ def create_app(script_info=None):
 
     from cloudalbum.api.admin import admin_blueprint
     app.register_blueprint(admin_blueprint, url_prefix='/admin')
-
-    @jwt.token_in_blacklist_loader
-    def check_if_token_in_blacklist_DB(decrypted_token):
-        from cloudalbum.util.jwt_helper import is_blacklisted_token_set
-        try:
-            return is_blacklisted_token_set(decrypted_token)
-        except Exception as e:
-            app.logger.error(e)
-            return make_response(jsonify({'msg': 'session already expired'}, 409))
 
     # shell context for flask cli
     @app.shell_context_processor
