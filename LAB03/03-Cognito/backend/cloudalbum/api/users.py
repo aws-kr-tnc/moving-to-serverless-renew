@@ -158,25 +158,19 @@ class Signup(Resource):
             raise BadRequest(e.message)
 
 
-def cognito_signin(user):
-    client = boto3.client('cognito-idp')
-    try:
-        msg = '{0}{1}'.format(user['email'], app.config['COGNITO_CLIENT_ID'])
-        dig = hmac.new(app.config['COGNITO_CLIENT_SECRET'].encode('utf-8'),
-                       msg=msg.encode('utf-8'),
-                       digestmod=hashlib.sha256).digest()
-        auth= base64.b64encode(dig).decode()
-        resp = client.admin_initiate_auth(UserPoolId=app.config['COGNITO_POOL_ID'],
-                                          ClientId=app.config['COGNITO_CLIENT_ID'],
-                                          AuthFlow='ADMIN_NO_SRP_AUTH',
-                                          AuthParameters={'SECRET_HASH': auth,'USERNAME': user['email'], 'PASSWORD': user['password']})
-        access_token = resp['AuthenticationResult']['AccessToken']
-        refresh_token = resp['AuthenticationResult']['RefreshToken']
-        return access_token, refresh_token
-    except client.exceptions.NotAuthorizedException as e:
-        app.logger.error('Password mismatched')
-        app.logger.error(e)
-        raise BadRequest('Password mismatched')
+def cognito_signin(cognito_client, user):
+    msg = '{0}{1}'.format(user['email'], app.config['COGNITO_CLIENT_ID'])
+    dig = hmac.new(app.config['COGNITO_CLIENT_SECRET'].encode('utf-8'),
+                   msg=msg.encode('utf-8'),
+                   digestmod=hashlib.sha256).digest()
+    auth= base64.b64encode(dig).decode()
+    resp = cognito_client.admin_initiate_auth(UserPoolId=app.config['COGNITO_POOL_ID'],
+                                      ClientId=app.config['COGNITO_CLIENT_ID'],
+                                      AuthFlow='ADMIN_NO_SRP_AUTH',
+                                      AuthParameters={'SECRET_HASH': auth,'USERNAME': user['email'], 'PASSWORD': user['password']})
+    access_token = resp['AuthenticationResult']['AccessToken']
+    refresh_token = resp['AuthenticationResult']['RefreshToken']
+    return access_token, refresh_token
 
 
 @api.route('/signin')
@@ -193,7 +187,7 @@ class Signin(Resource):
         client = boto3.client('cognito-idp')
         try:
             signin_data = validate_user(req_data)['data']
-            access_token, refresh_token = cognito_signin(signin_data)
+            access_token, refresh_token = cognito_signin(client, signin_data)
             res = jsonify({'accessToken': access_token, 'refreshToken': refresh_token})
             app.logger.debug('success:user signin:access_token:{}, refresh_token:{}'.format(access_token, refresh_token))
             return make_response(res, 200)
