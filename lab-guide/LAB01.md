@@ -165,22 +165,25 @@ npm install
 
 18. Frontend application do api call, so we have to define destination backend address. You can check this `.env` file below.
 ```console
-~environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env
+~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env
 ```
 * It contains below default properties.
 ```console
 //AXIOS api request time-out
 VUE_APP_TIMEOUT=15000
 
-//For test/development 
+//For test/development api end-point
 VUE_APP_API=http://127.0.0.1:5000
 
-//For deployment 
+//For deployment
 //VUE_APP_API=http://<DEPLOYED_SERVER>
+
+//Is using S3 presinged URL?!
+VUE_APP_S3_PRESIGNED_URL=false
 
 ```
 
-19. Let's take a look around backend application. (~environment/moving-to-serverless-renew/LAB01/backend)
+19. Let's take a look around backend application. (~/environment/moving-to-serverless-renew/LAB01/backend)
 
   <img src=./images/lab01-backend-project-structure.png width=500>
 
@@ -246,11 +249,20 @@ class ProductionConfig(BaseConfig):
 * For reference, you can also use Cloud9 Custom Runner. To use Custom Runner provided by Cloud9, you can refer to the following document.  
   * https://docs.aws.amazon.com/cloud9/latest/user-guide/build-run-debug.html#build-run-debug-change-runner 
 
-* First, set up environment variables.
+* First, set up environment variables. (`LAB01/backend/shell.env`)
 ```console
+# Required environment variables
+export DATABASE_TEST_URL=sqlite:////tmp/sqlite_test.db
+export DATABASE_URL=sqlite:////tmp/sqlite_dev.db
+export UPLOAD_FOLDER=/tmp
+export FLASK_APP=cloudalbum/__init__.py
 export FLASK_ENV=development
 export APP_SETTINGS=cloudalbum.config.DevelopmentConfig
-export UPLOAD_FOLDER=/tmp
+# export S3_PHOTO_BUCKET=
+# export COGNITO_POOL_ID=
+# export COGNITO_CLIENT_ID=
+# export COGNITO_CLIENT_SECRET=
+
 ```
 * Or, `source ~/environment/moving_to-serverless-renew/LAB01/backend/shell.env`
 
@@ -296,9 +308,7 @@ Date: Wed, 21 Aug 2019 06:37:20 GMT
 Server: Werkzeug/0.15.5 Python/3.6.8
 
 {
-    "Message": {
-        "msg": "pong!"
-    },
+    "Message": "pong",
     "ok": true
 }
 
@@ -392,6 +402,8 @@ ssh-rsa CXCAAB3Nzaxxyc2EAAAADAQABAAABAQDThHERqJJMcZqitA5DZ35j41UFE0zIO5XxVqElCHN
 ```console
 SG_NAME=`curl -s http://169.254.169.254/latest/meta-data/security-groups`
 SG_ID=`aws ec2 describe-security-groups --group-names $SG_NAME --query 'SecurityGroups[*].[GroupId]' --output text`
+echo $SG_NAME
+echo $SG_ID
 ```
 
 * Before run below command, you should replace  `<YOUR_IP>` like `61.79.225.xxx`.
