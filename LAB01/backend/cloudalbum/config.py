@@ -25,7 +25,7 @@ class BaseConfig:
     JWT_BLACKLIST_TOKEN_CHECKS = ['access']
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ECHO = os.getenv('SQLALCHEMY_ECHO', True)
+    SQLALCHEMY_ECHO = eval(os.getenv('SQLALCHEMY_ECHO', 'True'))
 
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', os.path.join(os.getcwd(), '/tmp'))
     THUMBNAIL_WIDTH = os.getenv('THUMBNAIL_WIDTH', 300)
@@ -34,15 +34,19 @@ class BaseConfig:
 
 class DevelopmentConfig(BaseConfig):
     """Development configuration"""
+    SECRET_KEY = os.getenv('FLASK_SECRET', 'dev_secret')
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:////tmp/sqlite_dev.database')
 
 
 class TestingConfig(BaseConfig):
     """Testing configuration"""
     TESTING = True
+    SECRET_KEY = os.getenv('FLASK_SECRET', 'test_secret')
+    SQLALCHEMY_ECHO = eval(os.getenv('SQLALCHEMY_ECHO', 'False'))
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_TEST_URL', 'sqlite:////tmp/sqlite_test.database')
 
 
 class ProductionConfig(BaseConfig):
     """Production configuration"""
+    SECRET_KEY = os.getenv('FLASK_SECRET', 'prod_secret')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')

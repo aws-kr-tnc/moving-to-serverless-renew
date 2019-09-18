@@ -47,6 +47,7 @@ def create_app(script_info=None):
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
     app.config['JWT_BLACKLIST_ENABLED'] = True
     app.config['JWT_BLACKLIST_TOKEN_CHECKS'] = ['access']
+    app.config['PROPAGATE_EXCEPTIONS'] = True
 
     # initiate some config value for JWT Authentication
     jwt = JWTManager(app)
@@ -84,7 +85,6 @@ def create_app(script_info=None):
         except Exception as e:
             app.logger.error(e)
 
-
     @jwt.token_in_blacklist_loader
     def check_if_token_in_blacklist_set(decrypted_token):
         from cloudalbum.util.jwt_helper import is_blacklisted_token_set
@@ -93,7 +93,6 @@ def create_app(script_info=None):
         except Exception as e:
             app.logger.error(e)
             raise Conflict('Session already expired: {0}'.format(e))
-
 
     # shell context for flask cli
     @app.shell_context_processor

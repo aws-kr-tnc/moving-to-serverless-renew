@@ -33,7 +33,7 @@ def recreate_db():
     db.session.commit()
 
 
-@cli.command()
+@cli.command('test')
 def test():
     """
     Runs the tests without code coverage
