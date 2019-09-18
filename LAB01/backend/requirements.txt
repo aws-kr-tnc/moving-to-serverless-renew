@@ -13,4 +13,6 @@ bson==0.5.8
 flask-restplus==0.12.1
 Pillow==6.1.0
 PyMySQL==0.9.3
-httpie==1.0.2
+httpie==1.0.3
+pytest==5.1.2 
+pytest-cov==2.7.1

@@ -7,7 +7,7 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
-
+import pytest
 from flask_testing import TestCase
 from cloudalbum import create_app, db
 
@@ -15,6 +15,7 @@ app = create_app()
 
 
 class BaseTestCase(TestCase):
+
     def create_app(self):
         app.config.from_object('cloudalbum.config.TestingConfig')
         return app
