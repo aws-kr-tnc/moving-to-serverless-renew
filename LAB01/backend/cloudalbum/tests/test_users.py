@@ -9,19 +9,23 @@
 """
 import json
 import unittest
-
+from cloudalbum.tests.base import BaseTestCase
 from flask_jwt_extended import create_access_token
 
-from cloudalbum.tests.base import BaseTestCase
+new_user = {
+    'username': 'test002',
+    'email': 'test002@testuser.com',
+    'password': 'Password!'
+}
 
-user = {
-    'username': 'user001',
-    'email': 'user001@user001.com',
+existed_user = {
+    'username': 'test001',
+    'email': 'test001@testuser.com',
     'password': 'Password!'
 }
 
 bad_user = {
-    'username': 'user001',
+    'username': 'test001',
     'email': 'bad_email',
     'password': 'aa'
 }
@@ -39,7 +43,7 @@ class TestUserService(BaseTestCase):
         """Ensure a new user signup resource."""
         with self.client:
             response = self.client.post(
-                '/users/signup', data=json.dumps(user), content_type='application/json', )
+                '/users/signup', data=json.dumps(new_user), content_type='application/json', )
             self.assertEqual(response.status_code, 201)
 
     def test_bad_signup(self):
@@ -52,22 +56,14 @@ class TestUserService(BaseTestCase):
     def test_signin(self):
         """Ensure signin request works well."""
         with self.client:
-            # 1.Signup
             response = self.client.post(
-                '/users/signup', data=json.dumps(user), content_type='application/json', )
-            # 2.Signin
-            response = self.client.post(
-                '/users/signin', data=json.dumps(user), content_type='application/json', )
+                '/users/signin', data=json.dumps(existed_user), content_type='application/json', )
             self.assertEqual(response.status_code, 200)
             self.assertNotEqual(response.json['accessToken'], None)
 
     def test_bad_signin(self):
         """Check error handling for bad request."""
         with self.client:
-            # 1.Signup
-            response = self.client.post(
-                '/users/signup', data=json.dumps(user), content_type='application/json', )
-            # 2.Signin
             response = self.client.post(
                 '/users/signin', data=json.dumps(bad_user), content_type='application/json', )
             resp = response.json
@@ -77,19 +73,13 @@ class TestUserService(BaseTestCase):
         """Ensure error is thrown if the email already exists."""
         with self.client:
             response = self.client.post(
-                '/users/signup', data=json.dumps(user), content_type='application/json', )
-
-            if response.status_code is 201:
-                second_resp = self.client.post(
-                    '/users/signup', data=json.dumps(user), content_type='application/json', )
-                self.assertEqual(second_resp.status_code, 409)
-            else:
-                assert False, 'Fail, check the signup code before run test.'
+                '/users/signup', data=json.dumps(existed_user), content_type='application/json', )
+            self.assertEqual(response.status_code, 409)
 
     def test_signout(self):
         """Ensure signout request works well."""
         with self.client:
-            access_token = create_access_token(identity=user)
+            access_token = create_access_token(identity=existed_user)
             # Signout
             response = self.client.post(
                 '/users/signout',

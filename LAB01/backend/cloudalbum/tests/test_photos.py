@@ -12,14 +12,14 @@ from cloudalbum.tests.base import BaseTestCase
 from flask_jwt_extended import create_access_token
 
 user = {
-    'user_id': 'user001',
-    'email': 'user001@user001.com',
+    'user_id': 'testuser',
+    'email': 'testuser@testuser.com',
     'password': 'Password!'
 }
 
 upload = dict(
     tags='ITA, Venezia, SONY , DSLR-A300, 2048 x 1371',
-    filename_orig='DSC07570.jpg',
+    filename_orig='test_image.jpg',
     desc='TEST',
     make='SONY',
     model='DSLR-A300',
@@ -55,7 +55,7 @@ class TestPhotoService(BaseTestCase):
     def test_upload(self):
         """Ensure the /photos/file behaves correctly."""
         access_token = create_access_token(identity=user)
-        upload['file'] = (BytesIO(b'my file contents'), 'DSC07570.jpg')
+        upload['file'] = (BytesIO(b'my file contents'), 'test_image.jpg')
         response = self.client.post(
             '/photos/file',
             headers=get_header(access_token),
@@ -78,7 +78,7 @@ class TestPhotoService(BaseTestCase):
         """Ensure the /photos/<photo_id> route behaves correctly."""
         access_token = create_access_token(identity=user)
         # 1. upload
-        upload['file'] = (BytesIO(b'my file contents'), 'DSC07570.jpg')
+        upload['file'] = (BytesIO(b'my file contents'), 'test_image.jpg')
         response = self.client.post(
             '/photos/file',
             headers=get_header(access_token),
@@ -99,7 +99,7 @@ class TestPhotoService(BaseTestCase):
         """Ensure the /photos/<photo_id>?mode=thumbnail route behaves correctly."""
         access_token = create_access_token(identity=user)
         # 1. upload
-        upload['file'] = (BytesIO(b'my file contents'), 'DSC07570.jpg')
+        upload['file'] = (BytesIO(b'my file contents'), 'test_image.jpg')
         response = self.client.post(
             '/photos/file',
             headers=get_header(access_token),

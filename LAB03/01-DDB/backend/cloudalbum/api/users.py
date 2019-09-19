@@ -8,12 +8,14 @@
     :license: MIT, see LICENSE for more details.
 """
 import uuid
+
 from flask import Blueprint, request
 from flask import current_app as app
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_raw_jwt)
 from flask import jsonify, make_response
 from flask_restplus import Api, Resource, fields
 from jsonschema import ValidationError
+from jsonschema import exceptions
 from pynamodb.exceptions import PynamoDBException
 from werkzeug.security import check_password_hash
 from cloudalbum.schemas import validate_user
@@ -124,9 +126,9 @@ class Signup(Resource):
     def post(self):
         """Enroll a new user"""
         req_data = request.get_json()
-        validated = validate_user(req_data)
-        user_data = validated['data']
         try:
+            validated = validate_user(req_data)
+            user_data = validated['data']
             exist_user = [item for item in User.email_index.query(user_data['email'])]
             if not exist_user:
                 new_user_id = uuid.uuid4().hex
