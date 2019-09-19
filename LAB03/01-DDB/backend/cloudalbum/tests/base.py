@@ -16,7 +16,7 @@ import uuid
 user = {
     'username': 'test001',
     'email': 'test001@testuser.com',
-    'password': 'Password!'
+    'password': 'Password1!'
 }
 
 app = create_app()

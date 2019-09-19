@@ -8,8 +8,10 @@
     :license: MIT, see LICENSE for more details.
 """
 
-import datetime
 import os
+import datetime
+from os import environ
+from boto3.session import Session
 
 
 class BaseConfig:
@@ -28,7 +30,7 @@ class BaseConfig:
     THUMBNAIL_WIDTH = os.getenv('THUMBNAIL_WIDTH', 300)
     THUMBNAIL_HEIGHT = os.getenv('THUMBNAIL_HEIGHT', 200)
 
-    AWS_REGION = os.getenv('AWS_REGION', 'ap-southeast-1')
+    AWS_REGION = Session().region_name if environ.get('AWS_REGION') is None else environ.get('AWS_REGION')
 
     # DynamoDB
     DDB_RCU = os.getenv('DDB_RCU', 10)

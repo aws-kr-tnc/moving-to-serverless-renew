@@ -15,6 +15,12 @@ from werkzeug.security import generate_password_hash
 from cloudalbum import create_app, db
 from cloudalbum.database.models import User
 
+user = {
+    'username': 'test001',
+    'email': 'test001@testuser.com',
+    'password': 'Password1!'
+}
+
 app = create_app()
 cli = FlaskGroup(create_app=create_app)
 
@@ -52,8 +58,8 @@ def seed_db():
     Insert seeds database
     :return:
     """
-    db.session.add(User(username='mario', email='super@mario.com', password=generate_password_hash('asdfg')))
-    db.session.add(User(username='luigi', email='super@luigi.com', password=generate_password_hash('asdfg')))
+    db.session.add(User(username=user['username'], email=user['email'],
+                        password=generate_password_hash(user['password'])))
     db.session.commit()
 
 
