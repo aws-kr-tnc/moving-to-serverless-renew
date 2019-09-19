@@ -9,7 +9,7 @@
 """
 from flask_testing import TestCase
 from cloudalbum import create_app
-from cloudalbum.database.model_ddb import User
+from cloudalbum.database.model_ddb import User, Photo
 from werkzeug.security import generate_password_hash
 import uuid
 
@@ -39,4 +39,6 @@ class BaseTestCase(TestCase):
     def tearDown(self):
         # Delete test data
         for item in User.scan(User.username.startswith('test')):
+            item.delete()
+        for item in Photo.scan(Photo.user_id.startswith('test')):
             item.delete()
