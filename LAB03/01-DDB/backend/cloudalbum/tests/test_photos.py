@@ -15,7 +15,7 @@ from flask_jwt_extended import create_access_token
 for_user_token = {
     'user_id': 'test001',
     'email': 'test001@testuser.com',
-    'password': 'Password!'
+    'password': 'Password1!'
 }
 
 

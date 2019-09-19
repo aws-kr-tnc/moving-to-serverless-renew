@@ -15,13 +15,13 @@ from cloudalbum.tests.base import BaseTestCase
 new_user = {
     'username': 'test002',
     'email': 'test002@testuser.com',
-    'password': 'Password!'
+    'password': 'Password1!'
 }
 
 existed_user = {
     'username': 'test001',
     'email': 'test001@testuser.com',
-    'password': 'Password!'
+    'password': 'Password1!'
 }
 
 bad_user = {

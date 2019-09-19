@@ -14,7 +14,7 @@ from flask_jwt_extended import create_access_token
 user = {
     'user_id': 'testuser',
     'email': 'testuser@testuser.com',
-    'password': 'Password!'
+    'password': 'Password1!'
 }
 
 upload = dict(

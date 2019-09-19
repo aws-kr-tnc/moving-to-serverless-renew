@@ -125,9 +125,9 @@ class Signup(Resource):
     def post(self):
         """Enroll a new user"""
         req_data = request.get_json()
-        validated = validate_user(req_data)
-        user_data = validated['data']
         try:
+            validated = validate_user(req_data)
+            user_data = validated['data']
             exist_user = [item for item in User.email_index.query(user_data['email'])]
             if not exist_user:
                 new_user_id = uuid.uuid4().hex

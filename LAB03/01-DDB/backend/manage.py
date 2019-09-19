@@ -9,12 +9,18 @@
 """
 import sys
 import unittest
-
+import uuid
 from flask.cli import FlaskGroup
 from cloudalbum import create_app
 from cloudalbum.database import delete_table
 from cloudalbum.database.model_ddb import User
 from werkzeug.security import generate_password_hash
+
+user = {
+    'username': 'test001',
+    'email': 'test001@testuser.com',
+    'password': 'Password1!'
+}
 
 app = create_app()
 cli = FlaskGroup(create_app=create_app)
@@ -39,11 +45,12 @@ def test():
 def seed_db():
     """Seeds the database."""
     try:
-        user = User('test_user_id')
-        user.email = 'user@user.com'
-        user.password = generate_password_hash('Password1!')
-        user.username = 'user'
-        user.save()
+        # Insert test user
+        test_user = User(uuid.uuid4().hex)
+        test_user.email = user['email']
+        test_user.username = user['username']
+        test_user.password = generate_password_hash(user['password'])
+        test_user.save()
     except Exception as e:
         app.logger.error(e)
 

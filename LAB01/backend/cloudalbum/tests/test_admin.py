@@ -19,7 +19,7 @@ class TestAdminService(BaseTestCase):
         self.assert200(response, 'pong failed?')
 
     def test_healthcheck(self):
-        """Ensure the /ping route behaves correctly."""
+        """Ensure the /healthcheck route behaves correctly."""
         response = self.client.get('/admin/health_check')
         self.assert200(response)
 
