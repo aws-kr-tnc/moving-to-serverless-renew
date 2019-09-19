@@ -7,15 +7,17 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
+import json
 from datetime import datetime
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute, ListAttribute, MapAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
 from tzlocal import get_localzone
-import json
-import boto3
+from boto3.session import Session
+from os import environ
 
-AWS_REGION = boto3.session.Session().region_name
+
+AWS_REGION = Session().region_name if environ.get('AWS_REGION') is None else environ.get('AWS_REGION')
 
 
 class EmailIndex(GlobalSecondaryIndex):
@@ -109,4 +111,6 @@ def photo_deserialize(photo):
     photo_json['nation'] = photo.nation
     photo_json['address'] = photo.address
     return photo_json
+
+
 

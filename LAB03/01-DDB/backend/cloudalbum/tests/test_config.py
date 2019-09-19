@@ -7,7 +7,6 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
-import os
 import unittest
 from flask import current_app
 from flask_testing import TestCase
@@ -22,12 +21,10 @@ class TestDevelopmentConfig(TestCase):
         return app
 
     def test_app_is_development(self):
-        self.assertTrue(app.config['SECRET_KEY'] == 'my_secret')
+        self.assertTrue(app.config['SECRET_KEY'] == 'dev_secret')
         self.assertFalse(current_app is None)
-        self.assertTrue(
-            app.config['SQLALCHEMY_DATABASE_URI'] ==
-            os.environ.get('DATABASE_URL')
-        )
+        self.assertIsNotNone(app.config['DDB_RCU'])
+        self.assertIsNotNone(app.config['DDB_WCU'])
 
 
 class TestTestingConfig(TestCase):
@@ -36,13 +33,11 @@ class TestTestingConfig(TestCase):
         return app
 
     def test_app_is_testing(self):
-        self.assertTrue(app.config['SECRET_KEY'] == 'my_secret')
+        self.assertTrue(app.config['SECRET_KEY'] == 'test_secret')
         self.assertTrue(app.config['TESTING'])
         self.assertFalse(app.config['PRESERVE_CONTEXT_ON_EXCEPTION'])
-        self.assertTrue(
-            app.config['SQLALCHEMY_DATABASE_URI'] ==
-            os.environ.get('DATABASE_TEST_URL')
-        )
+        self.assertIsNotNone(app.config['DDB_RCU'])
+        self.assertIsNotNone(app.config['DDB_WCU'])
 
 
 class TestProductionConfig(TestCase):
@@ -51,8 +46,10 @@ class TestProductionConfig(TestCase):
         return app
 
     def test_app_is_production(self):
-        self.assertTrue(app.config['SECRET_KEY'] == 'my_secret')
+        self.assertTrue(app.config['SECRET_KEY'] == 'prod_secret')
         self.assertFalse(app.config['TESTING'])
+        self.assertIsNotNone(app.config['DDB_RCU'])
+        self.assertIsNotNone(app.config['DDB_WCU'])
 
 
 if __name__ == '__main__':
