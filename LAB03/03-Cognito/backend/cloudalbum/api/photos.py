@@ -161,7 +161,7 @@ class OnePhoto(Resource):
             file_deleted = delete_s3(photo.filename, user['email'])
 
             if file_deleted:
-                app.logger.debug("success:photo deleted: user_id:{}, photo_id:{}".format(user['user_id'], photo_id))
+                app.logger.debug('success:photo deleted: user_id:{}, photo_id:{}'.format(user['user_id'], photo_id))
                 return make_response({'ok': True, 'photos': {'photo_id': photo_id}}, 200)
             else:
                 raise FileNotFoundError

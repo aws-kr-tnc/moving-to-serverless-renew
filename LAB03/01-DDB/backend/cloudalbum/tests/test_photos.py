@@ -7,6 +7,7 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
+import unittest
 from io import BytesIO
 from cloudalbum.tests.base import BaseTestCase
 from cloudalbum.database.model_ddb import Photo
@@ -132,3 +133,7 @@ class TestPhotoService(BaseTestCase):
             query_string=data
         )
         self.assert200(response)
+
+
+if __name__ == '__main__':
+    unittest.main()

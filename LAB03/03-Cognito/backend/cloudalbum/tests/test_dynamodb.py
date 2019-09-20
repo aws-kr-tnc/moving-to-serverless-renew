@@ -8,16 +8,20 @@
     :license: MIT, see LICENSE for more details.
 """
 import unittest
+
+import pytest
+
 from cloudalbum.tests.base import BaseTestCase
-from cloudalbum.database.model_ddb import User, Photo
+from cloudalbum.database.model_ddb import Photo
 
 
 class TestDynamoDBService(BaseTestCase):
     """Test DynamoDB Service."""
 
-    def test_user_table(self):
-        """Ensure the DDB User table is available."""
-        self.assertEqual(User.exists(), True)
+    # User table is no more needed
+    # def test_user_table(self):
+    #     """Ensure the DDB User table is available."""
+    #     self.assertEqual(User.exists(), True)
 
     def test_photo_table(self):
         """Ensure the DDB Photo table is available."""
