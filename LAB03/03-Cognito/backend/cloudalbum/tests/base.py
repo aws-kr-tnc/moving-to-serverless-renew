@@ -9,12 +9,11 @@
 """
 from flask_testing import TestCase
 from cloudalbum import create_app
+from cloudalbum.database import Photo
 import base64
 import boto3
 import hashlib
 import hmac
-
-from cloudalbum.database import Photo
 
 user = {
     'username': 'test001',

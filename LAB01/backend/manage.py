@@ -14,12 +14,7 @@ from flask.cli import FlaskGroup
 from werkzeug.security import generate_password_hash
 from cloudalbum import create_app, db
 from cloudalbum.database.models import User
-
-user = {
-    'username': 'test001',
-    'email': 'test001@testuser.com',
-    'password': 'Password1!'
-}
+from cloudalbum.tests.base import user
 
 app = create_app()
 cli = FlaskGroup(create_app=create_app)

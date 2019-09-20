@@ -8,11 +8,16 @@
     :license: MIT, see LICENSE for more details.
 """
 import sys
+import hmac
+import boto3
+import base64
+import hashlib
 import unittest
-
 from flask.cli import FlaskGroup
 from cloudalbum import create_app
+from cloudalbum.tests.base import user
 from cloudalbum.database import delete_table
+
 
 app = create_app()
 cli = FlaskGroup(create_app=create_app)
@@ -20,7 +25,6 @@ cli = FlaskGroup(create_app=create_app)
 
 @cli.command('delete_db')
 def delete_db():
-    # delete_table()
     delete_table()
 
 
@@ -37,14 +41,34 @@ def test():
 @cli.command('seed_db')
 def seed_db():
     """Seeds the database."""
-    # try:
-    #     user = User('test_user_id')
-    #     user.email = 'user@user.com'
-    #     user.password = generate_password_hash('Password1!')
-    #     user.username = 'user'
-    #     user.save()
-    # except Exception as e:
-    #     app.logger.error(e)
+    # Create test user
+    msg = '{0}{1}'.format(user['email'], app.config['COGNITO_CLIENT_ID'])
+    dig = hmac.new(app.config['COGNITO_CLIENT_SECRET'].encode('utf-8'),
+                   msg=msg.encode('utf-8'),
+                   digestmod=hashlib.sha256).digest()
+    try:
+        cognito_client = boto3.client('cognito-idp')
+        response = cognito_client.sign_up(
+            ClientId=app.config['COGNITO_CLIENT_ID'],
+            SecretHash=base64.b64encode(dig).decode(),
+            Username=user['email'],
+            Password=user['password'],
+            UserAttributes=[{
+                'Name': 'name',
+                'Value': user['username']
+            }],
+            ValidationData=[{
+                'Name': 'name',
+                'Value': user['username']
+            }]
+        )
+        username = response['UserSub']
+        cognito_client.admin_confirm_sign_up(
+            UserPoolId=app.config['COGNITO_POOL_ID'],
+            Username=username
+        )
+    except cognito_client.exceptions.UsernameExistsException as e:
+        pass
 
 
 if __name__ == '__main__':

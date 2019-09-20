@@ -9,12 +9,13 @@
 """
 import hashlib
 import boto3, hmac, base64
+from botocore.exceptions import ClientError
 from flask import Blueprint, request
 from flask import current_app as app
 from flask import jsonify, make_response
 from flask_restplus import Api, Resource, fields
 from jsonschema import ValidationError
-from werkzeug.exceptions import InternalServerError, BadRequest
+from werkzeug.exceptions import InternalServerError, BadRequest, Conflict
 
 from cloudalbum.schemas import validate_user
 from cloudalbum.solution import solution_signup_cognito
@@ -131,6 +132,9 @@ def cognito_signup(signup_user):
     # TODO 7: Implement following solution code to sign up user into cognito user pool
     try:
         return solution_signup_cognito(user, dig)
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'UsernameExistsException':
+            raise Conflict('ERROR: Existed user!')
     except Exception as e:
         raise BadRequest(e.response['Error']['Message'])
 
@@ -218,7 +222,7 @@ class Signout(Resource):
         200: 'signout success',
         500: 'login required'
     })
-    def delete(self):
+    def post(self):
         """user signout"""
         token = get_token_from_header(request)
         try:
