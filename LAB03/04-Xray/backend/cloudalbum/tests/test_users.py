@@ -9,157 +9,84 @@
 """
 import json
 import unittest
-import random
-from cloudalbum.tests.base import BaseTestCase
+
+import boto3
+from cloudalbum.api.users import cognito_signin
+from cloudalbum.tests.base import BaseTestCase, user as existed_user
 
 
-def auto_signup(self):
-    """Signup tool for test user """
-    random_int = random.randint(0, 1000000)
-    dic_user = {
-        "username": "user" + str(random_int),
-        "email":"%s@mario.com" % random_int,
-        'password': '%s_password' % random_int
-    }
+new_user = {
+    'username': 'test002',
+    'email': 'test002@testuser.com',
+    'password': 'Password1!'
+}
 
-    with self.client:
-        response = self.client.post(
-            '/users/signup',
-            data=json.dumps(dic_user),
-            content_type='application/json',
-        )
-        return response, dic_user
-
-
-def auto_signin(self, test_user):
-    with self.client:
-        response = self.client.post(
-            '/users/signin',
-            data=json.dumps(test_user),
-            content_type='application/json',
-        )
-        return response
+bad_user = {
+    'username': 'user001',
+    'email': 'bad_email',
+    'password': 'aa'
+}
 
 
 class TestUserService(BaseTestCase):
     """Tests for the Users Service."""
 
-    def test_users_ping(self):
+    def test_ping(self):
         """Ensure the /ping route behaves correctly."""
         response = self.client.get('/users/ping')
-        self.assert200(response, "pong failed?")
+        self.assert200(response, 'pong failed?')
 
-    def test_user_signup(self):
+    def test_signup(self):
         """Ensure a new user signup resource."""
-
-        response, new_user = auto_signup(self)
-        resp = response.json
-
-        self.assertEqual(response.status_code, 201)
-        del new_user['password']
-        del resp['data']['id']
-        self.assertEquals(new_user, resp['data'])
-
-    def test_add_user_invalid_json(self):
-        """Ensure error is thrown if the JSON object is empty."""
-
         with self.client:
             response = self.client.post(
-                '/users/signup',
-                data=json.dumps({}),
-                content_type='application/json',
-            )
+                '/users/signup', data=json.dumps(new_user), content_type='application/json', )
+            self.assertEqual(response.status_code, 201)
 
-            resp = response.json
-
-            self.assertEqual({}, resp['data'])
-            self.assert400(response, "response code is not 400")
-
-    def test_add_user_invalid_json_keys(self):
-        """
-        Ensure error is thrown if the JSON object does not have a username key.
-        """
-        data_invalid = {'email': 'super@mario.com'}
+    def test_bad_signup(self):
+        """Check error handling for bad request."""
         with self.client:
             response = self.client.post(
-                '/users/signup',
-                data=json.dumps(data_invalid),
-                content_type='application/json',
-            )
-            resp = response.json
-            self.assert400(response, "response code is not 400")
-            self.assertEqual(data_invalid, resp['data'])
+                '/users/signup', data=json.dumps(bad_user), content_type='application/json', )
+            self.assertEqual(response.status_code, 400)
 
-    def test_add_user_duplicate_email(self):
-        """Ensure error is thrown if the email already exists."""
-        response, test_user = auto_signup(self)
-
-        if response.status_code is 201:
-            with self.client:
-                second_response = self.client.post(
-                    '/users/signup',
-                    data=json.dumps(test_user),
-                    content_type='application/json'
-                )
-            duplicated_resp = second_response.json
-
-            self.assertEqual(second_response.status_code, 409)
-            self.assertEqual(test_user, duplicated_resp['data'])
-
-    def test_single_user_search(self):
-        """Ensure get single user behaves correctly."""
-
-        response, test_user = auto_signup(self)
-        result = response.json
-
+    def test_signin(self):
+        """Ensure signin request works well."""
         with self.client:
-            response = self.client.get('/users/%s' % result['data']['id'])
-            search_result_user =result['data']
-
-            del search_result_user['id']
-            del test_user['password']
-
+            response = self.client.post(
+                '/users/signin', data=json.dumps(existed_user), content_type='application/json', )
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(test_user, search_result_user)
+            self.assertNotEqual(response.json['accessToken'], None)
 
-    def test_single_user_no_id(self):
-        """Ensure error is thrown if an id is not provided."""
+    def test_bad_signin(self):
+        """Check error handling for bad request."""
         with self.client:
-            response = self.client.get('/users/1000000000000')
-            self.assert404(response, "not exist user failed")
+            response = self.client.post(
+                '/users/signin', data=json.dumps(bad_user), content_type='application/json', )
+            resp = response.json
+            self.assertEqual(response.status_code, 400)
+
+    def test_signup_duplicate_email(self):
+        """Ensure error is thrown if the email already exists."""
+        with self.client:
+            response = self.client.post(
+                '/users/signup', data=json.dumps(existed_user), content_type='application/json', )
+            self.assertEqual(response.status_code, 409)
 
     def test_signout(self):
-        # signup user
-        response, test_user = auto_signup(self)
-
-        #signin user -> get jwt token
-        del test_user['username']
-        signing_resp = auto_signin(self, test_user)
-        access_token = signing_resp.get_json()['accessToken']
-
-        # signout with token
-        response = self.client.post(
-            '/users/signout',
-            headers=dict(
-                Authorization='Bearer ' + signing_resp.get_json()['accessToken']
-            ),
-            content_type='application/json',
-        )
-
-        #first signout success
-        self.assert200(response)
-
-        self.assertRaises(Exception, self.client.post(
-                                        '/users/signout',
-                                        headers=dict(
-                                            Authorization='Bearer ' + signing_resp.get_json()['accessToken']
-                                        ),
-                                        content_type='application/json',
-                                    ))
-
-
-        # second signout should fail
-        # self.assert500(response)
+        """Ensure signout request works well."""
+        with self.client:
+            access_token, _ = cognito_signin(boto3.client('cognito-idp'), existed_user)
+            # access_token = create_access_token(identity=existed_user)
+            # Signout
+            response = self.client.post(
+                '/users/signout',
+                headers=dict(
+                    Authorization='Bearer {0}'.format(access_token)
+                ),
+                content_type='application/json',
+            )
+            self.assert200(response)
 
 
 if __name__ == '__main__':
