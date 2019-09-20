@@ -7,11 +7,12 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
+import unittest
 from io import BytesIO
 from cloudalbum.tests.base import BaseTestCase
 from flask_jwt_extended import create_access_token
 
-user = {
+for_user_token = {
     'user_id': 'testuser',
     'email': 'testuser@testuser.com',
     'password': 'Password1!'
@@ -44,7 +45,7 @@ class TestPhotoService(BaseTestCase):
 
     def test_ping(self):
         """Ensure the /ping route behaves correctly."""
-        access_token = create_access_token(identity=user)
+        access_token = create_access_token(identity=for_user_token)
         response = self.client.get(
             '/photos/ping',
             headers=get_header(access_token),
@@ -54,7 +55,7 @@ class TestPhotoService(BaseTestCase):
 
     def test_upload(self):
         """Ensure the /photos/file behaves correctly."""
-        access_token = create_access_token(identity=user)
+        access_token = create_access_token(identity=for_user_token)
         upload['file'] = (BytesIO(b'my file contents'), 'test_image.jpg')
         response = self.client.post(
             '/photos/file',
@@ -66,7 +67,7 @@ class TestPhotoService(BaseTestCase):
 
     def test_list(self):
         """Ensure the /photos/ route behaves correctly."""
-        access_token = create_access_token(identity=user)
+        access_token = create_access_token(identity=for_user_token)
         response = self.client.get(
             '/photos/',
             headers=get_header(access_token),
@@ -76,7 +77,7 @@ class TestPhotoService(BaseTestCase):
 
     def test_delete(self):
         """Ensure the /photos/<photo_id> route behaves correctly."""
-        access_token = create_access_token(identity=user)
+        access_token = create_access_token(identity=for_user_token)
         # 1. upload
         upload['file'] = (BytesIO(b'my file contents'), 'test_image.jpg')
         response = self.client.post(
@@ -97,7 +98,7 @@ class TestPhotoService(BaseTestCase):
 
     def test_get_mode_thumb_orig(self):
         """Ensure the /photos/<photo_id>?mode=thumbnail route behaves correctly."""
-        access_token = create_access_token(identity=user)
+        access_token = create_access_token(identity=for_user_token)
         # 1. upload
         upload['file'] = (BytesIO(b'my file contents'), 'test_image.jpg')
         response = self.client.post(
@@ -128,3 +129,7 @@ class TestPhotoService(BaseTestCase):
             query_string=data
         )
         self.assert200(response)
+
+
+if __name__ == '__main__':
+    unittest.main()

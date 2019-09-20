@@ -7,6 +7,7 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
+import unittest
 from cloudalbum.tests.base import BaseTestCase
 from cloudalbum.database.model_ddb import User, Photo
 
@@ -23,3 +24,5 @@ class TestDynamoDBService(BaseTestCase):
         self.assertEqual(Photo.exists(), True)
 
 
+if __name__ == '__main__':
+    unittest.main()

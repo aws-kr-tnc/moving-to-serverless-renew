@@ -7,6 +7,7 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
+import unittest
 from cloudalbum.tests.base import BaseTestCase
 
 
@@ -24,3 +25,5 @@ class TestAdminService(BaseTestCase):
         self.assert200(response)
 
 
+if __name__ == '__main__':
+    unittest.main()

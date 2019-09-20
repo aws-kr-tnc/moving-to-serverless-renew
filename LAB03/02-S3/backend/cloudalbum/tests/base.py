@@ -29,7 +29,7 @@ class BaseTestCase(TestCase):
         return app
 
     def setUp(self):
-        # Insert test user
+        # Create test user
         test_user = User(uuid.uuid4().hex)
         test_user.email = user['email']
         test_user.username = user['username']

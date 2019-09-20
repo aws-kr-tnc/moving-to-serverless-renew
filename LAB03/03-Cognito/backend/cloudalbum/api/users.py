@@ -14,10 +14,11 @@ from flask import current_app as app
 from flask import jsonify, make_response
 from flask_restplus import Api, Resource, fields
 from jsonschema import ValidationError
-from werkzeug.exceptions import InternalServerError, BadRequest
+from werkzeug.exceptions import InternalServerError, BadRequest, Conflict
 from cloudalbum.schemas import validate_user
 from cloudalbum.solution import solution_signup_cognito
 from cloudalbum.util.jwt_helper import get_token_from_header, cog_jwt_required
+from botocore.exceptions import ClientError
 
 
 users_blueprint = Blueprint('users', __name__)
@@ -130,6 +131,9 @@ def cognito_signup(signup_user):
     # TODO 7: Implement following solution code to sign up user into cognito user pool
     try:
         return solution_signup_cognito(user, dig)
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'UsernameExistsException':
+            raise Conflict('ERROR: Existed user!')
     except Exception as e:
         raise BadRequest(e.response['Error']['Message'])
 
@@ -167,7 +171,7 @@ def cognito_signin(cognito_client, user):
     resp = cognito_client.admin_initiate_auth(UserPoolId=app.config['COGNITO_POOL_ID'],
                                       ClientId=app.config['COGNITO_CLIENT_ID'],
                                       AuthFlow='ADMIN_NO_SRP_AUTH',
-                                      AuthParameters={'SECRET_HASH': auth,'USERNAME': user['email'], 'PASSWORD': user['password']})
+                                      AuthParameters={'SECRET_HASH': auth, 'USERNAME': user['email'], 'PASSWORD': user['password']})
     access_token = resp['AuthenticationResult']['AccessToken']
     refresh_token = resp['AuthenticationResult']['RefreshToken']
     return access_token, refresh_token
@@ -217,7 +221,7 @@ class Signout(Resource):
         200: 'signout success',
         500: 'login required'
     })
-    def delete(self):
+    def post(self):
         """user signout"""
         token = get_token_from_header(request)
         try:

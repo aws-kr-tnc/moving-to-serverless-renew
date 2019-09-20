@@ -7,8 +7,8 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
-import unittest
 import boto3
+import unittest
 import botocore
 from cloudalbum.tests.base import BaseTestCase
 from flask import current_app as app

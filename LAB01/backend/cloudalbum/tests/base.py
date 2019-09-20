@@ -9,7 +9,6 @@
 """
 from flask_testing import TestCase
 from werkzeug.security import generate_password_hash
-
 from cloudalbum import create_app, db
 from cloudalbum.database.models import User
 
@@ -30,7 +29,7 @@ class BaseTestCase(TestCase):
 
     def setUp(self):
         db.create_all()
-        # Insert test user
+        # Create test user
         test_user = User(username=user['username'],
                          email=user['email'], password=generate_password_hash(user['password']))
         db.session.add(test_user)
@@ -39,3 +38,5 @@ class BaseTestCase(TestCase):
     def tearDown(self):
         db.session.remove()
         db.drop_all()
+
+

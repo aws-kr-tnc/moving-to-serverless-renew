@@ -27,7 +27,7 @@ def add_token_to_set(token):
     Adds a new token to the set. It is not revoked when it is added.
     :param identity_claim:
     """
-    claims= token_decoder(token)
+    claims = token_decoder(token)
     jti = claims['jti']
     blacklist_set.add(jti)
 
@@ -90,13 +90,14 @@ def cog_jwt_required(f):
         token = request.headers['Authorization'].replace('Bearer ', '')
 
         if not 'Authorization' in request.headers:
-            return make_response(jsonify({'Message':'no token'}), 400)
+            return make_response(jsonify({'Message': 'no token'}), 400)
         try:
             if token_decoder(token) is not None:
                 return f(*args, **kwargs)
         except Exception as e:
             app.logger.error(e)
-            return make_response(jsonify({'Message':'invalid token'}), 400)
+            return make_response(jsonify({'Message': 'invalid token'}), 400)
+
     return decorated_function
 
 

@@ -11,16 +11,11 @@ import json
 import unittest
 from cloudalbum.tests.base import BaseTestCase
 from flask_jwt_extended import create_access_token
+from cloudalbum.tests.base import user as existed_user
 
 new_user = {
     'username': 'test002',
     'email': 'test002@testuser.com',
-    'password': 'Password1!'
-}
-
-existed_user = {
-    'username': 'test001',
-    'email': 'test001@testuser.com',
     'password': 'Password1!'
 }
 
