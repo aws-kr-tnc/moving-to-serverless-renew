@@ -167,7 +167,7 @@ def cognito_signin(cognito_client, user):
     dig = hmac.new(app.config['COGNITO_CLIENT_SECRET'].encode('utf-8'),
                    msg=msg.encode('utf-8'),
                    digestmod=hashlib.sha256).digest()
-    auth= base64.b64encode(dig).decode()
+    auth = base64.b64encode(dig).decode()
     resp = cognito_client.admin_initiate_auth(UserPoolId=app.config['COGNITO_POOL_ID'],
                                       ClientId=app.config['COGNITO_CLIENT_ID'],
                                       AuthFlow='ADMIN_NO_SRP_AUTH',

@@ -19,16 +19,18 @@ user = {
     'password': 'Password1!'
 }
 
-app = create_app()
-
 
 class BaseTestCase(TestCase):
+    app = create_app()
 
     def create_app(self):
-        app.config.from_object('cloudalbum.config.TestingConfig')
-        return app
+        self.app.config.from_object('cloudalbum.config.TestingConfig')
+        return self.app
 
     def setUp(self):
+        # Delete any test data that may be remained.
+        for item in Photo.scan(Photo.filename_orig.startswith('test')):
+            item.delete()
         # Create test user
         test_user = User(uuid.uuid4().hex)
         test_user.email = user['email']
@@ -40,5 +42,5 @@ class BaseTestCase(TestCase):
         # Delete test data
         for item in User.scan(User.username.startswith('test')):
             item.delete()
-        for item in Photo.scan(Photo.user_id.startswith('test')):
+        for item in Photo.scan(Photo.filename_orig.startswith('test')):
             item.delete()

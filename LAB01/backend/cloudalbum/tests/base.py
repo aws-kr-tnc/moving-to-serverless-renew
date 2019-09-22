@@ -18,14 +18,14 @@ user = {
     'password': 'Password1!'
 }
 
-app = create_app()
-
 
 class BaseTestCase(TestCase):
 
+    app = create_app()
+
     def create_app(self):
-        app.config.from_object('cloudalbum.config.TestingConfig')
-        return app
+        self.app.config.from_object('cloudalbum.config.TestingConfig')
+        return self.app
 
     def setUp(self):
         db.create_all()
