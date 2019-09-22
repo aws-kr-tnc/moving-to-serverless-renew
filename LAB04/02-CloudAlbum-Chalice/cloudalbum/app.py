@@ -22,6 +22,7 @@ app = Chalice(app_name='cloudalbum')
 app.debug = True
 app.log.setLevel(logging.DEBUG)
 
+
 @app.authorizer()
 def jwt_auth(auth_request):
     """
@@ -36,6 +37,11 @@ def jwt_auth(auth_request):
     except Exception as e:
         app.log.error(e)
         return AuthResponse(routes=[''], principal_id='')
+
+
+@app.route('/ping')
+def index():
+    return {'Message': 'pong', 'ok': 'true'}
 
 
 @app.route('/photos/file', methods=['POST'], cors=cors_config,

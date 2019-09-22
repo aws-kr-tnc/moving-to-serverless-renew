@@ -23,10 +23,14 @@ class TestDevelopmentConfig(TestCase):
     def test_app_is_development(self):
         self.assertTrue(app.config['SECRET_KEY'] == 'dev_secret')
         self.assertFalse(current_app is None)
-        # Required config value for DynamoDB
+
+    def test_ddb_rcu(self):
         self.assertIsNotNone(app.config['DDB_RCU'])
+
+    def test_ddb_wcu(self):
         self.assertIsNotNone(app.config['DDB_WCU'])
-        # Required config value for S3
+
+    def test_s3_bucket(self):
         self.assertIsNotNone(app.config['S3_PHOTO_BUCKET'])
 
 
@@ -39,10 +43,14 @@ class TestTestingConfig(TestCase):
         self.assertTrue(app.config['SECRET_KEY'] == 'test_secret')
         self.assertTrue(app.config['TESTING'])
         self.assertFalse(app.config['PRESERVE_CONTEXT_ON_EXCEPTION'])
-        # Required config value for DynamoDB
+
+    def test_ddb_rcu(self):
         self.assertIsNotNone(app.config['DDB_RCU'])
+
+    def test_ddb_wcu(self):
         self.assertIsNotNone(app.config['DDB_WCU'])
-        # Required config value for S3
+
+    def test_s3_bucket(self):
         self.assertIsNotNone(app.config['S3_PHOTO_BUCKET'])
 
 
@@ -54,11 +62,15 @@ class TestProductionConfig(TestCase):
     def test_app_is_production(self):
         self.assertTrue(app.config['SECRET_KEY'] == 'prod_secret')
         self.assertFalse(app.config['TESTING'])
-        # Required config value for DynamoDB
+
+    def test_ddb_rcu(self):
         self.assertIsNotNone(app.config['DDB_RCU'])
+
+    def test_ddb_wcu(self):
         self.assertIsNotNone(app.config['DDB_WCU'])
-        # Required config value for S3
-        self.assertIsNotNone(app.config['S3_PHOTO_BUCKET'], msg='S3_PHOTO_BUCKET is not set!')
+
+    def test_s3_bucket(self):
+        self.assertIsNotNone(app.config['S3_PHOTO_BUCKET'])
 
 
 if __name__ == '__main__':
