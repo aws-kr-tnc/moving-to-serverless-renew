@@ -8,6 +8,7 @@
     :license: MIT, see LICENSE for more details.
 """
 import unittest
+import pytest
 from io import BytesIO
 from cloudalbum.tests.base import BaseTestCase
 from flask_jwt_extended import create_access_token
@@ -35,31 +36,30 @@ upload = dict(
 )
 
 
-def get_header(access_token):
-    headers = dict(Authorization='Bearer {0}'.format(access_token))
-    return headers
-
-
 class TestPhotoService(BaseTestCase):
     """Tests for the Photo Service."""
 
+    @pytest.fixture(autouse=True)
+    def create_token_and_header(self):
+        with self.app.app_context():
+            self.access_token = create_access_token(identity=for_user_token)
+            self.test_header = dict(Authorization='Bearer {0}'.format(self.access_token))
+
     def test_ping(self):
         """Ensure the /ping route behaves correctly."""
-        access_token = create_access_token(identity=for_user_token)
         response = self.client.get(
             '/photos/ping',
-            headers=get_header(access_token),
+            headers=self.test_header,
             content_type='application/json',
         )
         self.assert200(response)
 
     def test_upload(self):
         """Ensure the /photos/file behaves correctly."""
-        access_token = create_access_token(identity=for_user_token)
         upload['file'] = (BytesIO(b'my file contents'), 'test_image.jpg')
         response = self.client.post(
             '/photos/file',
-            headers=get_header(access_token),
+            headers=self.test_header,
             content_type='multipart/form-data',
             data=upload
         )
@@ -67,22 +67,20 @@ class TestPhotoService(BaseTestCase):
 
     def test_list(self):
         """Ensure the /photos/ route behaves correctly."""
-        access_token = create_access_token(identity=for_user_token)
         response = self.client.get(
             '/photos/',
-            headers=get_header(access_token),
+            headers=self.test_header,
             content_type='application/json',
         )
         self.assert200(response)
 
     def test_delete(self):
         """Ensure the /photos/<photo_id> route behaves correctly."""
-        access_token = create_access_token(identity=for_user_token)
         # 1. upload
         upload['file'] = (BytesIO(b'my file contents'), 'test_image.jpg')
         response = self.client.post(
             '/photos/file',
-            headers=get_header(access_token),
+            headers=self.test_header,
             content_type='multipart/form-data',
             data=upload
         )
@@ -91,19 +89,18 @@ class TestPhotoService(BaseTestCase):
         # 2. delete
         response = self.client.delete(
             '/photos/{}'.format(photo_id),
-            headers=get_header(access_token),
+            headers=self.test_header,
             content_type='application/json',
         )
         self.assert200(response)
 
     def test_get_mode_thumb_orig(self):
         """Ensure the /photos/<photo_id>?mode=thumbnail route behaves correctly."""
-        access_token = create_access_token(identity=for_user_token)
         # 1. upload
         upload['file'] = (BytesIO(b'my file contents'), 'test_image.jpg')
         response = self.client.post(
             '/photos/file',
-            headers=get_header(access_token),
+            headers=self.test_header,
             content_type='multipart/form-data',
             data=upload
         )
@@ -114,7 +111,7 @@ class TestPhotoService(BaseTestCase):
         data = {'mode': 'thumbnails'}
         response = self.client.get(
             '/photos/{}'.format(photo_id),
-            headers=get_header(access_token),
+            headers=self.test_header,
             content_type='application/json',
             query_string=data
         )
@@ -124,7 +121,7 @@ class TestPhotoService(BaseTestCase):
         data = {'mode': 'original'}
         response = self.client.get(
             '/photos/{}'.format(photo_id),
-            headers=get_header(access_token),
+            headers=self.test_header,
             content_type='application/json',
             query_string=data
         )
