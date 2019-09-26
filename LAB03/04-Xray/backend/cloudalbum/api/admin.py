@@ -10,7 +10,6 @@
 from flask import Blueprint, make_response
 from flask import current_app as app
 from flask_restplus import Api, Resource
-# from cloudalbum.util.response import m_response, err_response
 from botocore.exceptions import ClientError
 import shutil
 import socket
@@ -38,6 +37,8 @@ class HealthCheck(Resource):
         try:
             # 1. Is database available?!
             boto3.client('dynamodb').describe_table(TableName='Photo')
+            # User table is no more used.
+            # boto3.client('dynamodb').describe_table(TableName='User')
 
             # 2. Is disk have enough free space?!
             total, used, free = shutil.disk_usage("/")

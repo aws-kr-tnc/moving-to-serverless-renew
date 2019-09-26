@@ -33,8 +33,8 @@ class BaseConfig:
     AWS_REGION = Session().region_name if environ.get('AWS_REGION') is None else environ.get('AWS_REGION')
 
     # DynamoDB
-    DDB_RCU = os.getenv('DDB_RCU', 10)
-    DDB_WCU = os.getenv('DDB_WCU', 10)
+    DDB_RCU = int(os.getenv('DDB_RCU', '10'))
+    DDB_WCU = int(os.getenv('DDB_WCU', '10'))
 
 
 class DevelopmentConfig(BaseConfig):
