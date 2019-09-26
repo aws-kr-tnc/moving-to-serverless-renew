@@ -38,7 +38,8 @@ class HealthCheck(Resource):
         try:
             # 1. Is database available?!
             boto3.client('dynamodb').describe_table(TableName='Photo')
-            boto3.client('dynamodb').describe_table(TableName='User')
+            # User table is no more used.
+            # boto3.client('dynamodb').describe_table(TableName='User')
 
             # 2. Is disk have enough free space?!
             total, used, free = shutil.disk_usage('/')
