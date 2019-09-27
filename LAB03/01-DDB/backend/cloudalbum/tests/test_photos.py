@@ -87,12 +87,10 @@ class TestPhotoService(BaseTestCase):
             data=upload
         )
         self.assert200(response)
-        photo_id = None
-        for item in Photo.scan(Photo.filename_orig.startswith('test_image.jpg'), limit=1):
-            photo_id = item.id
+        photo_id = [item.id for item in Photo.scan(Photo.filename_orig.startswith('test_image.jpg'), limit=1)]
         # 2. delete
         response = self.client.delete(
-            '/photos/{}'.format(photo_id),
+            '/photos/{}'.format(photo_id[0]),
             headers=self.test_header,
             content_type='application/json',
         )
@@ -109,13 +107,11 @@ class TestPhotoService(BaseTestCase):
             data=upload
         )
         self.assert200(response)
-        photo_id = None
-        for item in Photo.scan(Photo.filename_orig.startswith('test_image.jpg'), limit=1):
-            photo_id = item.id
+        photo_id = [item.id for item in Photo.scan(Photo.filename_orig.startswith('test_image.jpg'), limit=1)]
         # 2. thumbnails
         data = {'mode': 'thumbnails'}
         response = self.client.get(
-            '/photos/{}'.format(photo_id),
+            '/photos/{}'.format(photo_id[0]),
             headers=self.test_header,
             content_type='application/json',
             query_string=data

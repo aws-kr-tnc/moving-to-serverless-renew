@@ -22,6 +22,7 @@ def get_param_path(param_path):
     store = AwsParameterStore(region)
     return store.get_parameters_dict(param_path)
 
+
 # store configuration values for Cloudalbum
 conf = get_param_path('/cloudalbum/')
 
@@ -53,4 +54,3 @@ cors_config = CORSConfig(
     expose_headers=['X-Special-Header'],
     allow_credentials=True
 )
-

@@ -12,10 +12,11 @@ import boto3
 import logging
 import uuid
 import json
+from botocore.exceptions import ParamValidationError
 from chalicelib import cognito
 from chalicelib.config import cors_config
 from chalicelib.util import pp, save_s3_chalice, get_parts, delete_s3
-from chalice import Chalice, Response, BadRequestError, AuthResponse, ChaliceViewError
+from chalice import Chalice, Response, ConflictError, BadRequestError, AuthResponse, ChaliceViewError
 from chalicelib.model_ddb import Photo, create_photo_info, ModelEncoder, with_presigned_url
 
 app = Chalice(app_name='cloudalbum')
@@ -37,11 +38,6 @@ def jwt_auth(auth_request):
     except Exception as e:
         app.log.error(e)
         return AuthResponse(routes=[''], principal_id='')
-
-
-@app.route('/ping')
-def index():
-    return {'Message': 'pong', 'ok': 'true'}
 
 
 @app.route('/photos/file', methods=['POST'], cors=cors_config,
@@ -138,13 +134,18 @@ def signup():
     client = boto3.client('cognito-idp')
     try:
         cognito.signup(client, req_data, dig)
-        return Response(status_code=200, body={'ok': True},
+        return Response(status_code=201, body={'ok': True},
                         headers={'Content-Type': 'application/json'})
-    except client.exceptions.ParamValidationError as e:
+    except client.exceptions.UsernameExistsException as e:
+        raise ConflictError(e.response['Error']['Message'])
+    except client.exceptions.InvalidParameterException as e:
         raise BadRequestError(e.response['Error']['Message'])
+    except client.exceptions.InvalidPasswordException as e:
+        raise BadRequestError(e.response['Error']['Message'])
+    except ParamValidationError as e:
+        raise BadRequestError(e)
     except Exception as e:
-        raise BadRequestError(e.response['Error']['Message'])
-
+        raise ChaliceViewError(e)
 
 @app.route('/users/signout', methods=['POST'], cors=cors_config,
            authorizer=jwt_auth, content_types=['application/json'])

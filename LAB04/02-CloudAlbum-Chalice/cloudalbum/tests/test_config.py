@@ -1,5 +1,13 @@
-import json
-import pytest
+"""
+    cloudalbum/tests/test_config.py
+    ~~~~~~~~~~~~~~~~~~~~~~~
+    Test cases for application configuration
+
+    :description: CloudAlbum is a fully featured sample application for 'Moving to AWS serverless' training course
+    :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
+    :license: MIT, see LICENSE for more details.
+"""
+import unittest
 from unittest import TestCase
 from chalicelib.config import conf
 
@@ -26,3 +34,7 @@ class TestConfig(TestCase):
 
     def test_cognito_client_secret(self):
         self.assertIsNotNone(conf['COGNITO_CLIENT_SECRET'])
+
+
+if __name__ == '__main__':
+    unittest.main()
