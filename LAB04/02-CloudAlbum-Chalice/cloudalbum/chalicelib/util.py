@@ -58,7 +58,7 @@ def email_normalize(email):
     return email.replace('@', '_at_').replace('.', '_dot_')
 
 
-def make_thumbnails(path, filename, app):
+def make_thumbnails(path, filename, logger):
     """
     Generate thumbnail from original image file.
     :param path: target path
@@ -67,7 +67,9 @@ def make_thumbnails(path, filename, app):
     :return: None
     """
     thumb_full_path = '/tmp/thumbnail.jpg'
+
     im = Image.open(os.path.join(path, filename))
+    logger.debug(os.path.join(path, filename))
     im = im.convert('RGB')
     im.thumbnail((int(conf['THUMBNAIL_WIDTH']), int(conf['THUMBNAIL_HEIGHT']), Image.ANTIALIAS))
     im.save(thumb_full_path)
@@ -98,7 +100,7 @@ def save_s3_chalice(bytes, filename, email, logger):
             logger.debug(statinfo)
 
         s3_client.upload_file(temp_file, conf['S3_PHOTO_BUCKET'], key)
-        thumb_path = make_thumbnails('/tmp', temp_file, logger)
+        thumb_path = make_thumbnails('/tmp', filename, logger)
         logger.debug('thumb_path for upload: {0}'.format(thumb_path))
         logger.debug('prefix_thumb: {0}'.format(prefix_thumb))
         logger.debug(os.stat(temp_file))
