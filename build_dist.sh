@@ -3,12 +3,13 @@ WORK_DIR=/tmp/cloudalbum_dist
 CWD=`pwd`
 echo "building.. './resources/cloudalbum-mts-dist-src.zip' file. "
 echo "-----------------------------------------------------------"
-mkdir -p ${WORK_DIR}/cloudalbum-mts-dist-src/cloudalbum-mts-dist-src/frontend/cloudalbum
+rm -rf ${WORK_DIR} 2> /dev/null
+mkdir -p ${WORK_DIR}/cloudalbum-mts-dist-src/frontend/cloudalbum
 rsync -q -av --progress ./LAB01/frontend/cloudalbum ${WORK_DIR}/cloudalbum-mts-dist-src/frontend/ --exclude node_modules --exclude dist
 mkdir -p ${WORK_DIR}/cloudalbum-mts-dist-src/LAB01/backend
-cp -r ./LAB01/backend/ ${WORK_DIR}/cloudalbum-mts-dist-src/LAB01/
+cp -r ./LAB01/backend/ ${WORK_DIR}/cloudalbum-mts-dist-src/LAB01/backend/
 mkdir -p ${WORK_DIR}/cloudalbum-mts-dist-src/LAB02/backend
-cp -r ./LAB01/backend/ ${WORK_DIR}/cloudalbum-mts-dist-src/LAB02/
+cp -r ./LAB01/backend/ ${WORK_DIR}/cloudalbum-mts-dist-src/LAB02/backend/
 mkdir -p ${WORK_DIR}/cloudalbum-mts-dist-src/LAB03/
 cp -r ./LAB03/ ${WORK_DIR}/cloudalbum-mts-dist-src/LAB03/
 mkdir -p ${WORK_DIR}/cloudalbum-mts-dist-src/LAB04/
