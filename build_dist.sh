@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 WORK_DIR=/tmp/cloudalbum_dist
 CWD=`pwd`
-echo $CWD
 echo "building.. './resources/cloudalbum-mts-dist-src.zip' file. "
-echo
+echo "-----------------------------------------------------------"
 mkdir -p ${WORK_DIR}/frontend/cloudalbum
 rsync -q -av --progress ./LAB01/frontend/cloudalbum ${WORK_DIR}/frontend/ --exclude node_modules --exclude dist
 mkdir -p ${WORK_DIR}/LAB01/backend
@@ -19,5 +18,5 @@ find ${WORK_DIR} -name ".pytest_cache" -exec rm -rf {} \; 2>/dev/null
 find ${WORK_DIR} -name "__pycache__" -exec rm -rf {} \; 2>/dev/null
 # Make a zip file
 cd ${WORK_DIR} && zip -r ${CWD}/resources/cloudalbum-mts-dist-src.zip *
-echo
+echo "-----------------------------------------------------------"
 echo "Now, updated : resources/cloudalbum-mts-dist-src.zip"
