@@ -1,5 +1,5 @@
-# LAB 03 - Moving to AWS serverless
-We will move the components of legacy application which has constraints of scalability and high availability to serverless environment one by one.
+# Lab 3: CloudAlbum with Serverless Architecture - Part 1
+Now, we will move the components of legacy application which has constraints of scalability and high availability to serverless environment one by one.
 
 ## TASK 1. Permission grant for Cloud9
 
@@ -204,7 +204,7 @@ In this TASK, we will introduce DynamoDB for CloudAlbum application. We also int
 * We already made `venv` and activated.
 
 ```console
-pip install -r ~/environment/moving-to-serverless-renew/LAB03/01-DDB/backend/requirements.txt
+pip install -r ~/environment/LAB03/01-DDB/backend/requirements.txt
 ```
 
 
@@ -271,15 +271,17 @@ class Photo(db.Model):
 3. Review the data model definition via **PynamoDB**. This will show how DynamoDB tables and GSI are defined in PynamoDB. They are all expressed in **Python Class.**
 
 ```python
+import json
 from datetime import datetime
-
 from pynamodb.models import Model
 from pynamodb.attributes import UnicodeAttribute, NumberAttribute, UTCDateTimeAttribute, ListAttribute, MapAttribute
 from pynamodb.indexes import GlobalSecondaryIndex, IncludeProjection
-
 from tzlocal import get_localzone
+from boto3.session import Session
+from os import environ
 
-from cloudalbum.util.config import conf
+
+AWS_REGION = Session().region_name if environ.get('AWS_REGION') is None else environ.get('AWS_REGION')
 
 
 class EmailIndex(GlobalSecondaryIndex):
@@ -289,8 +291,8 @@ class EmailIndex(GlobalSecondaryIndex):
 
     class Meta:
         index_name = 'user-email-index'
-        read_capacity_units = 2
-        write_capacity_units = 1
+        read_capacity_units = 5
+        write_capacity_units = 5
         projection = IncludeProjection(['password'])
 
     # This attribute is the hash key for the index
@@ -306,7 +308,7 @@ class User(Model):
 
     class Meta:
         table_name = 'User'
-        region = conf['AWS_REGION']
+        region = AWS_REGION
 
     id = UnicodeAttribute(hash_key=True)
     email_index = EmailIndex()
@@ -322,7 +324,7 @@ class Photo(Model):
 
     class Meta:
         table_name = 'Photo'
-        region = conf['AWS_REGION']
+        region = AWS_REGION
 
     user_id = UnicodeAttribute(hash_key=True)
     id = UnicodeAttribute(range_key=True)
@@ -342,23 +344,35 @@ class Photo(Model):
     city = UnicodeAttribute(null=True)
     nation = UnicodeAttribute(null=True)
     address = UnicodeAttribute(null=True)
+
+...
 ```
 
 6. Review the **__init__.py** in the database package. The DynamoDB **User** and **Photo** tables will be **created automatically** for the convenience. **Note** the **(Model).create_table** function which used in **LAB03/01-DDB/backend/cloudalbum/database/__init__.py**. This is a feature of Pynamodb Model class.
 
 ```python
-from flask import currenct_app as app
-from cloudalbum.database.model_ddb import User
-from cloudalbum.database.model_ddb import Photo
+from cloudalbum.database.model_ddb import User, Photo
+from flask import current_app as app
 
 
-if not User.exists():
-    User.create_table(read_capacity_units=app.config['DDB_RCU'], write_capacity_units=app.config['DDB_WCU'], wait=True)
-    app.logger.debug('DynamoDB User table created!')
+def create_table():
+    if not User.exists():
+        app.logger.debug('Creating DynamoDB User table..')
+        User.create_table(read_capacity_units=app.config['DDB_RCU'],
+                          write_capacity_units=app.config['DDB_WCU'],
+                          wait=True)
+    if not Photo.exists():
+        app.logger.debug('Creating DynamoDB Photo table..')
+        Photo.create_table(read_capacity_units=app.config['DDB_RCU'],
+                           write_capacity_units=app.config['DDB_WCU'],
+                           wait=True)
 
-if not Photo.exists():
-    User.create_table(read_capacity_units=app.config['DDB_RCU'], write_capacity_units=app.config['DDB_WCU'], wait=True)
-    app.logger.debug('DynamoDB User table created!')
+
+def delete_table():
+    if User.exists():
+        User.delete_table()
+    if Photo.exists():
+        Photo.delete_table()
 ```
 
 7. Review the **LAB03/01-DDB/backend/cloudalbum/config.py** file. **New attributes** are added for DynamoDB.
@@ -367,13 +381,19 @@ if not Photo.exists():
 
 ```python
 import os
+import datetime
+from os import environ
+from boto3.session import Session
 
 class BaseConfig:
 	(.. ..)
 	
-    AWS_REGION = os.getenv('AWS_REGION', 'ap-southeast-1')
-    DDB_RCU = os.getenv('DDB_RCU', 10)
-    DDB_WCU = os.getenv('DDB_WCU', 10)
+    AWS_REGION = Session().region_name if environ.get('AWS_REGION') is None else environ.get('AWS_REGION')
+
+    # DynamoDB
+    DDB_RCU = int(os.getenv('DDB_RCU', '10'))
+    DDB_WCU = int(os.getenv('DDB_WCU', '10'))
+
 
 ```
 * For provisioned mode tables, you specify throughput capacity in terms of Read Capacity Units (RCU) and Write Capacity Units(WCU).
@@ -419,23 +439,25 @@ class BaseConfig:
 9. Find **TODO #2** in the 'LAB03/01-DDB/backend/cloudalbum/api/users.py' file and please implement your own code instead of following solution function which name is **solution_get_user_data_with_idx** for user signin feature.
 
 ```python
-	signin_data = validate_user(req_data)['data']
-	
-	# TODO 2: Implement following solution code to get user profile with GSI
-	db_user = solution_get_user_data_with_idx(signin_data)
-	
-	if db_user is None:
-	    return m_response(False, {'msg':'not exist email', 'user':signin_data}, 400)
+    signin_data = validate_user(req_data)['data']
+
+    # TODO 2: Implement following solution code to get user profile with GSI
+    db_user = solution_get_user_data_with_idx(signin_data)
+    if db_user is None:
+        raise BadRequest('Not existed user!')
+    else:
+        ....
+
 ```
 * Above solution code shows the way of using GSI which has a partition key as email.
 
 * Inside of **solution\_get\_user\_data\_with\_idx** function, you can find how to query to GSI **email_index**, which is defined at LAB03/01-DDB/backend/cloudalbum/database/model_ddb.py.
 
 ```python
-    for user_email in User.email_index.query(signin_data['email']):
-        if user_email is None:
-            return None
-        return user_email
+    user_email = [item for item in User.email_index.query(signin_data['email'])]
+    if not user_email:
+        return None
+    return user_email[0]
 
 ```
 
@@ -488,20 +510,94 @@ class BaseConfig:
 	photo = Photo.get(user['user_id'], photo_id)
 	photo.delete()
 ```
-13. Run your application!
 
-* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](https://github.com/aws-kr-tnc/moving-to-serverless-renew/blob/master/lab-guide/LAB_make_connection.md)
+**NOTE:** Now, we converted backend application source code to use DynamoDB, an Amazon serverless datastore, instead of the RDBMS. Amazon DynamoDB is a fully managed serverless datastore. We no longer need to take the scalability and server management burden off.
 
 
-14. Then look into AWS DynamoDB console.
-* User and Photo tables are auto generated with 'user-email-index'
+13. Now we can run unittest to check if our application is working properly. 
+
+* Before, run unittest you need to load environment variables for the application. You can check this `~/environment/LAB03/01-DDB/backend/shell.env` file.
+
+* You can also check `~/environment/LAB03/01-DDB/backend/cloudalbum/config.py` file. Each default value of `DDB_RCU` and `DDB_WCU` is 10.
+
+
+```console
+source ~/environment/LAB03/01-DDB/backend/shell.env
+cd ~/environment/LAB03/01-DDB/backend/cloudalbum/tests
+```
+* Run pytest like below.
+```console
+pytest -v -W ignore::DeprecationWarning
+```
+* Output
+```console
+================================ test session starts ================================
+platform linux -- Python 3.6.8, pytest-5.1.2, py-1.8.0, pluggy-0.13.0 -- /home/ec2-user/environment/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/ec2-user/environment/LAB03/01-DDB/backend/cloudalbum/tests
+plugins: cov-2.7.1
+collected 25 items                                                                  
+
+test_admin.py::TestAdminService::test_healthcheck PASSED                      [  4%]
+test_admin.py::TestAdminService::test_ping PASSED                             [  8%]
+test_config.py::TestDevelopmentConfig::test_app_is_development PASSED         [ 12%]
+test_config.py::TestDevelopmentConfig::test_ddb_rcu PASSED                    [ 16%]
+test_config.py::TestDevelopmentConfig::test_ddb_wcu PASSED                    [ 20%]
+test_config.py::TestTestingConfig::test_app_is_testing PASSED                 [ 24%]
+test_config.py::TestTestingConfig::test_ddb_rcu PASSED                        [ 28%]
+test_config.py::TestTestingConfig::test_ddb_wcu PASSED                        [ 32%]
+test_config.py::TestProductionConfig::test_app_is_production PASSED           [ 36%]
+test_config.py::TestProductionConfig::test_ddb_rcu PASSED                     [ 40%]
+test_config.py::TestProductionConfig::test_ddb_wcu PASSED                     [ 44%]
+test_dynamodb.py::TestDynamoDBService::test_photo_table PASSED                [ 48%]
+test_dynamodb.py::TestDynamoDBService::test_user_table PASSED                 [ 52%]
+test_photos.py::TestPhotoService::test_delete PASSED                          [ 56%]
+test_photos.py::TestPhotoService::test_get_mode_thumb_orig PASSED             [ 60%]
+test_photos.py::TestPhotoService::test_list PASSED                            [ 64%]
+test_photos.py::TestPhotoService::test_ping PASSED                            [ 68%]
+test_photos.py::TestPhotoService::test_upload PASSED                          [ 72%]
+test_users.py::TestUserService::test_bad_signin PASSED                        [ 76%]
+test_users.py::TestUserService::test_bad_signup PASSED                        [ 80%]
+test_users.py::TestUserService::test_ping PASSED                              [ 84%]
+test_users.py::TestUserService::test_signin PASSED                            [ 88%]
+test_users.py::TestUserService::test_signout PASSED                           [ 92%]
+test_users.py::TestUserService::test_signup PASSED                            [ 96%]
+test_users.py::TestUserService::test_signup_duplicate_email PASSED            [100%]
+================================ 25 passed in 3.31s =================================
+```
+
+* If the test fails, you can check the environment variables in the `~/environment/LAB03/01-DDB/backend/shell.env` file. Nevertheless, if you cannot solve the problem, contact the instructor.
+
+14. Now, you can run CloudAlbum application like below after unittest. Let's run backend and frontend.
+* for backend
+```console
+cd ~/environment/LAB03/01-DDB/backend
+python manage.py run -h 0.0.0.0 -p 5000 
+```
+* for frontend (use another terminal in Cloud9)
+```console
+cd ~/environment/frontend/cloudalbum
+npm run serve
+```
+
+  * You can also refer to following lab guide in LAB01.
+    * [TASK 3. Connect to your application (Via SSH Tunneling)](LAB01.md#task-3-connect-to-your-application-(via-ssh-tunneling)) 
+    * [TASK 2. Look around current application and try run it.](LAB01.md#task-2.-look-around-current-application-and-try-run-it.)
+
+15. Enjoy the CloudAlbum with DynamoDB
+  * You can use `python manage.py seed_db` command to create test user easily.
+
+<img src=./images/lab01-02.png width=700>
+
+
+16. Then look into AWS DynamoDB console.
+* User and Photo tables are generated automatically with 'user-email-index'
 * Review saved data of each DynamoDB tables.
 <img src=./images/lab03-task1-ddb_result.png width=800>
 
 Is it OK? Let's move to the next TASK.
 
-15. Stop your application. 
-* You can stop both frontend and backend application by press `ctrl+c` in your Cloud9 Terminal.
+17. If you are running a backend or frontend application, you can exit by pressing `ctrl + c`.
 
 
 ## TASK 3. Go to S3
@@ -515,7 +611,7 @@ CloudAlbum stored user uploaded images into disk based storage(EBS or NAS). Howe
    * visit: https://boto3.readthedocs.io/en/latest/reference/services/s3.html
 
 * We will retrieve image object with pre-signed URL and return it to the requested frontend side.
-* For your convenience, let's set frontend variable ```VUE_APP_S3_PRESIGNED_URL``` value to **True**. You can find this variable in **~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env**.
+* For your convenience, let's set frontend variable ```VUE_APP_S3_PRESIGNED_URL``` value to **true**. You can find this variable in **~/environment/frontend/cloudalbum/.env**.
 
 ```console
 //AXIOS api request time-out
@@ -531,37 +627,82 @@ VUE_APP_API=http://127.0.0.1:5000
 VUE_APP_S3_PRESIGNED_URL=true
 ```
 
-16. Make a bucket to save image objects and retrieve it from Amazon S3. 
+18. Now, let's build front-end application for handle S3 presigned URL.
 
+```console
+cd ~/environment/frontend/cloudalbum/
+npm run build
 ```
-aws s3 mb s3://cloudalbum-<INITIAL>
+
+* You can see similar messages below, if you complete the build.
+```console
+...
+...
+...
+ DONE  Build complete. The dist directory is ready to be deployed.
+ INFO  Check out deployment instructions at https://cli.vuejs.org/guide/deployment.html
 ```
 
-* Before copy and paste under below AWS cli command which create a S3 bucket, you should replace **cloudalbum-\<INITIAL\>** with your own initial to make a globally unique bucket name(e.g. cloudalbum-mrjb). We will use this bucket until end of this hands-on, please copy and paste your bucket name into your notes pad.
+19. We have already made an S3 Bucket for the frontend at LAB02. If you haven't created an S3 bucket on LAB01, you can create it like this. We use this bucket to save image objects and retrieve it.
+
+* Before copy and paste under below AWS cli command which create a S3 bucket, you should replace **cloudalbum-\<INITIAL\>** with your own initial to make a globally unique bucket name(e.g. cloudalbum-mrjb). 
 
 
-17. Review the config.py file which located in **LAB03/02-S3/backend/cloudalbum/config.py**
+```console
+aws s3 mb s3://cloudalbum-<your-initial>
+```
 
-18. Set up the value of 'S3_PHOTO_BUCKET'. Please change the **cloudalbum-\<INITIAL\>** to your **real bucket name** which made above.
+* You can see the message like below
+```console
+make_bucket: cloudalbum-<your-initial>
+```
+
+**Now, we will change our source code to save uploaded photo files to S3.**
+
+
+20. Let's review the config.py file which located in **LAB03/02-S3/backend/cloudalbum/config.py**
 
 ```python
-import datetime
 import os
+import datetime
+from os import environ
+from boto3.session import Session
+
 
 class BaseConfig:
-	(...)
+...
    
     # S3
-    S3_PHOTO_BUCKET = os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-<your-initial>')
-    S3_PRESIGNED_URL_EXPIRE_TIME = os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', 3600)
+    S3_PHOTO_BUCKET = os.getenv('S3_PHOTO_BUCKET', None)
+    S3_PRESIGNED_URL_EXPIRE_TIME = int(os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', '3600'))
+...
 ```
+
+21. You can set up the value of 'S3_PHOTO_BUCKET'  in `~/environment/LAB03/02-S3/backend/shell.env` file. 
+```bash
+# Required environment variables
+export UPLOAD_FOLDER=/tmp
+export FLASK_APP=cloudalbum/__init__.py
+export FLASK_ENV=development
+export APP_SETTINGS=cloudalbum.config.DevelopmentConfig
+export DDB_RCU=10
+export DDB_WCU=10
+export S3_PHOTO_BUCKET=
+export S3_PRESIGNED_URL_EXPIRE_TIME=3600
+# export COGNITO_POOL_ID=
+# export COGNITO_CLIENT_ID=
+# export COGNITO_CLIENT_SECRET=
+
+```
+* Uncomment `# export S3_PHOTO_BUCKET=` and assign your own bucket name.
+
 
 * As you can see, expire time for the presigned url of an object set 3600 seconds.
 
 
 ### TODO #5
 
-19. Find **TODO #5** in the 'LAB03/02-S3/backend/cloudalbum/util/file_control.py' file and please implement your own code instead of following solution function which name is **solution\_put\_object\_to\_s3** to put an image object with Boto3 SDK. 
+22. Find **TODO #5** in the 'LAB03/02-S3/backend/cloudalbum/util/file_control.py' file and please implement your own code instead of following solution function which name is **solution\_put\_object\_to\_s3** to put an image object with Boto3 SDK. 
 
 ```python
 	# TODO 5 : Implement following solution code to save image object to S3
@@ -584,7 +725,7 @@ class BaseConfig:
 
 ### TODO #6
 
-20. Find **TODO #6** in the 'LAB03/02-S3/backend/cloudalbum/util/file_control.py' file and please implement your own code instead of following solution function which name is **solution\_generate\_s3\_presigned\_url** to generate an presigned url of each object. 
+23. Find **TODO #6** in the 'LAB03/02-S3/backend/cloudalbum/util/file_control.py' file and please implement your own code instead of following solution function which name is **solution\_generate\_s3\_presigned\_url** to generate an presigned url of each object. 
 
 ```python
     # TODO 6 : Implement following solution code to retrieve pre-signed URL from S3.
@@ -609,27 +750,112 @@ generate_presigned_url(ClientMethod, Params=None, ExpiresIn=3600, HttpMethod=Non
 
         The presigned url
 ```
-* Why get **Presigned URL** instead of byte-stream as previous lab?
-	* **Anyone who receives the presigned URL can access the object**. 
-	* First, it helps **Single Page Application to fetch images without any auth token** which should be sent in ```Authorization``` header. Furthermore, images(or other static assets) behind authentication is quite difficult to implement. 
-	* Second, presigned URL support your **server side application to off-load it's role to send a static data to browser**. It helps to distributed environment between client and server application. Once the browser get the image url, it can request image to the S3 by self without any server-side authentication.
+**NOTE:** Why we use **Presigned URL** instead of byte-stream as previous lab?
+* **Someone who receives the presigned URL can access the object**. 
+  * First, it helps **Single Page Application to fetch images without any auth token** which should be sent in ```Authorization``` header. Furthermore, images(or other static assets) behind authentication is quite difficult to implement. 
+  * Second, presigned URL support your **server side application to off-load it's role to send a static data to browser**. It helps to distributed environment between client and server application. Once the browser get the image url, it can request image to the S3 by self without any server-side authentication.
 	* visit: https://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html
 
-21. Run your application!
 
-* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](https://github.com/aws-kr-tnc/moving-to-serverless-renew/blob/master/lab-guide/LAB_make_connection.md)
+24. Now we can run unittest to check if our application is working properly. 
 
-22. Perform application test.
+* Before, run unittest you need to load environment variables for the application. You can check this `~/environment/LAB03/02-S3/backend/shell.env` file.
+
+* You can also check `~/environment/LAB03/02-S3/backend/cloudalbum/config.py` file. Configure `S3_PHOTO_BUCKET` value and uncomment this. Before run `source shell.env`.
+
+```console
+# Required environment variables
+export UPLOAD_FOLDER=/tmp
+export FLASK_APP=cloudalbum/__init__.py
+export FLASK_ENV=development
+export APP_SETTINGS=cloudalbum.config.DevelopmentConfig
+export DDB_RCU=10
+export DDB_WCU=10
+export S3_PHOTO_BUCKET=
+export S3_PRESIGNED_URL_EXPIRE_TIME=3600
+# export COGNITO_POOL_ID=
+# export COGNITO_CLIENT_ID=
+# export COGNITO_CLIENT_SECRET=
+```
+
+```console
+source ~/environment/LAB03/02-S3/backend/shell.env
+cd ~/environment/LAB03/02-S3/backend/cloudalbum/tests
+```
+* Run unittest like below.
+```console
+pytest -v -W ignore::DeprecationWarning
+```
+* Output
+```console
+============================= test session starts =============================
+platform linux -- Python 3.6.8, pytest-5.1.2, py-1.8.0, pluggy-0.13.0 -- /home/ec2-user/environment/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/ec2-user/environment/LAB03/02-S3/backend/cloudalbum/tests
+plugins: cov-2.7.1
+collected 29 items                                                            
+
+test_admin.py::TestAdminService::test_healthcheck PASSED                [  3%]
+test_admin.py::TestAdminService::test_ping PASSED                       [  6%]
+test_config.py::TestDevelopmentConfig::test_app_is_development PASSED   [ 10%]
+test_config.py::TestDevelopmentConfig::test_ddb_rcu PASSED              [ 13%]
+test_config.py::TestDevelopmentConfig::test_ddb_wcu PASSED              [ 17%]
+test_config.py::TestDevelopmentConfig::test_s3_bucket PASSED            [ 20%]
+test_config.py::TestTestingConfig::test_app_is_testing PASSED           [ 24%]
+test_config.py::TestTestingConfig::test_ddb_rcu PASSED                  [ 27%]
+test_config.py::TestTestingConfig::test_ddb_wcu PASSED                  [ 31%]
+test_config.py::TestTestingConfig::test_s3_bucket PASSED                [ 34%]
+test_config.py::TestProductionConfig::test_app_is_production PASSED     [ 37%]
+test_config.py::TestProductionConfig::test_ddb_rcu PASSED               [ 41%]
+test_config.py::TestProductionConfig::test_ddb_wcu PASSED               [ 44%]
+test_config.py::TestProductionConfig::test_s3_bucket PASSED             [ 48%]
+test_dynamodb.py::TestDynamoDBService::test_photo_table PASSED          [ 51%]
+test_dynamodb.py::TestDynamoDBService::test_user_table PASSED           [ 55%]
+test_photos.py::TestPhotoService::test_delete PASSED                    [ 58%]
+test_photos.py::TestPhotoService::test_get_mode_thumb_orig PASSED       [ 62%]
+test_photos.py::TestPhotoService::test_list PASSED                      [ 65%]
+test_photos.py::TestPhotoService::test_ping PASSED                      [ 68%]
+test_photos.py::TestPhotoService::test_upload PASSED                    [ 72%]
+test_s3.py::TestS3Service::test_bucket_availability PASSED              [ 75%]
+test_users.py::TestUserService::test_bad_signin PASSED                  [ 79%]
+test_users.py::TestUserService::test_bad_signup PASSED                  [ 82%]
+test_users.py::TestUserService::test_ping PASSED                        [ 86%]
+test_users.py::TestUserService::test_signin PASSED                      [ 89%]
+test_users.py::TestUserService::test_signout PASSED                     [ 93%]
+test_users.py::TestUserService::test_signup PASSED                      [ 96%]
+test_users.py::TestUserService::test_signup_duplicate_email PASSED      [100%]
+============================= 29 passed in 3.82s ==============================
+```
+
+24. You can run CloudAlbum application like below after unittest.
+  * for backend.
+```console
+cd ~/environment/LAB03/02-S3/backend
+python manage.py run -h 0.0.0.0 -p 5000 
+```
+  * for frontend. (use another terminal in Cloud9)
+```console
+cd ~/environment/frontend/cloudalbum/
+npm run serve
+```
+
+  * You can also refer to 
+  [TASK 3. Connect to your application (Via SSH Tunneling)](LAB01.md#task-3-connect-to-your-application-(via-ssh-tunneling)) and [TASK 2. Look around current application and try run it.](LAB01.md#task-2.-look-around-current-application-and-try-run-it.)in LAB01.
+
+25. Enjoy the CloudAlbum with DynamoDB and S3
+  * You can use `python manage.py seed_db` command to create test user easily.
+
 <img src=./images/lab01-02.png width=700>
 
-23. Examine DynamoDB Console and S3 Console.
+
+26. Examine DynamoDB Console and S3 Console.
 <img src=./images/lab03-task2-s3-console.png width=500>
 
 * You can find your uploaded image objects with thumbnails.
 
 Is it OK? Let's move to the next TASK.
 
-24. Stop your application. 
+27. Stop your application. 
 * You can stop both frontend and backend application by press `ctrl+c` in your Cloud9 Terminal.
 
 
@@ -642,68 +868,71 @@ To begin, follow the steps below.
 
 **Set up an Amazon Cognito user pool.**
 
-25. In the AWS Console, go to the **Amazon Cognito**
+28. In the AWS Console, go to the **Amazon Cognito**
 
-26. Make sure you are still in the **Singapore(ap-southeast-1)** region.
+29. Make sure you are still in the **Singapore(ap-southeast-1)** region.
 
-27. Click **Manage your User Pools**.
+30. Click **Manage your User Pools**.
 
-28. At the top right corner, click **Create a user pool**.
+31. At the top right corner, click **Create a user pool**.
 
-29. For **Pool name**, type **cloudalbum-pool-\<INITIAL\>**.
+32. For **Pool name**, type **cloudalbum-pool-\<INITIAL\>**.
 
-30. Click **Step through settings**.
+33. Click **Step through settings**.
 
-31. For **How do you want your end users to sign in?**, select **Email address or phone number**.
+34. For **How do you want your end users to sign in?**, select **Email address or phone number**.
 <img src=./images/lab03-task3-cognito-setup.png width=800>
 
-32. For **Which standard attributes do you want to require?**, select **name**.
+35. For **Which standard attributes do you want to require?**, select **name**.
 
-33. Click **Next step**.
+36. Click **Next step**.
 
-34. Leave the default settings on the Policy page and click **Next step**.
+37. Leave the default settings on the Policy page and click **Next step**.
 
-35. Skip the MFA and verifications pages and click **Next step**.
+38. Skip the MFA and verifications pages and click **Next step**.
 
-36. On the **Message customization** page, select **Verification Type** as **Link**. Feel free to customize the email body.
+39. On the **Message customization** page, select **Verification Type** as **Link**. Feel free to customize the email body.
 
-37. Click **Next Step**.
+40. Click **Next Step**.
 
-38. Skip the Tag section and click **Next Step**.
+41. Skip the Tag section and click **Next Step**.
 
-39. Leave the default setting on the **Devices** page and click **Next step**.
+42. Leave the default setting on the **Devices** page and click **Next step**.
 
-40. On the **App Clients** page, click **Add an app client**.
+43. On the **App Clients** page, click **Add an app client**.
 
-41. For **App client name,** type a client name, for example, **CloudAlbum**.
+44. For **App client name,** type a client name, for example, **CloudAlbum**.
 
-42. Leave the other default settings and click **Create app client**.
+45. Choose **Enable sign-in API for server-based authentication (ADMIN_NO_SRP_AUTH)** option.
+<img src=./images/lab03-task3-cognito-app-client.png width=800>
 
-43. Click **Next Step**.
+46. Leave the other default settings and click **Create app client**.
 
-44. Skip the **Triggers** page and click **Next Step**
+47. Click **Next Step**.
 
-45. On the **Review** page, click **Create Pool**.
+48. Skip the **Triggers** page and click **Next Step**
 
-46. After the pool is created, write down the **Pool ID** for later use.
+49. On the **Review** page, click **Create Pool**.
 
-47. In the left navigation menu, under **App integration**, click **App client settings**.
+50. After the pool is created, write down the **Pool ID** for later use.
 
-53. In the left navigation menu, under **General settings**, click **App clients**.
+51. In the left navigation menu, under **App integration**, click **App client settings**.
 
-54. Click **Show details**.
+52. In the left navigation menu, under **General settings**, click **App clients**.
 
-55. Make a note of the **App client ID** and **App client secret** for later use.
+53. Click **Show details**.
 
-56. Click **Return to pool details** at the bottom to return to the Pool details page.
+54. Make a note of the **App client ID** and **App client secret** for later use.
+
+55. Click **Return to pool details** at the bottom to return to the Pool details page.
 
 
-57. Install required Python packages:
+56. Install required Python packages:
 ```console
-sudo pip install -r ~/environment/moving-to-serverless-workshop-renew/LAB03/03-COGNITO/requirements.txt
+sudo pip install -r ~/environment/LAB03/03-COGNITO/requirements.txt
 ```
 
-58. Review 'LAB03/03-COGNITO/cloudalbum/config.py'
+57. Review 'LAB03/03-COGNITO/cloudalbum/config.py'
 
 * Set up **S3_PHOTO_BUCKET** value : Replace **cloudalbum-\<INITIAL\>** to exist value which created previous hands-on lab.
 
@@ -712,16 +941,16 @@ import datetime
 import os
 
 class BaseConfig:
-	(...)
-	# S3
-	S3_PHOTO_BUCKET = os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-<your-initial>')
-	
-	# COGNITO
-	'COGNITO_POOL_ID' = os.getenv('COGNITO_POOL_ID', '<YOUR_POOL_ID>')
-	'COGNITO_CLIENT_ID' = os.getenv('COGNITO_CLIENT_ID', '<YOUR_CLIENT_ID>')
-	'COGNITO_CLIENT_SECRET' = os.getenv('COGNITO_CLIENT_SECRET', '<YOUR_CLIENT_SECRET>')
-	'COGNITO_DOMAIN' = os.getenv('COGNITO_DOMAIN', '<YOUR_COGNITO_DOMAIN>')
+...
+    # S3
+    S3_PHOTO_BUCKET = os.getenv('S3_PHOTO_BUCKET', None)
+    S3_PRESIGNED_URL_EXPIRE_TIME = int(os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', '3600'))
 
+    # Cognito
+    COGNITO_POOL_ID = os.getenv('COGNITO_POOL_ID', None)
+    COGNITO_CLIENT_ID = os.getenv('COGNITO_CLIENT_ID', None)
+    COGNITO_CLIENT_SECRET = os.getenv('COGNITO_CLIENT_SECRET', None)
+...
 ```
 
 * Check the values under ***# COGNITO***.
@@ -731,15 +960,27 @@ class BaseConfig:
 ----|----
 | COGNITO_CLIENT_ID | Copy and paste the App Client ID you noted earlier. |
 | COGNITO_CLIENT_SECRET | Copy and paste the App Client Secret you noted earlier. |
-|COGNITO_DOMAIN |Copy and paste the domain name you created earlier. It should look similar to the example below. Do not copy the entire URL starting with https://<YOUR_DOMAIN_NAME>.auth.ap-southeast-1.amazoncognito.com (for example(**without** `https://`): <YOUR_DOMAIN_NAME>.auth.ap-southeast-1.amazoncognito.com)|
-
- * For example,
-
-   <img src="images/lab03-task3-cognito-config.png" width="800">
 
 
+ * These values are initialized from environment variables. You can specify these values in `shell.env` and load them as easily as before using the `source shell.env` command.
 
-59. Before implement TODO #7, you need to review **LAB03/03-Cognito/backend/cloudalbum/database/model_ddb.py** file. Compare to the previous lab, there is only one table:Photo. It means from now **Cognito User pool replace original User table of DynamoDB**.
+ * Here is required variables in `shell.env`. You can uncomment and specify your own values.
+```console
+# Required environment variables
+export UPLOAD_FOLDER=/tmp
+export FLASK_APP=cloudalbum/__init__.py
+export FLASK_ENV=development
+export APP_SETTINGS=cloudalbum.config.DevelopmentConfig
+export DDB_RCU=10
+export DDB_WCU=10
+export S3_PHOTO_BUCKET=
+export S3_PRESIGNED_URL_EXPIRE_TIME=3600
+export COGNITO_POOL_ID=
+export COGNITO_CLIENT_ID=
+export COGNITO_CLIENT_SECRET=
+```
+
+58. Before implement TODO #7, you need to review **LAB03/03-Cognito/backend/cloudalbum/database/model_ddb.py** file. Compare to the previous lab, there is only one table:Photo. It means from now **Cognito User pool replace original User table of DynamoDB**.
 
 ```python
 class Photo(Model):
@@ -773,7 +1014,7 @@ class Photo(Model):
 
 ### TODO #7
 
-Find **TODO #7** in the 'LAB03/03-Cognito/backend/cloudalbum/api/users.py' file and please implement your own code instead of following solution function which name is **solution\_signup\_cognito** which is enroll user into Cognito user pool.
+59. Find **TODO #7** in the 'LAB03/03-Cognito/backend/cloudalbum/api/users.py' file and please implement your own code instead of following solution function which name is **solution\_signup\_cognito** which is enroll user into Cognito user pool.
 
 ```python
 	# TODO 7: Implement following solution code to sign up user into cognito user pool
@@ -868,7 +1109,7 @@ def user_signup_confirm(id):
 ```
 * There was a **set to store expired-or blacklisted- token** of sign-out user's into your application memory. However, after using Cognito, you don't need to save blacklisted token at server-side anymore. All you need to do is bring Boto3 client and let the Cognito know which token is expired.
 
-*After using Cognito: **LAB03/03-Cognito/backend/cloudalbum/api/users.py**
+* After using Cognito: **LAB03/03-Cognito/backend/cloudalbum/api/users.py**
 ```python
 	try:
 	    client = boto3.client('cognito-idp')
@@ -877,33 +1118,120 @@ def user_signup_confirm(id):
 	    )
 ```
 
-
-61. Run your backend/frontend application!
-
-* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](https://github.com/aws-kr-tnc/moving-to-serverless-renew/blob/master/lab-guide/LAB_make_connection.md)
+61. We don't need User tables anymore. So, now we can **remove User table** in DynamoDB console.
+<img src=./images/lab03-task3-delete-user-table.png width=800>
 
 
-62. Perform application test.
-<img src=./images/lab01-02.png width=500>
 
-* Sign in / up
-* Upload Sample Photos
-* Sample images download here
-  *  https://d2r3btx883i63b.cloudfront.net/temp/sample-photo.zip
-* Look your Album
-* Change Profile
-* Find photos with Search tool
-* Check the Photo Map
+62. Now we can run unittest to check if our application is working properly.
 
-63. Examine Cognito Console dashboard **after user sign-up.**
-<img src=./images/lab03-task3-cognito-userpool.png width=700>
+* Before, run unittest you need to load environment variables for the application. You can check this `~/environment/LAB03/03-Cognito/backend/shell.env` file.
 
-* You can find your profile information.
+* You can also check `~/environment/LAB03/03-Cognito/backend/cloudalbum/config.py` file. Configure `S3_PHOTO_BUCKET` value and uncomment this. Before run `source shell.env`.
+
+```console
+# Required environment variables
+export UPLOAD_FOLDER=/tmp
+export FLASK_APP=cloudalbum/__init__.py
+export FLASK_ENV=development
+export APP_SETTINGS=cloudalbum.config.DevelopmentConfig
+export DDB_RCU=10
+export DDB_WCU=10
+export S3_PHOTO_BUCKET=
+export S3_PRESIGNED_URL_EXPIRE_TIME=3600
+export COGNITO_POOL_ID=
+export COGNITO_CLIENT_ID=
+export COGNITO_CLIENT_SECRET=
+```
+* Make sure, all required environment variables should set properly. (**S3_PHOTO_BUCKET, COGNITO_POOL_ID, COGNITO_CLIENT_ID, COGNITO_CLIENT_SECRET**)
+
+```console
+source ~/environment/LAB03/03-Cognito/backend/shell.env
+cd ~/environment/LAB03/03-Cognito/backend/cloudalbum/tests
+```
+* Run unittest like below.
+```console
+pytest -v -W ignore::DeprecationWarning
+```
+* Output
+```console
+=============================== test session starts ================================
+platform linux -- Python 3.6.8, pytest-5.1.2, py-1.8.0, pluggy-0.13.0 -- /home/ec2-user/environment/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/ec2-user/environment/LAB03/03-Cognito/backend/cloudalbum/tests
+plugins: cov-2.7.1
+collected 37 items                                                                 
+
+test_admin.py::TestAdminService::test_healthcheck PASSED                     [  2%]
+test_admin.py::TestAdminService::test_ping PASSED                            [  5%]
+test_config.py::TestDevelopmentConfig::test_app_is_development PASSED        [  8%]
+test_config.py::TestDevelopmentConfig::test_cognito_client_id PASSED         [ 10%]
+test_config.py::TestDevelopmentConfig::test_cognito_client_secret PASSED     [ 13%]
+test_config.py::TestDevelopmentConfig::test_cognito_pool_id PASSED           [ 16%]
+test_config.py::TestDevelopmentConfig::test_ddb_rcu PASSED                   [ 18%]
+test_config.py::TestDevelopmentConfig::test_ddb_wcu PASSED                   [ 21%]
+test_config.py::TestDevelopmentConfig::test_s3_bucket PASSED                 [ 24%]
+test_config.py::TestTestingConfig::test_app_is_testing PASSED                [ 27%]
+test_config.py::TestTestingConfig::test_cognito_client_id PASSED             [ 29%]
+test_config.py::TestTestingConfig::test_cognito_client_secret PASSED         [ 32%]
+test_config.py::TestTestingConfig::test_cognito_pool_id PASSED               [ 35%]
+test_config.py::TestTestingConfig::test_ddb_rcu PASSED                       [ 37%]
+test_config.py::TestTestingConfig::test_ddb_wcu PASSED                       [ 40%]
+test_config.py::TestTestingConfig::test_s3_bucket PASSED                     [ 43%]
+test_config.py::TestProductionConfig::test_app_is_production PASSED          [ 45%]
+test_config.py::TestProductionConfig::test_cognito_client_id PASSED          [ 48%]
+test_config.py::TestProductionConfig::test_cognito_client_secret PASSED      [ 51%]
+test_config.py::TestProductionConfig::test_cognito_pool_id PASSED            [ 54%]
+test_config.py::TestProductionConfig::test_ddb_rcu PASSED                    [ 56%]
+test_config.py::TestProductionConfig::test_ddb_wcu PASSED                    [ 59%]
+test_config.py::TestProductionConfig::test_s3_bucket PASSED                  [ 62%]
+test_dynamodb.py::TestDynamoDBService::test_photo_table PASSED               [ 64%]
+test_photos.py::TestPhotoService::test_delete PASSED                         [ 67%]
+test_photos.py::TestPhotoService::test_get_mode_thumb_orig PASSED            [ 70%]
+test_photos.py::TestPhotoService::test_list PASSED                           [ 72%]
+test_photos.py::TestPhotoService::test_ping PASSED                           [ 75%]
+test_photos.py::TestPhotoService::test_upload PASSED                         [ 78%]
+test_s3.py::TestS3Service::test_bucket_availability PASSED                   [ 81%]
+test_users.py::TestUserService::test_bad_signin PASSED                       [ 83%]
+test_users.py::TestUserService::test_bad_signup PASSED                       [ 86%]
+test_users.py::TestUserService::test_ping PASSED                             [ 89%]
+test_users.py::TestUserService::test_signin PASSED                           [ 91%]
+test_users.py::TestUserService::test_signout PASSED                          [ 94%]
+test_users.py::TestUserService::test_signup PASSED                           [ 97%]
+test_users.py::TestUserService::test_signup_duplicate_email PASSED           [100%]
+
+=============================== 37 passed in 15.03s ================================
+```
+
+63. You can run CloudAlbum application like below after unittest.
+  * for backend.
+```console
+cd ~/environment/LAB03/03-Cognito/backend
+python manage.py run -h 0.0.0.0 -p 5000 
+```
+  * for frontend. (use another terminal in Cloud9)
+```console
+cd ~/environment/frontend/cloudalbum/
+npm run serve
+```
+
+  * You can also refer to 
+  [TASK 3. Connect to your application (Via SSH Tunneling)](LAB01.md#task-3-connect-to-your-application-(via-ssh-tunneling)) and [TASK 2. Look around current application and try run it.](LAB01.md#task-2.-look-around-current-application-and-try-run-it.)in LAB01.
+
+64. Enjoy the CloudAlbum with DynamoDB, S3 and Cognito.
+  * You can use `python manage.py seed_db` command to create test user easily.
+
+<img src=./images/lab01-02.png width=700>
+
+
+65. Examine Cognito management console.
+<img src=./images/lab03-task3-cognito-users.png width=500>
 
 
 * Stop your application. 
 * You can stop both frontend and backend application by press `ctrl+c` in your Cloud9 Terminal.
 
+Is it OK? Let's move to the next TASK.
 
 
 ## TASK 5. Go to X-ray
@@ -912,44 +1240,45 @@ AWS [X-Ray](https://aws.amazon.com/xray/) helps developers analyze and debug pro
 
 <img src="./images/lab03-task4-x-ray-arc.png" width="600">
 
-64. Install required Python packages for AWS X-Ray.
+66. Install required Python packages for AWS X-Ray.
 ```console
-sudo pip install -r ~/environment/moving-to-serverless-workshop-renew/LAB03/04-XRAY/requirements.txt
+sudo pip install -r ~/environment/LAB03/04-XRAY/requirements.txt
 ```
 
 **Download and run the AWS X-Ray daemon on your AWS Cloud9 instance.**
 
-65. Visit the AWS X-Ray daemon documentation link below:
+67. Visit the AWS X-Ray daemon documentation link below:
 * https://docs.aws.amazon.com/xray/latest/devguide/xray-daemon.html
 
-66. On the documentation page, scroll down until you see a link to **Linux (executable)-aws-xray-daemon-linux-2.x.zip (sig).** Right-click the link and copy the link address.
+68. On the documentation page, scroll down until you see a link to **Linux (executable)-aws-xray-daemon-linux-2.x.zip (sig).** Right-click the link and copy the link address.
 
-67. In your AWS **Cloud9 instance terminal**, type the command below to go to your home directory.
+69. In your AWS **Cloud9 instance terminal**, type the command below to go to your home directory.
 ```console
 cd ~
 ```
 
-68. Type wget and paste the AWS X-Ray daemon hyperlink address that you copied. The command should look like the example below.
+70. Type wget and paste the AWS X-Ray daemon hyperlink address that you copied. The command should look like the example below.
 ```console
 wget https://s3.dualstack.us-east-2.amazonaws.com/aws-xray-assets.us-east-2/xray-daemon/aws-xray-daemon-linux-3.x.zip
 ```
 
-69. Unzip the AWS X-Ray daemon by typing the command below. Make sure that the name of the .zip file matches the one in the command below.
+71. Unzip the AWS X-Ray daemon by typing the command below. Make sure that the name of the .zip file matches the one in the command below.
 ```console
 unzip aws-xray-daemon-linux-3.x.zip
 ```
 
-70. Run the AWS X-Ray daemon by typing the command below. The X-Ray daemon buffers segments in a queue and uploads them to X-Ray in batches. 
+72. Run the AWS X-Ray daemon by typing the command below. The X-Ray daemon buffers segments in a queue and uploads them to X-Ray in batches. 
 
 ```console
 ./xray
 ```
 
-* **Now, X-Ray daemon works and ready to use X-Ray to analyze applications.**
+* **Now, X-Ray daemon works and ready to use X-Ray to analyze applications. Keep this terminal until complete this hands-on lab. Because we'll explore X-ray console to check the api call logs.**
+
 
 ### TODO #9
 
-70. Review TODO #9 which is in **LAB03/04-XRAY/cloudalbum/backend/__init__.py** file.
+73. Review TODO #9 which is in **LAB03/04-XRAY/cloudalbum/backend/__init__.py** file.
 
 * To instrument CloudAlbum, *our Flask application*, first configure a segment name on the xray_recorder. Then, use the XRayMiddleware function to patch our CloudAlbum application in code. 
 * Related document
@@ -1000,68 +1329,171 @@ def print_abc():
 
 ```
 
+74. Now we can run unittest to check if our application is working properly.
 
-71. Implement your unique data into **LAB03/04-XRAY/cloudalbum/backend/config.py**. This step is identical to the step 58.
+* **NOTE:** The X-ray daemon must be alive. (refer to step 72) **Because we'll explore X-ray console to check the api call logs.**
 
-* Set up **S3_PHOTO_BUCKET** value : Replace **cloudalbum-\<INITIAL\>** to real value which used previous hands-on lab.
+* Before, run unittest you need to load environment variables for the application. 
 
+```console
+# Required environment variables
+export UPLOAD_FOLDER=/tmp
+export FLASK_APP=cloudalbum/__init__.py
+export FLASK_ENV=development
+export APP_SETTINGS=cloudalbum.config.DevelopmentConfig
+export DDB_RCU=10
+export DDB_WCU=10
+export S3_PHOTO_BUCKET=
+export S3_PRESIGNED_URL_EXPIRE_TIME=3600
+export COGNITO_POOL_ID=
+export COGNITO_CLIENT_ID=
+export COGNITO_CLIENT_SECRET=
 ```
-import datetime
-import os
+* Make sure, all required environment variables should set properly. (**S3_PHOTO_BUCKET, COGNITO_POOL_ID, COGNITO_CLIENT_ID, COGNITO_CLIENT_SECRET**)
 
-class BaseConfig:
-	(...)
-	# S3
-	S3_PHOTO_BUCKET = os.getenv('S3_PHOTO_BUCKET', 'cloudalbum-<your-initial>')
-		
-	# COGNITO
-	'COGNITO_POOL_ID' = os.getenv('COGNITO_POOL_ID', '<YOUR_POOL_ID>')
-	'COGNITO_CLIENT_ID' = os.getenv('COGNITO_CLIENT_ID', '<YOUR_CLIENT_ID>')
-	'COGNITO_CLIENT_SECRET' = os.getenv('COGNITO_CLIENT_SECRET', '<YOUR_CLIENT_SECRET>')
-	'COGNITO_DOMAIN' = os.getenv('COGNITO_DOMAIN', '<YOUR_COGNITO_DOMAIN>')
+* You can also check `~/environment/LAB03/04-Xray/backend/cloudalbum/config.py` file.
+
+
+```console
+source ~/environment/LAB03/04-Xray/backend/shell.env
+cd ~/environment/LAB03/04-Xray/backend/cloudalbum/tests
+```
+* Run unittest like below.
+```console
+pytest -v -W ignore::DeprecationWarning
+```
+* Output
+```console
+============================== test session starts ==============================
+platform linux -- Python 3.6.8, pytest-5.1.2, py-1.8.0, pluggy-0.13.0 -- /home/ec2-user/environment/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/ec2-user/environment/LAB03/04-Xray/backend/cloudalbum/tests
+plugins: cov-2.7.1
+collected 37 items                                                              
+
+test_admin.py::TestAdminService::test_healthcheck PASSED                  [  2%]
+test_admin.py::TestAdminService::test_ping PASSED                         [  5%]
+test_config.py::TestDevelopmentConfig::test_app_is_development PASSED     [  8%]
+test_config.py::TestDevelopmentConfig::test_cognito_client_id PASSED      [ 10%]
+test_config.py::TestDevelopmentConfig::test_cognito_client_secret PASSED  [ 13%]
+test_config.py::TestDevelopmentConfig::test_cognito_pool_id PASSED        [ 16%]
+test_config.py::TestDevelopmentConfig::test_ddb_rcu PASSED                [ 18%]
+test_config.py::TestDevelopmentConfig::test_ddb_wcu PASSED                [ 21%]
+test_config.py::TestDevelopmentConfig::test_s3_bucket PASSED              [ 24%]
+test_config.py::TestTestingConfig::test_app_is_testing PASSED             [ 27%]
+test_config.py::TestTestingConfig::test_cognito_client_id PASSED          [ 29%]
+test_config.py::TestTestingConfig::test_cognito_client_secret PASSED      [ 32%]
+test_config.py::TestTestingConfig::test_cognito_pool_id PASSED            [ 35%]
+test_config.py::TestTestingConfig::test_ddb_rcu PASSED                    [ 37%]
+test_config.py::TestTestingConfig::test_ddb_wcu PASSED                    [ 40%]
+test_config.py::TestTestingConfig::test_s3_bucket PASSED                  [ 43%]
+test_config.py::TestProductionConfig::test_app_is_production PASSED       [ 45%]
+test_config.py::TestProductionConfig::test_cognito_client_id PASSED       [ 48%]
+test_config.py::TestProductionConfig::test_cognito_client_secret PASSED   [ 51%]
+test_config.py::TestProductionConfig::test_cognito_pool_id PASSED         [ 54%]
+test_config.py::TestProductionConfig::test_ddb_rcu PASSED                 [ 56%]
+test_config.py::TestProductionConfig::test_ddb_wcu PASSED                 [ 59%]
+test_config.py::TestProductionConfig::test_s3_bucket PASSED               [ 62%]
+test_dynamodb.py::TestDynamoDBService::test_photo_table PASSED            [ 64%]
+test_photos.py::TestPhotoService::test_delete PASSED                      [ 67%]
+test_photos.py::TestPhotoService::test_get_mode_thumb_orig PASSED         [ 70%]
+test_photos.py::TestPhotoService::test_list PASSED                        [ 72%]
+test_photos.py::TestPhotoService::test_ping PASSED                        [ 75%]
+test_photos.py::TestPhotoService::test_upload PASSED                      [ 78%]
+test_s3.py::TestS3Service::test_bucket_availability PASSED                [ 81%]
+test_users.py::TestUserService::test_bad_signin PASSED                    [ 83%]
+test_users.py::TestUserService::test_bad_signup PASSED                    [ 86%]
+test_users.py::TestUserService::test_ping PASSED                          [ 89%]
+test_users.py::TestUserService::test_signin PASSED                        [ 91%]
+test_users.py::TestUserService::test_signout PASSED                       [ 94%]
+test_users.py::TestUserService::test_signup PASSED                        [ 97%]
+test_users.py::TestUserService::test_signup_duplicate_email PASSED        [100%]
+
+============================== 37 passed in 15.14s ==============================
 ```
 
-* Check the values under ***# COGNITO***.
-* The second parameter of **os.getenv** is the default value to use when the first parameter does not exist.
+75. You can run CloudAlbum application like below after unittest.
+  * for backend.
+```console
+cd ~/environment/LAB03/04-Xray/backend
+python manage.py run -h 0.0.0.0 -p 5000 
+```
+  * for frontend. (use another terminal in Cloud9)
+```console
+cd ~/environment/frontend/cloudalbum/
+npm run serve
+```
 
-| COGNITO_POOL_ID | Copy and paste the pool ID you noted earlier. |
-----|----
-| COGNITO_CLIENT_ID | Copy and paste the App Client ID you noted earlier. |
-| COGNITO_CLIENT_SECRET | Copy and paste the App Client Secret you noted earlier. |
-|COGNITO_DOMAIN |Copy and paste the domain name you created earlier. It should look similar to the example below. Do not copy the entire URL starting with https://<YOUR_DOMAIN_NAME>.auth.ap-southeast-1.amazoncognito.com (for example(**without** `https://`): <YOUR_DOMAIN_NAME>.auth.ap-southeast-1.amazoncognito.com)|
+  * You can also refer to 
+  [TASK 3. Connect to your application (Via SSH Tunneling)](LAB01.md#task-3-connect-to-your-application-(via-ssh-tunneling)) and [TASK 2. Look around current application and try run it.](LAB01.md#task-2.-look-around-current-application-and-try-run-it.)in LAB01.
+
+76. Enjoy the CloudAlbum with DynamoDB, S3, Cognito and X-ray.
+<img src=./images/lab01-02.png width=700>
 
 
+77. Examine X-Ray Console dashboard
+* AWS X-Ray: Service map
+<img src=images/lab03-task4-x-ray-service-map.png width=500>
+* AWS X-Ray: Traces
+<img src=images/lab03-task4-x-ray-traces.png width=500>
 
-72. Run your backend/frontend application!
-
-* If you don't remember how to run your back-end/frontend application, please refer this document:[LAB03_how_to_run_backend/frontend](https://github.com/aws-kr-tnc/moving-to-serverless-renew/blob/master/lab-guide/LAB_make_connection.md)
-
-73. Enjoy your CloudAlbum service!
-
-<img src=images/lab01-02.png width=700>
-
-* Sign in / up
-* Upload Sample Photos
-* Sample images download here
-  *  https://d2r3btx883i63b.cloudfront.net/temp/sample-photo.zip
-* Look your Album
-* Change Profile
-* Find photos with Search tool
-* Check the Photo Map
-
-74. Examine X-Ray Console dashboard
-<img src=images/lab03-task4-x-ray.png width=500>
-
-Is it OK? Let's go to next LAB.
-
-75. Stop your application. 
+78. Stop your application. 
 * You can stop both frontend and backend application by press `ctrl+c` in your Cloud9 Terminal.
+
+In this LAB, Amazon RDS and EFS have been replaced by the serverless services Amazon DynamoDB and S3. But still our application runs on EC2. In the next hands-on lab, we will migrate our application to Lambda and API Gateway.
+
+## Optional TASK: Deploy after remove Amazon RDS and EFS
+In the previous hands-on lab, we provisioned resources and deployed the application through ElasticBeanstalk.
+
+Our application no longer requires RDS and EFS. It uses Amazon DynamoDB, a fully managed serverless service, instead of instance-based Amazon RDS. In addition, instead of EFS, it uses S3, a less expensive, more scalable, and more featureful serverless storage.
+
+Let's deploy our new application to the ElasticBeanstalk.
+
+79. Make a zip file for ElasticBeanstalk deployment.
+```console
+mkdir -p ~/environment/deploy
+cd ~/environment/LAB03/04-Xray/backend/
+zip -r ~/environment/deploy/cloudalbum-v2.0.zip .
+```
+ * Alternatively, You can use pre-bundled zip file here : https://github.com/aws-kr-tnc/moving-to-serverless-renew/raw/master/resources/cloudalbum_v2.0.zip
+
+80. Let's remove Amazon RDS. First, go to the RDS console. Click **Databases** menu and then choose a database like below. Then click **Action** menu choose **Delete**.
+
+    <img src=./images/lab04-optional-rds-delete.png width=500>
+
+
+81. Remove your EFS. Choose your file-system(**shared-storage**) and click the **Actions** button then choose **Delete file system**. Confirm that the EFS resource has been deleted. 
+
+    <img src=./images/lab02-task7-efs-delete.png width=500>
+
+82. Go to ElasticBeanstalk environment configuration menu and then choose **Configuration** -> **Software** -> **Modify**. 
+
+    <img src=./images/lab04-optional-eb-config-1.png width=500>
+
+83. Enable X-ray daemon in the **Modify Software** page.
+
+    <img src=./images/lab04-optional-eb-xray.png width=500>
+
+84. Remove properties that are no longer used in the **Modify Software** page.
+
+    <img src=./images/lab04-optional-eb-config-2.png width=500>
+
+85. Add some properties in the **Modify Software** page.
+ * Configure following variables
+   * S3_PHOTO_BUCKET
+   * COGNITO_POOL_ID
+   * COGNITO_CLIENT_ID
+   * COGNITO_CLIENT_SECRET
+
+    <img src=./images/lab04-optional-eb-config-3.png width=500>
+
+* Click the **Apply** button.
 
 
 # Congratulation! You completed LAB03.
 
 ## LAB GUIDE LINKS
-* [LAB 01 - Take a look around](LAB01.md)
-* [LAB 02 - Building and deploying your application in HA environment](LAB02.md)
-* [LAB 03 - Move to serverless](LAB03.md)
-* [LAB 04 - Serverless with AWS Chalice](LAB04.md)
+* [Lab 1: CloudAlbum with 3-tier Architecture](LAB01.md)
+* [Lab 2: CloudAlbum with 3-tier architecture and high availability](LAB02.md)
+* [Lab 3: CloudAlbum with Serverless Architecture - Part 1](LAB03.md)
+* [Lab 4: CloudAlbum with Serverless Architecture - Part 2](LAB04.md)

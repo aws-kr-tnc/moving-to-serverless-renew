@@ -10,6 +10,8 @@
 
 import sys
 import unittest
+
+import sqlalchemy
 from flask.cli import FlaskGroup
 from werkzeug.security import generate_password_hash
 from cloudalbum import create_app, db
@@ -53,9 +55,14 @@ def seed_db():
     Insert seeds database
     :return:
     """
-    db.session.add(User(username=user['username'], email=user['email'],
-                        password=generate_password_hash(user['password'])))
-    db.session.commit()
+    try:
+        db.session.add(User(username=user['username'], email=user['email'],
+                            password=generate_password_hash(user['password'])))
+        db.session.commit()
+    except sqlalchemy.exc.IntegrityError as e:
+        # User already exist!
+        pass
+    print(user)
 
 
 if __name__ == '__main__':

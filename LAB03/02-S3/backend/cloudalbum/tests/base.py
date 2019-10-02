@@ -29,8 +29,11 @@ class BaseTestCase(TestCase):
 
     def setUp(self):
         # Delete any test data that may be remained.
+        for item in User.scan(User.username.startswith('test')):
+            item.delete()
         for item in Photo.scan(Photo.filename_orig.startswith('test')):
             item.delete()
+
         # Create test user
         test_user = User(uuid.uuid4().hex)
         test_user.email = user['email']

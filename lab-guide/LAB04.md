@@ -1,4 +1,4 @@
-# LAB 04 - Serverless with AWS Chalice
+# Lab 4: CloudAlbum with Serverless Architecture - Part 2
 This exercise is divided into two parts. The first part is about the AWS serverless framework Chalice, and the second part is using the Chalice to run the CloudAlbum application.
 
 ## Serverless framework
@@ -960,8 +960,7 @@ aws dynamodb delete-table --table-name "Photo"
 
 
 ## LAB GUIDE LINKS
-* [LAB 01 - Take a look around](LAB01.md)
-* [LAB 02 - Building and deploying your application in HA environment](LAB02.md)
-* [LAB 03 - Moving to AWS serverless](LAB03.md)
-* [LAB 04 - Serverless with AWS Chalice](LAB04.md)
-
+* [Lab 1: CloudAlbum with 3-tier Architecture](LAB01.md)
+* [Lab 2: CloudAlbum with 3-tier architecture and high availability](LAB02.md)
+* [Lab 3: CloudAlbum with Serverless Architecture - Part 1](LAB03.md)
+* [Lab 4: CloudAlbum with Serverless Architecture - Part 2](LAB04.md)

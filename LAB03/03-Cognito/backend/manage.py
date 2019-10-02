@@ -69,6 +69,7 @@ def seed_db():
         )
     except cognito_client.exceptions.UsernameExistsException as e:
         pass
+    print(user)
 
 
 if __name__ == '__main__':

@@ -7,14 +7,14 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
-from flask_testing import TestCase
-from cloudalbum import create_app
-import base64
-import boto3
-import hashlib
 import hmac
-
+import boto3
+import base64
+import hashlib
+from cloudalbum import create_app
 from cloudalbum.database import Photo
+from flask_testing import TestCase
+
 
 user = {
     'username': 'test001',

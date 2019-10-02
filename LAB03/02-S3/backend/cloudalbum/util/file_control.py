@@ -7,16 +7,13 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
-from io import BytesIO
-from flask import current_app as app
-from PIL import Image
-from pathlib import Path
-from cloudalbum.solution import solution_put_object_to_s3, solution_generate_s3_presigned_url
-from cloudalbum.database.model_ddb import Photo, photo_deserialize
-from datetime import datetime
 import os
 import boto3
-
+from PIL import Image
+from io import BytesIO
+from pathlib import Path
+from flask import current_app as app
+from cloudalbum.solution import solution_put_object_to_s3, solution_generate_s3_presigned_url
 
 def email_normalize(email):
     return email.replace('@', '_at_').replace('.', '_dot_')
@@ -46,6 +43,7 @@ def make_thumbnail(path, filename):
         app.logger.error("ERROR:Thumbnails creation error:{}".format(str(thumb_file_location)))
         app.logger.error(e)
 
+
 def make_thumbnails_s3(file_p):
     result_bytes_stream = BytesIO()
 
@@ -58,8 +56,6 @@ def make_thumbnails_s3(file_p):
         app.logger.debug(e)
 
     return result_bytes_stream.getvalue()
-
-
 
 
 def delete(filename, email):
@@ -185,7 +181,6 @@ def presigned_url(filename, email, Thumbnail=True):
         url = solution_generate_s3_presigned_url(s3_client, key)
         return url
 
-
     except Exception as e:
         app.logger.error('ERROR:creating presigned url failed:{0}'.format(e))
         raise e
@@ -204,14 +199,10 @@ def presigned_url_both(filename, email):
     key_origin = "{0}{1}".format(prefix, filename)
     try:
         s3_client = boto3.client('s3')
-        thumb_url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': app.config['S3_PHOTO_BUCKET'], 'Key': key_thumb},
-            ExpiresIn=app.config['S3_PRESIGNED_URL_EXPIRE_TIME'])
-        origin_url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': app.config['S3_PHOTO_BUCKET'], 'Key': key_origin},
-            ExpiresIn=app.config['S3_PRESIGNED_URL_EXPIRE_TIME'])
+
+        # TODO 6 : Implement following solution code to retrieve pre-signed URL from S3.
+        return solution_generate_s3_presigned_url(s3_client, key_thumb, key_origin)
+
     except Exception as e:
         raise e
     return thumb_url, origin_url

@@ -1,12 +1,10 @@
-# LAB 02 - Building and deploying your application in HA environment
+# Lab 2: CloudAlbum with 3-tier architecture and high availability
 
-Before we go to the serverless application architecture, let's deploy our application into the High Availability Applciation Architecture environment to see the obvious differences from the hostbased environment.
+Before we go to the serverless application architecture, let's deploy our application into the High Availability Applciation Architecture environment to see the obvious differences from the host based environment and serverless environment.
 
 So, we'll deploy the CloudAlbum application with HA(high availability) architecture in the Amazon Web Services environment.
 
 ## In this lab cover.. 
-
-> 그림 추가 필요 (s3 frontend)
 
 <img src=./images/lab02-eb-diagram.png width=700>
 
@@ -14,6 +12,8 @@ So, we'll deploy the CloudAlbum application with HA(high availability) architect
 * Configure [EFS](https://aws.amazon.com/efs/) for the scalable **shared storage**.
 * Configure [ElasticBeanstalk](https://aws.amazon.com/elasticbeanstalk/).
   * with [RDS](https://aws.amazon.com/rds/), [ALB](https://aws.amazon.com/elasticloadbalancing/) and [AutoScaling](https://aws.amazon.com/autoscaling/). 
+  * backend application will be deployed here.
+* Configure [S3](https://aws.amazon.com/s3/) for static website hosting with front-end SPA.
 
 
 ## Prerequisites
@@ -44,7 +44,7 @@ In this section, you will create an VPC with multi-az for the high availability 
 3. Click **Create Stack** button at the top-left corner. (or click **Create new stack** at the center of page.)
 
 4. Download the **CloudFormation** template file (network.yaml) to your local laptop.
- * Download Link : <https://raw.githubusercontent.com/aws-kr-tnc/moving-to-serverless-workshop-1d/master/resources/network.yaml>
+ * Download Link : <https://raw.githubusercontent.com/aws-kr-tnc/moving-to-serverless-renew/master/resources/network.yaml>
 
 5. On the **Select Template** page, click **Upload a template to Amazon S3**. Click **Browse...** button. Then choose ***network.yaml*** file which is downloaded previous step.
 
@@ -102,7 +102,7 @@ Amazon Elastic File System (Amazon EFS) provides a simple, scalable, elastic fil
 
 ## TASK 3. Confiugure ElasticBeanstalk
 
-We will now deploy the CloudAlbum application using ElasticBeanstalk. Our application will be  integrated EFS, Elasticache, RDS, ALB, and AutoScalingGroup via ElasticBeanstalk.
+Now, we will deploy the CloudAlbum application using ElasticBeanstalk. Our application will be  integrated EFS, Elasticache, RDS, ALB, and AutoScalingGroup via ElasticBeanstalk.
 
 With Elastic Beanstalk, you can quickly deploy and manage applications in the AWS Cloud without having to learn about the infrastructure that runs those applications. Elastic Beanstalk reduces management complexity without restricting choice or control. You simply upload your application, and Elastic Beanstalk automatically handles the details of capacity provisioning, load balancing, scaling, and application health monitoring.
 
@@ -271,10 +271,33 @@ Now, let's deploy our application.
 
 56. Configure **Health check** variables.
 * **HTTP code** : `200`
-* **Path** : `/users/ping`
+* **Path** : `/admin/health_check`
 
      <img src=./images/lab02-task5-eb-alb-health-2.png width=500>
 
+* Here is health check logic.(backend/cloudalbum/api/admin.py)
+```python
+...
+
+@api.route('/health_check')
+class HealthCheck(Resource):
+    @api.doc(responses={200: 'system alive!'})
+    def get(self):
+        try:
+            # 1. Is database available?!
+            db.engine.execute('SELECT 1')
+            # 2. Is disk have enough free space?!
+            total, used, free = shutil.disk_usage('/')
+            if used / total * 100 >= 90:
+                raise Exception('free disk size under 10%')
+            # 3. Something else..
+            # TODO: health check something
+            return make_response({'ok': True, 'Message': 'Healthcheck success: {0}'.format(get_ip_addr())}, 200)
+        except Exception as e:
+            app.logger.error(e)
+            raise InternalServerError('Healthcheck failed: {0}: {1}'.format(get_ip_addr(), e))
+...
+```
 
 57. Click **Save** button.
 
@@ -340,11 +363,11 @@ option_settings:
 60. You can use `cloudalbum-v1.0.zip` file to deploy ElasticBeanstalk. Refer to below link.
  * https://github.com/aws-kr-tnc/moving-to-serverless-renew/raw/master/resources/cloudalbum_v1.0.zip
 
-* However, you can make a zip file using following command.
+* If you want, you can make a your own zip file using following command.
   
 ```console
-mkdir ~/environment/deploy
-cd ~/environment/moving-to-serverless-renew/LAB02/backend/
+mkdir -p ~/environment/deploy
+cd ~/environment/LAB02/backend/
 zip -r ~/environment/deploy/cloudalbum-v1.0.zip .
 ```
 
@@ -354,17 +377,17 @@ zip -r ~/environment/deploy/cloudalbum-v1.0.zip .
 
     <img src=./images/lab02-task5-deploy.png width=500>
 
-63. Click **Deploy** button. When the deployment completes successfully, you will see the 'Health OK' message in your browser.
+63. Click **Deploy** button. When the deployment completes successfully, you will see the **'Health OK'** message in your browser.
 
 64. You can test the Application by calling the following URL.
- * `http://<ElasticBeanstalk URL>/users/ping`
+ * `http://<ElasticBeanstalk URL>/admin/health_check`
 
 
 65. Now, let's run following command to build front-end application.
 
 * Before, build we need to modify `.env` file to change backend server end point. We will use ElasticBeastalk URL as a backend server end point.
 
-* open `~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env` and modify it like below.
+* open `~/environment/frontend/cloudalbum/.env` and modify it like below.
 ```console
 //AXIOS api request time-out
 VUE_APP_TIMEOUT=15000
@@ -385,7 +408,7 @@ VUE_APP_S3_PRESIGNED_URL=false
 66. Let's build front-end application.
 
 ```console
-cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/
+cd ~/environment/frontend/cloudalbum/
 npm run build
 ```
 * You can see similar messages below, if you complete the build.
@@ -398,6 +421,12 @@ npm run build
 ```
 
 67. Now, move front-end application to Amazon S3.
+
+* We need to change default S3 block public access policy for frontend application. Check your S3 policy.
+
+    <img src=./images/lab02-task4-s3-bucket-public.png width=500>
+
+
 ```console
 aws s3 mb s3://cloudalbum-<your-initial>
 ```
@@ -407,15 +436,19 @@ aws s3 mb s3://cloudalbum-<your-initial>
 make_bucket: cloudalbum-<your-initial>
 ```
 
+* We will use this bucket until end of this hands-on, please copy and paste your **bucket name** into your notes pad.
+
 * Copy front-end to S3 bucket and enable `Static website hosting`.
 ```console
-cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/dist
+cd ~/environment/frontend/cloudalbum/dist
 aws s3 sync . s3://cloudalbum-<your-initial>/ --acl public-read
 aws s3 website s3://cloudalbum-<your-initial>/ --index-document index.html
 ``` 
 
 68. Connect to front-end via your browser. Here is S3 URL rule pattern.
  * `http://<BUCKET NAME>.s3-website-<REGION CODE>.amazonaws.com`
+
+ * Currently, both backend and frontend are configured to communicate with **http**. (not https)
 
  * For example, if your frontend bucket name is 'frontend-1234' and the region you use is Singapore (ap-southeast-1):
    * http://frontend-1234.s3-website-ap-southeast-1.amazonaws.com
@@ -425,7 +458,7 @@ aws s3 website s3://cloudalbum-<your-initial>/ --index-document index.html
  <img src="./images/lab01-08.png" width=500>
 
 
-69. Test the following features to make sure your application is working well.
+69. Enjoy the following features of your application.
 
 <img src=./images/lab01-02.png width=800>
 
@@ -445,11 +478,19 @@ aws s3 website s3://cloudalbum-<your-initial>/ --index-document index.html
 
 
 72. Click the **Apply** button. let's wait until the configuration is applied.
- * We have modified our application to use Elasticache as a session store. So CloudAlbum works well in AutoScaling environment. **To confirm this, log in and press Ctrl + R or F5 to confirm that the service instance changes via page refresh.**
+ * We have modified our application to use Elasticache as a session store. So CloudAlbum works well in AutoScaling environment. 
+ 
+ * **To confirm this**, we can run below script in your Cloud9 terminal.
+ ```console
+ watch -n 1 http http://<ElasticBeanstalk URL>/admin/health_check
+ ```
+or
+```console
+while true; do http http://<ElasticBeanstalk URL>; sleep 1; done
+```
 
-> 그림 교채 필요
+* You should replace `<ElasticBeanstalk URL>` to your own URL. You can see that the load balancer distributes traffic across two instances.
 
-<img src=./images/lab02-task5-reload.png width=500>
 
 73. Test the deployed application and explore the ElasticBeastalk console. 
 
@@ -476,7 +517,7 @@ aws s3 website s3://cloudalbum-<your-initial>/ --index-document index.html
 
 
 ## LAB GUIDE LINKS
-* [LAB 01 - Take a look around](LAB01.md)
-* [LAB 02 - Building and deploying your application in HA environment](LAB02.md)
-* [LAB 03 - Moving to AWS serverless](LAB03.md)
-* [LAB 04 - Serverless with AWS Chalice](LAB04.md)
+* [Lab 1: CloudAlbum with 3-tier Architecture](LAB01.md)
+* [Lab 2: CloudAlbum with 3-tier architecture and high availability](LAB02.md)
+* [Lab 3: CloudAlbum with Serverless Architecture - Part 1](LAB03.md)
+* [Lab 4: CloudAlbum with Serverless Architecture - Part 2](LAB04.md)

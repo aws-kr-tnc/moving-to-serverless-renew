@@ -7,12 +7,12 @@
   * Download `generate_instance_profile.sh`.
 
 ```console
-wget https://raw.githubusercontent.com/aws-kr-tnc/moving-to-serverless-workshop-1d/master/resources/generate_instance_profile.sh
+wget https://raw.githubusercontent.com/aws-kr-tnc/moving-to-serverless-renew/master/resources/generate_instance_profile.sh
 ```
 * If you want, **review** the `generate_instance_profile.sh` file.
 ```console
-wget https://raw.githubusercontent.com/aws-kr-tnc/moving-to-serverless-workshop-1d/master/resources/workshop-cloud9-instance-profile-role-trust.json
-wget https://raw.githubusercontent.com/aws-kr-tnc/moving-to-serverless-workshop-1d/master/resources/workshop-cloud9-policy.json
+wget https://raw.githubusercontent.com/aws-kr-tnc/moving-to-serverless-renew/master/resources/workshop-cloud9-instance-profile-role-trust.json
+wget https://raw.githubusercontent.com/aws-kr-tnc/moving-to-serverless-renew/master/resources/workshop-cloud9-policy.json
 
 PARN=$(aws iam create-policy --policy-name workshop-cloud9-policy --policy-document file://workshop-cloud9-policy.json --query "Policy.Arn" --output text)
 aws iam create-role --role-name workshop-cloud9-instance-profile-role --assume-role-policy-document file://workshop-cloud9-instance-profile-role-trust.json

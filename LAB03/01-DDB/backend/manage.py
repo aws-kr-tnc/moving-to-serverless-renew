@@ -49,6 +49,7 @@ def seed_db():
         test_user.save()
     except Exception as e:
         app.logger.error(e)
+    print(user)
 
 
 if __name__ == '__main__':
