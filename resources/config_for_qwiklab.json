@@ -1,0 +1,11 @@
+{
+  "version": "2.0",
+  "app_name": "cloudalbum",
+  "stages": {
+    "dev": {
+      "api_gateway_stage": "api",
+      "manage_iam_role": false,
+      "iam_role_arn": "<CHALICE_ROLE_ARN>"
+    }
+  }
+}
