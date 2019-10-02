@@ -7,8 +7,8 @@
     :copyright: © 2019 written by Dayoungle Jun, Sungshik Jou.
     :license: MIT, see LICENSE for more details.
 """
-import datetime
 import os
+import datetime
 from os import environ
 from boto3.session import Session
 
@@ -37,7 +37,7 @@ class BaseConfig:
 
     # S3
     S3_PHOTO_BUCKET = os.getenv('S3_PHOTO_BUCKET', None)
-    S3_PRESIGNED_URL_EXPIRE_TIME = os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', 3600)
+    S3_PRESIGNED_URL_EXPIRE_TIME = int(os.getenv('S3_PRESIGNED_URL_EXPIRE_TIME', '3600'))
 
 
 class DevelopmentConfig(BaseConfig):
