@@ -29,11 +29,22 @@ The ***Serverless*** Framework (https://serverless.com) is an MIT open source fr
 
 **NOTE:** These ***serverless frameworks*** have many similarities. You can choose one framework from the above. In this hands-on lab, **you will use AWS Chalice**.
 
+**NOTE:** You can download all source code related this lab like below.
+```console
+cd ~/environment
+wget https://raw.githubusercontent.com/aws-kr-tnc/moving-to-serverless-renew/master/resources/cloudalbum-mts-dist-src.zip
+unzip cloudalbum-mts-dist-src.zip
+mv cloudalbum-mts-dist-src/* .
+rm -R cloudalbum-mts-dist-src
+rm cloudalbum-mts-dist-src.zip
+```
+
 ## TASK 1 : Setup virtualenv
 ***virtualenv*** is a tool to create isolated Python environments. It is easy to use. We will create virtualenv for AWS Chalice microframework environment.
 
 * **We alrady set up virtualenv LAB0 01 - TASK 1**
   * You can refer detailed instructions in `LAB0 01 - TASK 1`
+
 
 1. Make virtualenv for chalice application.
 
@@ -67,7 +78,7 @@ chalice 1.10.0, python 3.6.8, linux 4.14.133-88.112.amzn1.x86_64
 4. Install required packages for this lab. 
 
 ```Console
-pip install -r ~/environment/moving-to-serverless-workshop-1d/LAB04/02-CloudAlbum-Chalice/cloudalbum/requirements.txt
+pip install -r ~/environment/LAB04/02-CloudAlbum-Chalice/cloudalbum/requirements.txt
 ```
 
 ## TASK 2 : Build a simple AWS Chalice serverless app.
@@ -76,10 +87,10 @@ This TASK will provide an introduction on how to use AWS Chalice and provide ins
 5. We installed AWS Chalice serverless framework previous step, it is time to create your first Chalice application. Run the ***chalice new-project*** command to create a project called ***myapp***:
 
 ```console
-mkdir -p ~/environment/moving-to-serverless-renew/LAB04/01-Chalice/
+mkdir -p ~/environment/LAB04/01-Chalice/
 ```
 ```console
-cd ~/environment/moving-to-serverless-renew/LAB04/01-Chalice/
+cd ~/environment/LAB04/01-Chalice/
 ```
 ```console
 chalice new-project myapp
@@ -94,7 +105,7 @@ tree -a .
 ```
 * output: 
 ```
-<username>:~/environment/moving-to-serverless-workshop-1d/LAB04/01-Chalice (master) $ tree -a .
+<username>:~/environment/LAB04/01-Chalice (master) $ tree -a .
 
 .
 └── myapp
@@ -202,7 +213,7 @@ def user_add():
 * Review above code for new ***app.py***. ***Response*** and ***logging*** are importted from top of the ***app.py*** file. Debug option is enabled for the application logging. ***user_info*** and ***user_add*** functions are added.
 
 * Replace ***app.py*** file with the contents of above source code.
-  * ***app.py*** file is located in ***~/environment/moving-to-serverless-renew/LAB04/01-Chalice/myapp/app.py***
+  * ***app.py*** file is located in ***~/environment/LAB04/01-Chalice/myapp/app.py***
 
 9. Stop the previous ***chalice local --port 8080*** command with **CTRL+C** and run the new version of ***myapp***.
 ```console
@@ -281,7 +292,7 @@ Run, Chalice local server and then request `/introspect`
 chalice local --port 8080
 ```
 
-13. Stop the previous *chalice local --port 8080* command with *CTRL+C* and **deploy** it to **API Gateway** and **Lambda**. You can deploy this application using Chalice CLI command. (Make sure, you working directory is ***~/environment/moving-to-serverless-workshop-1d/LAB04/01-Chalice/myapp***)
+13. Stop the previous *chalice local --port 8080* command with *CTRL+C* and **deploy** it to **API Gateway** and **Lambda**. You can deploy this application using Chalice CLI command. (Make sure, you working directory is ***~/environment/LAB04/01-Chalice/myapp***)
 ```console
 chalice deploy
 ```
@@ -381,7 +392,7 @@ x-amzn-RequestId: 519a0bcd-9c8a-11e8-8997-5550927d6916
 
 ```
 
-* You can check the files of ***deployed*** and ***deployments*** directories. (~/environment/moving-to-serverless-workshop-1d/LAB04/01-Chalice)
+* You can check the files of ***deployed*** and ***deployments*** directories. (~/environment/LAB04/01-Chalice)
 ```
 tree -a .
 ```
@@ -413,7 +424,7 @@ tree -a .
 
 16. Delete deployed application
 ```console
-cd ~/environment/moving-to-serverless-workshop-1d/LAB04/01-Chalice/myapp
+cd ~/environment/LAB04/01-Chalice/myapp
 ```
 ```console
 chalice delete
@@ -459,10 +470,10 @@ Finally, all servers are gone!
 <img src=./images/lab04-task2-serverless-full.png width=700>
 
 
-17. Let's take a look around ***~/environment/moving-to-serverless-renew/LAB04/02-CloudAlbum-Chalice/cloudalbum/*** directory.
+17. Let's take a look around ***~/environment/LAB04/02-CloudAlbum-Chalice/cloudalbum/*** directory.
 
 ```console
-cd ~/environment/moving-to-serverless-renew/LAB04/02-CloudAlbum-Chalice/cloudalbum/
+cd ~/environment/LAB04/02-CloudAlbum-Chalice/cloudalbum/
 ```
 <img src=./images/lab03-task3-chalice-app-structure.png width=700>
 
@@ -736,7 +747,7 @@ def upload():
 
 24. Let's run CloudAlbum backend developed with AWS Chalice.
 ```console
-cd ~/environment/moving-to-serverless-renew/LAB04/02-CloudAlbum-Chalice/cloudalbum
+cd ~/environment/LAB04/02-CloudAlbum-Chalice/cloudalbum
 pip install -r requirements.txt
 chalice local --port 5000
 ```
@@ -784,11 +795,51 @@ Server: BaseHTTP/0.6 Python/3.6.6
     "refreshToken": "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ.OZN6BelUMYsuDIPYz6jCNV4z1DIO3WkH_FDxgibdRG8dA3bWF1ImRT9sLP3w9uCcP7Vii3XX3CPIvPLO2FP6NdxXUosNItvlC93VfateEAbasAiDXCAxr3OacwWKa6LZvx2lV19_49TRN9xPOmdTlId1k3fC25dnOFAt6wpKyD1O8nPboBoAcT57mw0O51tcIV5NmkWXdYj0DiOlTjL3CMwTRgM7tY4bXAq8BIZHrnHi-YQZRuJAP3ZoC5HlxfwWQGXivCtnYCMEPcMHp5EplCbs0qLqYe0XgygOuVKXCz2SglVdBHPj7OSKAl7muMOU0ysvcUnO7vfL_rbBZFYgyw.JKcvifCXPEqguuX9.f9rGGQaQCiSms-wQMRaegnz3VJVHmDpuPNCp40di2ekNP-w1DBn4p3Di0ZNq6l_WhmKX9cQXgU5YBjBsXdtEEBbqUU-f-bvt3tJ8yud_eYm5ssFQXCySaP2xpahbcy9ZBRLC7FpsSa873uVXaMjOzILHgT4fGvKcfwX9sZwdsHsnFUo32c7UX5gjgPSRELfOqj5gcz9iX2lbqb69_mHhPQ39HzZV4l6d4Nnsh7ndJn2VB3ax2NIa6B-EJjkrK9HcojMe97eTSi7S-jbKGq-nLKJT3h3RCPTZDIbHiTnsAhFLr3ArHfRnvpZE1XbD2LIxWm8JSVhOZpjfo86I0ikdXG7tIBSc5vi-jvaOEvoSHBO-6uj9XGNDE3ZbM5Ws2EYXB1JG-WSO6-MLeUQf4KaHTly7P3rZc8vdQbBKS8it4KIMfHicfZVAQe3V46bA9AymMiLl6xv9D58ehd5RYZ6FeT-2COoZWO0R6H6XJvG8evucSIRg8qlDnGEHkM0vzCWR_bySaieppCKXexOHrvyj-uNGe31JCmrsnAsUbCphuSGZ2621n7Hw8-of0lJS6FP5B1f2TbZFFM-Z21UFIavzIghy7SkqwUuP7fwy7c_2dCOCTI-Vy0b13PLW223dbHgKXxbIxqA8GE66bFyeKclV-2_ishVJK4GsGkjuk-9UnC5rZny99KCJlAISjPCxfWVLkY37F1wWBUgGlE-TQg7eGX-RiVtzgTVxL1E7fjRAX6-E8wAdgF8tLoa3h9zrunpJQW5aLfv7Of6xUx8zILoyit5oJ9iRxbB7SZe82EiJgePuRxgbUsCC65p-ubPpbn0-rdc1ojPwtoknKTnwiFiwDVrJEJepbOptoHt5BlSIv-l-8RyMFgl0LWYmlPJ31LqLJY763ic4Zq9oKQfQCRucSQXfgKlwIVl0L_lz4AIDc0NWVQYcZlTJBU3PGW2bh3voPfW8cWrmI9qzD10m5Irt23BDB5T9neaVFr4pWzJWqBsu_pFB3q2GKOPQW2BkGSPECcO7rxVLXOoDon8Fpi7nQVv1c-a1eeG4256BtCmkOqZ0H2R3lT2jPykZvT03yjj4NqVjYFxQ8Nxy4ST-Gx_DufNDHgsH5hxywW9uh5yvog227y8tso7BkCFohK9x8fsw-omI-ux0e8CSutc1dC0zugS0AWmyXqNRsCci0pd_BnjFgMmHA3LprahK1JHtvVBBvxHIctpApdt_SJw5y7dZ9NO0JXyvb9atjNsmp_LaotSV1c3zqx446llIZjd44zDom3EP8hoL9mT3l20a57OP0fG241BjtKP5ZP2RgwfQWtkmXfb3T6SSk1QI2N5mzkhE9I5XRBnaYoeq.dNBWDdZYrmpLmFF2DCPbvw"
 }
 
+```
 
+ 25. Now we can run unittest to check if our application is working properly.
+
+```console
+cd ~/environment/LAB04/02-CloudAlbum-Chalice/cloudalbum/tests
+pip install pytest pytest-cov
+```
+
+* Run pytest like below.
+```console
+pytest -v -W ignore::DeprecationWarning
+```
+* output
+```console
+============================ test session starts ============================
+platform linux -- Python 3.6.8, pytest-5.1.2, py-1.8.0, pluggy-0.13.0 -- /home/ec2-user/environment/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/ec2-user/environment/LAB04/02-CloudAlbum-Chalice/cloudalbum/tests
+plugins: cov-2.7.1
+collected 16 items
+
+test_config.py::TestConfig::test_cognito_client_id PASSED             [  6%]
+test_config.py::TestConfig::test_cognito_client_secret PASSED         [ 12%]
+test_config.py::TestConfig::test_cognito_pool_id PASSED               [ 18%]
+test_config.py::TestConfig::test_config PASSED                        [ 25%]
+test_config.py::TestConfig::test_ddb_rcu PASSED                       [ 31%]
+test_config.py::TestConfig::test_ddb_wcu PASSED                       [ 37%]
+test_config.py::TestConfig::test_s3_config PASSED                     [ 43%]
+test_photos.py::TestPhotoService::test_delete PASSED                  [ 50%]
+test_photos.py::TestPhotoService::test_list PASSED                    [ 56%]
+test_photos.py::TestPhotoService::test_upload PASSED                  [ 62%]
+test_users.py::TestUserService::test_bad_signin PASSED                [ 68%]
+test_users.py::TestUserService::test_bad_signup PASSED                [ 75%]
+test_users.py::TestUserService::test_signin PASSED                    [ 81%]
+test_users.py::TestUserService::test_signout PASSED                   [ 87%]
+test_users.py::TestUserService::test_signup PASSED                    [ 93%]
+test_users.py::TestUserService::test_signup_duplicate_email PASSED    [100%]
+
+============================ 16 passed in 51.61s ============================
 ```
 
 
-25. Now, you can deploy CloudAlbum application with chalice.
+
+26. Now, you can deploy CloudAlbum application with chalice.
 ```console
 chalice deploy --no-autogen-policy
 ```
@@ -810,11 +861,11 @@ Resources deployed:
 ```
 
 
-26. Look into your **Lambda Console.**
+27. Look into your **Lambda Console.**
 <img src=./images/lab04-task2-lambda-console.png width=700>
 
 
-27. Look into your **API Gateway Console.**
+28. Look into your **API Gateway Console.**
 <img src=./images/lab04-task2-apigw-console.png width=700>
 
 
@@ -826,7 +877,7 @@ Resources deployed:
 <img src=./images/lab04-task2-apigw-console-auth.png width=700>
 
 
-28. Now, configure our front-end to S3 bucket.
+29. Now, configure our front-end to S3 bucket.
 
 * First, check our serverles backend API URL.
 ```console
@@ -836,7 +887,7 @@ chalice url
 ```console
 https://3g34rwxxxx.execute-api.ap-southeast-1.amazonaws.com/api/
 ```
-* Now, go to frontend directory, then open `.env` file in your Cloud9 editor. (`~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/.env`)
+* Now, go to frontend directory, then open `.env` file in your Cloud9 editor. (`~/environment/frontend/cloudalbum/.env`)
 * It contains below default properties.
 ```console
 //AXIOS api request time-out
@@ -851,13 +902,15 @@ VUE_APP_API=<YOUR serverless backend API URL>
 //Is using S3 presinged URL?!
 VUE_APP_S3_PRESIGNED_URL=true
 
+//For LAB04 AWS Chalice serverless framework
+VUE_APP_USING_CHALICE=true
 ```
-* You should setup, `VUE_APP_API` URL and save this file.
+* You should setup, **VUE_APP_API** URL and save this file. In this LAB the value of **VUE_APP_S3_PRESIGNED_URL** and **VUE_APP_USING_CHALICE** must be **true**.
 
-29. Let's build front-end application.
+30. Let's build front-end application.
 
 ```console
-cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/
+cd ~/environment/frontend/cloudalbum/
 npm run build
 ```
 * You can see similar messages below, if you complete the build.
@@ -869,16 +922,16 @@ npm run build
  INFO  Check out deployment instructions at https://cli.vuejs.org/guide/deployment.html
 ```
 
-30. Now, move front-end application to Amazon S3. (It might be same with `/cloudalbum/S3_PHOTO_BUCKET` variable.)
+31. Now, move front-end application to Amazon S3. (It might be same with `/cloudalbum/S3_PHOTO_BUCKET` variable.)
 
 * Copy front-end to S3 bucket and enable `Static website hosting`.
 ```console
-cd ~/environment/moving-to-serverless-renew/LAB01/frontend/cloudalbum/dist
+cd ~/environment/frontend/cloudalbum/dist
 aws s3 sync . s3://frontend-<your-initial>/ --acl public-read
 aws s3 website s3://frontend-<your-initial>/ --index-document index.html
 ``` 
 
-31. Connect to front-end via your browser. Here is S3 URL rule pattern.
+32. Connect to front-end via your browser. Here is S3 URL rule pattern.
  * http://<BUCKER NAME>.s3-website-<REGION CODE>.amazonaws.com
 
  * For example, if your frontend bucket name is 'frontend-1234' and the region you use is Singapore (ap-southeast-1):
@@ -891,7 +944,7 @@ aws s3 website s3://frontend-<your-initial>/ --index-document index.html
 
 
 
-32. Enjoy Serverless CloudAlbum service.
+33. Enjoy Serverless CloudAlbum service.
 <img src=./images/lab01-02.png width=700>
 
 * Sign in / up
@@ -907,9 +960,9 @@ aws s3 website s3://frontend-<your-initial>/ --index-document index.html
 ## TASK 3 : Remove your AWS resources
 **CAUTION**: If you have completed this hands-on lab so far, please delete the AWS resources which used in this lab. You may incur an unwanted fee.
 
-32. Delete deployed application
+34. Delete deployed application
 ```console
-cd ~/environment/moving-to-serverless-workshop-1d/LAB04/02-CloudAlbum-Chalice/cloudalbum/
+cd ~/environment/LAB04/02-CloudAlbum-Chalice/cloudalbum/
 ```
 ```console
 chalice delete
@@ -930,17 +983,17 @@ aws ssm delete-parameter --name "/cloudalbum/DDB_RCU"
 aws ssm delete-parameter --name "/cloudalbum/DDB_WCU"
 ```
 
-34. Delete S3 
+35. Delete S3 
 ```console
 aws s3 rm s3://frontend-<INITIAL> --force
 ```
 
-35. Delete DynamoDB
+36. Delete DynamoDB
 ```console
 aws dynamodb delete-table --table-name "User"
 aws dynamodb delete-table --table-name "Photo"
 ```
-36. Delete Cognito User pool
+37. Delete Cognito User pool
 * Go to Cognito
 * Click **Manage User Pool**.
 * Click **cloudalbum-pool-\<INITIAL\>**.
@@ -949,7 +1002,7 @@ aws dynamodb delete-table --table-name "Photo"
 * Select **General Setting** menu in the left.
 * Click **Delete pool** button in the upper right corner.
 
-37. Delete Cloud9
+38. Delete Cloud9
 * Go to Cloud9
 * Select **workshop-\<INITIAL\>**
 * Click **Delete** button

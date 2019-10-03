@@ -8,16 +8,17 @@
     :license: MIT, see LICENSE for more details.
 """
 
-import boto3
-import logging
 import uuid
 import json
-from botocore.exceptions import ParamValidationError
+import boto3
+import base64
+import logging
 from chalicelib import cognito
 from chalicelib.config import cors_config
 from chalicelib.util import pp, save_s3_chalice, get_parts, delete_s3
-from chalice import Chalice, Response, ConflictError, BadRequestError, AuthResponse, ChaliceViewError
 from chalicelib.model_ddb import Photo, create_photo_info, ModelEncoder, with_presigned_url
+from chalice import Chalice, Response, ConflictError, BadRequestError, AuthResponse, ChaliceViewError
+from botocore.exceptions import ParamValidationError
 
 app = Chalice(app_name='cloudalbum')
 app.debug = True
@@ -40,30 +41,6 @@ def jwt_auth(auth_request):
         return AuthResponse(routes=[''], principal_id='')
 
 
-@app.route('/photos/file', methods=['POST'], cors=cors_config,
-           authorizer=jwt_auth, content_types=['multipart/form-data'])
-def upload():
-    """
-    File upload with multipart/form data.
-    :return:
-    """
-    form = get_parts(app)
-    filename_orig = form['filename_orig'][0].decode('utf-8')
-    extension = (filename_orig.rsplit('.', 1)[1]).lower()
-    try:
-        current_user = cognito.user_info(cognito.get_token(app.current_request))
-        filename = "{0}.{1}".format(uuid.uuid4(), extension)
-        filesize = save_s3_chalice(form['file'][0], filename, current_user['email'], app.log)
-
-        pp.pprint(current_user)
-        new_photo = create_photo_info(current_user['user_id'], filename, filesize, form)
-        new_photo.save()
-        return Response(status_code=200, body={'ok': True},
-                        headers={'Content-Type': 'application/json'})
-    except Exception as e:
-        raise ChaliceViewError(e)
-
-
 @app.route('/photos', methods=['GET'], cors=cors_config,
            authorizer=jwt_auth, content_types=['application/json'])
 def photo_list():
@@ -78,6 +55,31 @@ def photo_list():
         [data['photos'].append(with_presigned_url(current_user, photo)) for photo in photos]
         body = json.dumps(data, cls=ModelEncoder)
         return Response(status_code=200, body=body,
+                        headers={'Content-Type': 'application/json'})
+    except Exception as e:
+        raise ChaliceViewError(e)
+
+
+@app.route('/photos/file', methods=['POST'], cors=cors_config,
+           authorizer=jwt_auth, content_types=['multipart/form-data'])
+def upload():
+    """
+    File upload with multipart/form data.
+    :return:
+    """
+    form = get_parts(app)
+    filename_orig = form['filename_orig'][0].decode('utf-8')
+    extension = (filename_orig.rsplit('.', 1)[1]).lower()
+    base64_image = form['base64_image'][0].decode('utf-8').replace('data:image/jpeg;base64,', '')
+    imgdata = base64.b64decode(base64_image)
+
+    try:
+        current_user = cognito.user_info(cognito.get_token(app.current_request))
+        filename = "{0}.{1}".format(uuid.uuid4(), extension)
+        filesize = save_s3_chalice(imgdata, filename, current_user['email'], app.log)
+        new_photo = create_photo_info(current_user['user_id'], filename, filesize, form)
+        new_photo.save()
+        return Response(status_code=200, body={'ok': True},
                         headers={'Content-Type': 'application/json'})
     except Exception as e:
         raise ChaliceViewError(e)

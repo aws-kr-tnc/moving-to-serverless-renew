@@ -1,6 +1,5 @@
 import axiosInstance from '@/plugins/axios';
 
-
 const fileUpload = (file, name = 'file', param) => {
   const apiUri = '/photos/file';
   const formData = new FormData();
@@ -18,9 +17,6 @@ const fileUpload = (file, name = 'file', param) => {
   formData.append('nation', param.nation);
   formData.append('address', param.address);
   formData.append('filename_orig', param.filename_orig);
-
-  console.log(formData.keys());
-
 
   const config = {
     headers: {

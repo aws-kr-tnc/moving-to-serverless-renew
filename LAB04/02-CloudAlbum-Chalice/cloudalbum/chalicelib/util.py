@@ -34,7 +34,6 @@ def get_parts(app):
     return parsed
 
 
-
 def get_password_reset_url():
     """
     User password reset page provided by cognito.
@@ -98,13 +97,12 @@ def save_s3_chalice(bytes, filename, email, logger):
             f.write(bytes)
             statinfo = os.stat(temp_file)
             logger.debug(statinfo)
-
-        s3_client.upload_file(temp_file, conf['S3_PHOTO_BUCKET'], key)
-        thumb_path = make_thumbnails('/tmp', filename, logger)
-        logger.debug('thumb_path for upload: {0}'.format(thumb_path))
-        logger.debug('prefix_thumb: {0}'.format(prefix_thumb))
-        logger.debug(os.stat(temp_file))
-        s3_client.upload_file(thumb_path, conf['S3_PHOTO_BUCKET'], key_thumb)
+            s3_client.upload_file(temp_file, conf['S3_PHOTO_BUCKET'], key)
+            thumb_path = make_thumbnails('/tmp', filename, logger)
+            logger.debug('thumb_path for upload: {0}'.format(thumb_path))
+            logger.debug('prefix_thumb: {0}'.format(prefix_thumb))
+            logger.debug(os.stat(temp_file))
+            s3_client.upload_file(thumb_path, conf['S3_PHOTO_BUCKET'], key_thumb)
     except Exception as e:
         logger.error('Error occurred while saving file:%s', e)
         raise ChaliceViewError('Error occurred while saving file.')

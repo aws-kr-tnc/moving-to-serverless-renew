@@ -105,3 +105,5 @@ venv.bak/
 # pycharm
 .idea
 
+# chalice deployments
+LAB04/02-CloudAlbum-Chalice/cloudalbum/.chalice/deployments
