@@ -162,6 +162,12 @@ import service from '@/service';
 
 const photoApi = service.Photo;
 
+function getBase64(file, callback) {
+  const reader = new FileReader();
+  reader.addEventListener('load', () => callback(reader.result));
+  reader.readAsDataURL(file);
+}
+
 export default {
   name: 'FileUpload',
   components: {
@@ -185,6 +191,7 @@ export default {
       filename_orig: '',
       requiredRule: [v => !!v || 'Required!'],
       usingChalice: process.env.VUE_APP_USING_CHALICE,
+      base64Data: '',
     };
   },
   computed: {
@@ -220,7 +227,9 @@ export default {
       const self = this;
       try {
         if (!this.$refs.pictureInput.file) throw new Error('Old browser. No support for Filereader API');
-
+        getBase64(this.$refs.pictureInput.file, (base64Data) => {
+          this.base64Data = base64Data;
+        });
         // eslint-disable-next-line func-names
         EXIF.getData(this.$refs.pictureInput.file, function () {
           self.exifObj = this.exifdata;
@@ -254,7 +263,7 @@ export default {
       let resp;
       try {
         if (this.usingChalice === 'true') {
-          resp = await photoApi.fileUploadBase64(this.$refs.pictureInput.file, 'file', params);
+          resp = await photoApi.fileUploadBase64(this.base64Data, 'file', params);
         } else {
           resp = await photoApi.fileUpload(this.$refs.pictureInput.file, 'file', params);
         }
