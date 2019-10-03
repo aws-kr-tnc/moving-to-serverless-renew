@@ -396,10 +396,13 @@ VUE_APP_TIMEOUT=15000
 //VUE_APP_API=http://127.0.0.1:5000
 
 //For deployment
-VUE_APP_API=http://<DEPLOYED_SERVER>
+//VUE_APP_API=http://<DEPLOYED_SERVER>
 
 //Is using S3 presinged URL?!
 VUE_APP_S3_PRESIGNED_URL=false
+
+//For LAB04 AWS Chalice serverless framework
+VUE_APP_USING_CHALICE=false
 
 ```
 

@@ -1,6 +1,16 @@
 # Lab 3: CloudAlbum with Serverless Architecture - Part 1
 Now, we will move the components of legacy application which has constraints of scalability and high availability to serverless environment one by one.
 
+**NOTE:** You can download all source code related this lab like below.
+```console
+cd ~/environment
+wget https://raw.githubusercontent.com/aws-kr-tnc/moving-to-serverless-renew/master/resources/cloudalbum-mts-dist-src.zip
+unzip cloudalbum-mts-dist-src.zip
+mv cloudalbum-mts-dist-src/* .
+rm -R cloudalbum-mts-dist-src
+rm cloudalbum-mts-dist-src.zip
+```
+
 ## TASK 1. Permission grant for Cloud9
 
 AWS Cloud9 is configured with **AWS managed temporary credentials** as default. However we will **not use** AWS managed temporary credentials due to our application need various service such as DynamoDB, S3, Lambda and so on. We will use our own policy for this workshop.
@@ -618,13 +628,17 @@ CloudAlbum stored user uploaded images into disk based storage(EBS or NAS). Howe
 VUE_APP_TIMEOUT=15000
 
 //For test/development api end-point
-VUE_APP_API=http://127.0.0.1:5000
+//VUE_APP_API=http://127.0.0.1:5000
 
 //For deployment
 //VUE_APP_API=http://<DEPLOYED_SERVER>
 
 //Is using S3 presinged URL?!
-VUE_APP_S3_PRESIGNED_URL=true
+VUE_APP_S3_PRESIGNED_URL=false
+
+//For LAB04 AWS Chalice serverless framework
+VUE_APP_USING_CHALICE=false
+
 ```
 
 18. Now, let's build front-end application for handle S3 presigned URL.
@@ -1442,52 +1456,6 @@ npm run serve
 
 In this LAB, Amazon RDS and EFS have been replaced by the serverless services Amazon DynamoDB and S3. But still our application runs on EC2. In the next hands-on lab, we will migrate our application to Lambda and API Gateway.
 
-## Optional TASK: Deploy after remove Amazon RDS and EFS
-In the previous hands-on lab, we provisioned resources and deployed the application through ElasticBeanstalk.
-
-Our application no longer requires RDS and EFS. It uses Amazon DynamoDB, a fully managed serverless service, instead of instance-based Amazon RDS. In addition, instead of EFS, it uses S3, a less expensive, more scalable, and more featureful serverless storage.
-
-Let's deploy our new application to the ElasticBeanstalk.
-
-79. Make a zip file for ElasticBeanstalk deployment.
-```console
-mkdir -p ~/environment/deploy
-cd ~/environment/LAB03/04-Xray/backend/
-zip -r ~/environment/deploy/cloudalbum-v2.0.zip .
-```
- * Alternatively, You can use pre-bundled zip file here : https://github.com/aws-kr-tnc/moving-to-serverless-renew/raw/master/resources/cloudalbum_v2.0.zip
-
-80. Let's remove Amazon RDS. First, go to the RDS console. Click **Databases** menu and then choose a database like below. Then click **Action** menu choose **Delete**.
-
-    <img src=./images/lab04-optional-rds-delete.png width=500>
-
-
-81. Remove your EFS. Choose your file-system(**shared-storage**) and click the **Actions** button then choose **Delete file system**. Confirm that the EFS resource has been deleted. 
-
-    <img src=./images/lab02-task7-efs-delete.png width=500>
-
-82. Go to ElasticBeanstalk environment configuration menu and then choose **Configuration** -> **Software** -> **Modify**. 
-
-    <img src=./images/lab04-optional-eb-config-1.png width=500>
-
-83. Enable X-ray daemon in the **Modify Software** page.
-
-    <img src=./images/lab04-optional-eb-xray.png width=500>
-
-84. Remove properties that are no longer used in the **Modify Software** page.
-
-    <img src=./images/lab04-optional-eb-config-2.png width=500>
-
-85. Add some properties in the **Modify Software** page.
- * Configure following variables
-   * S3_PHOTO_BUCKET
-   * COGNITO_POOL_ID
-   * COGNITO_CLIENT_ID
-   * COGNITO_CLIENT_SECRET
-
-    <img src=./images/lab04-optional-eb-config-3.png width=500>
-
-* Click the **Apply** button.
 
 
 # Congratulation! You completed LAB03.
