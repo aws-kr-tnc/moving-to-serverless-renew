@@ -10,6 +10,7 @@
 import boto3
 import pytest
 import unittest
+import base64
 from app import app
 from chalice.config import Config
 from chalice.local import LocalGateway
@@ -63,6 +64,8 @@ class TestPhotoService(BaseTestCase):
     @pytest.fixture(autouse=True)
     def multipart_encode(self):
         with open('test_image.jpg', 'rb') as file:
+            base64_image = base64.b64encode(file.read())
+            upload['base64_image'] = base64_image
             fields = [(k, v) for k, v in upload.items()]
             files = [('file', 'test_image.jpg', file)]
             self.multipart_content_type, self.multipart_body = MultipartFormdataEncoder().encode(fields, files)
