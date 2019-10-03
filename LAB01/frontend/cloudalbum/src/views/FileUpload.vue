@@ -184,6 +184,7 @@ export default {
       height: '',
       filename_orig: '',
       requiredRule: [v => !!v || 'Required!'],
+      usingChalice: process.env.VUE_APP_USING_CHALICE,
     };
   },
   computed: {
@@ -245,8 +246,19 @@ export default {
       if (!this.isValide()) return false;
       console.log('Attempting uploading..');
       const params = this.makeParam();
+
+      console.log('========================');
+      console.log(`VUE_APP_USING_CHALICE: ${this.usingChalice}`);
+      console.log('========================');
+
+      let resp;
       try {
-        const resp = await photoApi.fileUpload(this.$refs.pictureInput.file, 'file', params);
+        if (this.usingChalice === 'true') {
+          resp = await photoApi.fileUploadBase64(this.$refs.pictureInput.file, 'file', params);
+        } else {
+          resp = await photoApi.fileUpload(this.$refs.pictureInput.file, 'file', params);
+        }
+
         console.log(resp);
         console.log('Image uploaded successfully ✨');
         this.$swal(
@@ -262,6 +274,7 @@ export default {
         console.log(error);
       }
     },
+
     popupNoExif() {
       this.removeImage();
       this.$swal(
