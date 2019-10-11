@@ -44,17 +44,23 @@ cp ${WORK_DIR}/${ZIP_FOR_LAB} ${CWD}/resources/${ZIP_FOR_LAB}
 
 # Make a zip file for hands-on lab(QL)
 cp ${CWD}/resources/config_for_qwiklab.json ${WORK_DIR}/cloudalbum-mts-dist-src/LAB04/02-CloudAlbum-Chalice/cloudalbum/.chalice/config.json
-cd ${WORK_DIR} && zip -r ${WORK_DIR}/${ZIP_FOR_QL} *
+cd ${WORK_DIR} && zip -r ${WORK_DIR}/${ZIP_FOR_QL} * -x ${ZIP_FOR_LAB}
 cp ${WORK_DIR}/${ZIP_FOR_QL} ${CWD}/resources/${ZIP_FOR_QL}
 
 # Make a zip file for ElasticBeanstalk deploy
 cd ${WORK_DIR}/cloudalbum-mts-dist-src/LAB02/backend/ && zip -r ${WORK_DIR}/${ZIP_FOR_EB} *
+# The reason is not clear, but because the .ebextentions/cloudalbum.config file is not included
+cd ${WORK_DIR}/cloudalbum-mts-dist-src/LAB02/backend/ && zip -u ${WORK_DIR}/${ZIP_FOR_EB} .ebextensions/cloudalbum.config
 cp ${WORK_DIR}/${ZIP_FOR_EB} ${CWD}/resources/${ZIP_FOR_EB}
 
-# Make a zip file for ElasticBeanstalk depoly (DDB, S3, Cognito, X-Ray)
+# Make a zip file for ElasticBeanstalk depoly (with DDB, S3, Cognito, X-Ray)
 cd ${WORK_DIR}/cloudalbum-mts-dist-src/LAB03/04-Xray/backend/ && zip -r ${WORK_DIR}/${ZIP_FOR_EB_V2} *
+# The reason is not clear, but because the .ebextentions/cloudalbum.config file is not included
+cd ${WORK_DIR}/cloudalbum-mts-dist-src/LAB03/04-Xray/backend/ && zip -u ${WORK_DIR}/${ZIP_FOR_EB_V2} .ebextensions/cloudalbum.config
 cp ${WORK_DIR}/${ZIP_FOR_EB_V2} ${CWD}/resources/${ZIP_FOR_EB_V2}
 
+
+## output ##
 echo "-----------------------------------------------------------"
 echo "Now, updated : resources/${ZIP_FOR_LAB}"
 echo "Now, updated : resources/${ZIP_FOR_QL}"

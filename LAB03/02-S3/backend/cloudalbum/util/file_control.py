@@ -199,10 +199,14 @@ def presigned_url_both(filename, email):
     key_origin = "{0}{1}".format(prefix, filename)
     try:
         s3_client = boto3.client('s3')
-
-        # TODO 6 : Implement following solution code to retrieve pre-signed URL from S3.
-        return solution_generate_s3_presigned_url(s3_client, key_thumb, key_origin)
-
+        thumb_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': app.config['S3_PHOTO_BUCKET'], 'Key': key_thumb},
+            ExpiresIn=app.config['S3_PRESIGNED_URL_EXPIRE_TIME'])
+        origin_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': app.config['S3_PHOTO_BUCKET'], 'Key': key_origin},
+            ExpiresIn=app.config['S3_PRESIGNED_URL_EXPIRE_TIME'])
     except Exception as e:
         raise e
     return thumb_url, origin_url

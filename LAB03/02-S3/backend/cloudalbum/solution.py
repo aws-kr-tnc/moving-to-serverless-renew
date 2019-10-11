@@ -85,5 +85,7 @@ def solution_generate_s3_presigned_url(s3_client, key):
     url = s3_client.generate_presigned_url(
         'get_object',
         Params={'Bucket': app.config['S3_PHOTO_BUCKET'],
-                'Key': key})
+                'Key': key},
+        ExpiresIn=app.config['S3_PRESIGNED_URL_EXPIRE_TIME'])
+
     return url

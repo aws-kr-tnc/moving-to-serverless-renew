@@ -481,7 +481,6 @@ aws s3 website s3://cloudalbum-<your-initial>/ --index-document index.html
 
 
 72. Click the **Apply** button. let's wait until the configuration is applied.
- * We have modified our application to use Elasticache as a session store. So CloudAlbum works well in AutoScaling environment. 
  
  * **To confirm this**, we can run below script in your Cloud9 terminal.
  ```console
