@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`App renders the component 1`] = `
+<v-app-stub id="app">
+  <layout-header-stub></layout-header-stub>
+  <layout-body-stub></layout-body-stub>
+  <layout-footer-stub></layout-footer-stub>
+</v-app-stub>
+`;
