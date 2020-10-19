@@ -59,7 +59,7 @@ import { LMap, LTileLayer, LMarker } from 'vue2-leaflet';
 export default {
   name: 'MapDialog',
   components: {
-    LMap, LTileLayer, LMarker
+    LMap, LTileLayer, LMarker,
   },
   props: {
     value: {
