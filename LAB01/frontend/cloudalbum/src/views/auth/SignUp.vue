@@ -102,14 +102,14 @@ export default {
       inputEmail: '',
       inputPassword: '',
       passwordConfirm: '',
-      requiredRule: [v => !!v || 'Required!'],
+      requiredRule: [(v) => !!v || 'Required!'],
     };
   },
   computed: {
     passwordConfirmationRules() {
       return [
         () => (this.inputPassword === this.passwordConfirm) || 'Password must match',
-        v => !!v || 'Confirmation password is required',
+        (v) => !!v || 'Confirmation password is required',
       ];
     },
   },

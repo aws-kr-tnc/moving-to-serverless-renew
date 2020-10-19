@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-import SignIn from './views/auth/SignIn.vue';
 import store from '@/vuex';
+import SignIn from './views/auth/SignIn.vue';
 
 Vue.use(Router);
 

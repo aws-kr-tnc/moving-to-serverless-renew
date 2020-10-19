@@ -1,6 +1,5 @@
 import axiosInstance from '@/plugins/axios';
 
-
 const photoList = () => {
   const apiUri = '/photos/';
 
