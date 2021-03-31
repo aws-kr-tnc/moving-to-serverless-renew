@@ -113,7 +113,7 @@ class FileUpload(Resource):
             raise InternalServerError('File upload failed: {0}'.format(e))
 
 
-@api.route('/')
+@api.route('/', strict_slashes=False)
 class List(Resource):
     @api.doc(
         responses=

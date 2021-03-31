@@ -163,7 +163,7 @@ class InfoUpload(Resource):
             raise InternalServerError('Photo information update failed: {0}'.format(e))
 
 
-@api.route('/')
+@api.route('/', strict_slashes=False)
 class List(Resource):
     @api.doc(
         responses=

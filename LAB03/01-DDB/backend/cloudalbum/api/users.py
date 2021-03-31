@@ -57,7 +57,7 @@ class Ping(Resource):
         return make_response({'ok': True, 'Message': 'pong'}, 200)
 
 
-@api.route('/')
+@api.route('/', strict_slashes=False)
 class UsersList(Resource):
     @api.doc(
         responses=

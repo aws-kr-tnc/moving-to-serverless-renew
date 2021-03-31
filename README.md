@@ -9,13 +9,13 @@ This workshop content will handle the server based Python Flask web application 
 
 #### Written by
  * Sungshik Jou (AWS Technical Trainer)
- * Dayungle Jung (AWS Technical Trainer)
+ * Dayoungle Jun (AWS Technical Trainer)
  * YoungSeon.Ahn (https://github.com/LoveMeWithoutAll)
 
 #### Improvements
  * Sample applications have been redesigned to a better architecture.
  * with Vue.js based SPA frontend.
- * with Flask based restful fackend.
+ * with Flask based restful backend.
  * with Swagger support.
  * with token based authentication.
  * Eliminate user inconvenience on Hands on-lab.
