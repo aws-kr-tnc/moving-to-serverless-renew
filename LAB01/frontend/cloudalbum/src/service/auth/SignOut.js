@@ -1,6 +1,5 @@
 import axiosInstance from '@/plugins/axios';
 
-
 const signOut = () => {
   const apiUri = '/users/signout';
 

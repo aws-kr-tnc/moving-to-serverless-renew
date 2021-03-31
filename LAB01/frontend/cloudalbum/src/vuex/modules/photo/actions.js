@@ -47,7 +47,6 @@ const getAllPhotoList = async (store) => {
   }
 };
 
-
 const deletePhoto = async (store, id) => {
   try {
     const resp = await service.Photo.deletePhoto(id);

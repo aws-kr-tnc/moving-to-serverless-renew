@@ -189,7 +189,7 @@ export default {
       width: '',
       height: '',
       filename_orig: '',
-      requiredRule: [v => !!v || 'Required!'],
+      requiredRule: [(v) => !!v || 'Required!'],
       usingChalice: process.env.VUE_APP_USING_CHALICE,
       base64Data: '',
     };

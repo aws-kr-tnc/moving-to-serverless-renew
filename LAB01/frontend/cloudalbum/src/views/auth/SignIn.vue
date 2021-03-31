@@ -82,7 +82,7 @@ export default {
     return {
       inputEmail: '',
       inputPassword: '',
-      requiredRule: [v => !!v || 'Required!'],
+      requiredRule: [(v) => !!v || 'Required!'],
     };
   },
   computed: {

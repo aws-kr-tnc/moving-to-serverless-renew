@@ -1,6 +1,5 @@
 import axiosInstance from '@/plugins/axios';
 
-
 const deletePhoto = (id) => {
   const apiUri = `/photos/${id}`;
 
