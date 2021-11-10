@@ -144,7 +144,7 @@ def presigned_url_both(filename, email):
     key_thumb = "{0}{1}".format(prefix_thumb, filename)
     key_origin = "{0}{1}".format(prefix, filename)
     try:
-        s3_client = boto3.client('s3')
+        s3_client = boto3.client('s3', config=boto3.session.Config(s3={'addressing_style': 'path'}, signature_version='s3v4'))
         thumb_url = s3_client.generate_presigned_url(
             'get_object',
             Params={'Bucket': conf['S3_PHOTO_BUCKET'], 'Key': key_thumb},
