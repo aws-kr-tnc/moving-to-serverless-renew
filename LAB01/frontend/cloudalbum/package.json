@@ -11,7 +11,7 @@
   "dependencies": {
     "@types/leaflet": "^1.5.17",
     "autoprefixer": "^9.8.6",
-    "axios": "^0.19.2",
+    "axios": "^0.21.2",
     "core-js": "^3.6.5",
     "esri-leaflet-geocoder": "^2.3.3",
     "exif-js": "^2.3.0",
