@@ -1,7 +1,7 @@
 ## The latest Werkzeug 1.0.0 updated.
 ## This update is not backward compatible, many Flask based libraries are breaking.
 ## So, we will use 0.16.1 version instead.
-Werkzeug==0.16.1
+Werkzeug==2.2.3
 Flask==1.1.1
 Flask-SQLAlchemy==2.4.1
 Flask-Testing==0.7.1
